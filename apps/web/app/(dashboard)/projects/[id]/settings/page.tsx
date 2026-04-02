@@ -76,16 +76,6 @@ export default async function ProjectSettingsPage({ params }: Props) {
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">
-          <h2 className="font-semibold text-foreground mb-1">API Key</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            This key identifies your project. Keep it private — it allows writing feedback.
-          </p>
-          <code className="block bg-muted rounded-lg px-4 py-3 text-sm font-mono text-foreground break-all">
-            {project.api_key}
-          </code>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-6">
           <h2 className="font-semibold text-foreground mb-4">Project Details</h2>
           <ProjectSettingsForm project={project} />
         </div>
