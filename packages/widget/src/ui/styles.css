@@ -1,0 +1,498 @@
+/* ===== ScaleFeedback Widget Styles ===== */
+/* All styles are scoped inside Shadow DOM */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* === Floating Action Button — Side Tab === */
+.sf-fab {
+  position: fixed;
+  z-index: 2147483647;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 10px;
+  box-shadow: -4px 4px 20px rgba(0,0,0,0.22);
+  transition: padding 0.2s ease, box-shadow 0.2s ease;
+  color: white;
+}
+
+/* Right-side tab (default) */
+.sf-fab.sf-pos-right {
+  right: 0;
+  border-radius: 12px 0 0 12px;
+}
+
+/* Left-side tab */
+.sf-fab.sf-pos-left {
+  left: 0;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 4px 4px 20px rgba(0,0,0,0.22);
+}
+
+.sf-fab:hover {
+  padding: 18px 13px;
+  box-shadow: -6px 6px 28px rgba(0,0,0,0.28);
+}
+
+.sf-fab.sf-pos-left:hover {
+  box-shadow: 6px 6px 28px rgba(0,0,0,0.28);
+}
+
+.sf-fab svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.sf-fab-label {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.sf-fab-dots {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  writing-mode: vertical-rl;
+  line-height: 1;
+  opacity: 0.75;
+}
+
+/* === Overlay (form/success modal) === */
+.sf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: sf-overlay-in 0.2s ease forwards;
+  backdrop-filter: blur(2px);
+}
+
+@keyframes sf-overlay-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* === Full-screen annotate overlay === */
+.sf-overlay-annotate {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: stretch;
+  padding: 60px;
+  backdrop-filter: blur(3px);
+}
+
+/* Inner panel — rounded card that sits inside the 60px frame */
+.sf-annotate-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+}
+
+/* Top toolbar bar — compact, marker.io style */
+.sf-annotate-topbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 16px;
+  height: 52px;
+  background: #ffffff;
+  border-bottom: 1px solid #ececec;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  z-index: 1;
+}
+
+/* Canvas area fills 100% of remaining space — no centering */
+.sf-annotate-canvas-area {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+.sf-annotate-canvas-area canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Divider in toolbar */
+.sf-toolbar-sep {
+  width: 1px;
+  height: 24px;
+  background: #ffd4c8;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* Right-side action buttons in topbar */
+.sf-annotate-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* === Modal === */
+.sf-modal {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,114,79,0.06);
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: sf-modal-in 0.28s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+@keyframes sf-modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.90) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.sf-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px 0;
+}
+
+.sf-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a0a2e;
+  letter-spacing: -0.01em;
+}
+
+.sf-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #5a5a6a;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-close-btn:hover { background: #fff3f0; }
+
+/* === Steps === */
+.sf-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+}
+
+.sf-step {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffd4c8;
+  transition: background 0.2s;
+}
+.sf-step.active { background: #ff724f; width: 24px; border-radius: 4px; }
+.sf-step.done { background: #ff724f; }
+
+/* === Annotation toolbar (used inside topbar) === */
+.sf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.sf-tool-btn {
+  background: none;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a4a5a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  transition: all 0.15s;
+  min-width: 34px;
+  height: 34px;
+}
+
+.sf-tool-btn:hover { background: #fff3f0; color: #ff724f; }
+.sf-tool-btn.active { background: #fff3f0; border-color: #ff724f; color: #ff724f; }
+
+.sf-tool-btn svg { width: 18px; height: 18px; }
+
+/* Hide text labels inside toolbar tool buttons */
+.sf-annotate-topbar .sf-tool-btn .sf-tool-label { display: none; }
+
+.sf-color-picker {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #ffd4c8;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sf-undo-btn {
+  margin-left: auto;
+}
+
+/* === Form step === */
+.sf-form { padding: 4px 28px 24px; display: flex; flex-direction: column; gap: 18px; }
+
+.sf-field { display: flex; flex-direction: column; gap: 6px; }
+
+.sf-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a0a2e;
+}
+
+.sf-input, .sf-textarea, .sf-select {
+  border: 1.5px solid #ffd4c8;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #1a0a2e;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  background: #fff;
+  width: 100%;
+}
+
+.sf-input:focus, .sf-textarea:focus, .sf-select:focus {
+  border-color: #ff724f;
+  box-shadow: 0 0 0 3px rgba(255,114,79,0.1);
+}
+
+.sf-textarea { min-height: 80px; resize: vertical; }
+
+.sf-type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.sf-type-btn {
+  border: 1.5px solid #ffd4c8;
+  border-radius: 8px;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4a4a5a;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.sf-type-btn:hover { background: #fff3f0; border-color: #ff724f; color: #ff724f; }
+.sf-type-btn.active { background: #fff3f0; border-color: #ff724f; color: #ff724f; }
+.sf-type-btn .sf-type-icon { display: flex; align-items: center; justify-content: center; }
+.sf-type-btn .sf-type-icon svg { width: 20px; height: 20px; }
+
+/* === Footer / actions === */
+.sf-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px 24px;
+  border-top: 1px solid #fff3f0;
+  margin-top: 4px;
+}
+
+.sf-btn-primary {
+  background: #ff724f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sf-btn-primary:hover { background: #e85d3b; }
+.sf-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.sf-btn-secondary {
+  background: none;
+  color: #5a5a6a;
+  border: 1.5px solid #ffd4c8;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sf-btn-secondary:hover { background: #fff3f0; border-color: #ffb09a; }
+
+/* === Success state === */
+.sf-success {
+  padding: 52px 32px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.sf-success-icon {
+  width: 56px;
+  height: 56px;
+  background: #fff3f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff724f;
+}
+
+.sf-success h3 { font-size: 18px; font-weight: 700; color: #1a0a2e; }
+.sf-success p { font-size: 14px; color: #5a5a6a; }
+
+/* === Loading spinner === */
+.sf-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: sf-spin 0.6s linear infinite;
+  display: inline-block;
+}
+
+@keyframes sf-spin { to { transform: rotate(360deg); } }
+
+/* === Confirm-close dialog === */
+.sf-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483649;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sf-overlay-in 0.15s ease forwards;
+}
+
+.sf-confirm-modal {
+  background: #f4f4f5;
+  border-radius: 14px;
+  padding: 36px 40px 28px;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.28);
+  animation: sf-modal-in 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+.sf-confirm-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+.sf-confirm-x:hover { color: #4b5563; }
+
+.sf-confirm-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #111827;
+  text-align: center;
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.sf-confirm-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.sf-confirm-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.sf-btn-danger {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 26px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sf-btn-danger:hover { background: #b91c1c; }

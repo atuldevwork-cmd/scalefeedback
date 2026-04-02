@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root {
+    /* Brand: #ff724f coral primary, #300a46 deep purple secondary */
+    --background: 220 20% 98%;
+    --foreground: 278 74% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 278 74% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 278 74% 12%;
+    --primary: 12 100% 65%;           /* #ff724f coral */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 278 74% 16%;         /* #300a46 deep purple */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 12 100% 96%;            /* very light coral */
+    --accent-foreground: 12 100% 38%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 12 100% 65%;
+    --radius: 0.625rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Toast animations */
+@keyframes sf-toast-in {
+  from { opacity: 0; transform: translateX(110%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes sf-toast-out {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(110%); }
+}
+.sf-toast-in  { animation: sf-toast-in  0.3s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.sf-toast-out { animation: sf-toast-out 0.3s ease-in both; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e2e4ea;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #c8cad4;
+}

@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedbackly — Full Product Roadmap & Technical Blueprint</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-purple: #300A46;
+    --mid-purple: #2D1B69;
+    --orange: #FF6B35;
+    --orange-alt: #FF7A59;
+    --violet: #7C3AED;
+    --magenta: #D268C5;
+    --lavender-bg: #F0EBFF;
+    --white: #FFFFFF;
+    --light-cream: #FAF8FF;
+    --text-dark: #1A0A2E;
+    --text-heading: #300A46;
+    --text-light: #FFFFFF;
+    --text-muted: #6B5B8A;
+    --yellow: #F5C842;
+    --teal: #5CE8C8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text-dark);
+    line-height: 1.7;
+    background: var(--white);
+  }
+
+  code, pre, .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #300A46 0%, #2D1B69 100%);
+    color: white;
+    padding: 80px 80px 70px;
+    position: relative;
+    overflow: hidden;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hero .ring {
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 400px;
+    height: 400px;
+    border: 2px solid rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .hero .ring:nth-child(2) {
+    width: 320px; height: 320px;
+    top: -40px; right: -40px;
+  }
+  .hero .ring:nth-child(3) {
+    width: 240px; height: 240px;
+    top: 0; right: 0;
+  }
+  .hero .dot {
+    position: absolute;
+    border-radius: 50%;
+  }
+  .hero h1 {
+    font-size: 3.2rem;
+    font-weight: 700;
+    max-width: 700px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .hero .subtitle {
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 600px;
+    margin-bottom: 32px;
+  }
+  .hero .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50px;
+    padding: 10px 24px 10px 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .hero .badge .icon-circle {
+    width: 32px; height: 32px;
+    background: var(--yellow);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 40px;
+  }
+
+  /* SECTIONS */
+  .section-dark {
+    background: linear-gradient(135deg, #300A46 0%, #2D1B69 100%);
+    color: white;
+    padding: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .section-light {
+    background: var(--lavender-bg);
+    padding: 80px;
+  }
+  .section-white {
+    background: var(--white);
+    padding: 80px;
+  }
+
+  .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin-bottom: 12px;
+  }
+  .section-dark .section-title {
+    color: white;
+  }
+  .section-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    margin-bottom: 48px;
+    max-width: 650px;
+  }
+  .section-dark .section-subtitle {
+    color: rgba(255,255,255,0.65);
+  }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+  .section-dark .section-label {
+    color: var(--yellow);
+  }
+
+  /* CARDS */
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+  }
+  .card-dark {
+    background: rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 32px;
+    color: white;
+  }
+  .card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    margin-bottom: 10px;
+  }
+  .card-dark h3 {
+    color: white;
+  }
+  .card p, .card-dark p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+  .card-dark p {
+    color: rgba(255,255,255,0.7);
+  }
+
+  .icon-circle {
+    width: 40px; height: 40px;
+    background: var(--yellow);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+
+  /* GRIDS */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+
+  /* TABLES */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.95rem;
+  }
+  .data-table thead tr {
+    background: var(--deep-purple);
+    color: white;
+  }
+  .data-table th {
+    padding: 16px 24px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .data-table td {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--lavender-bg);
+    background: white;
+  }
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 24px 28px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: #e0e0e0;
+    margin: 16px 0;
+  }
+  .code-block .kw { color: #c792ea; }
+  .code-block .str { color: #c3e88d; }
+  .code-block .cm { color: #546e7a; }
+  .code-block .fn { color: #82aaff; }
+  .code-block .type { color: #ffcb6b; }
+  .code-block .op { color: #89ddff; }
+
+  /* TIMELINE */
+  .timeline-item {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 32px;
+  }
+  .timeline-num {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--yellow);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+  .timeline-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .section-dark .timeline-content h4 { color: var(--yellow); }
+  .timeline-content p {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+  }
+
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border-radius: 50px;
+    padding: 14px 24px;
+    margin-bottom: 10px;
+  }
+  .checklist-item .check {
+    background: var(--yellow);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange);
+    font-size: 0.95rem;
+    flex-shrink: 0;
+  }
+  .checklist-item span {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.95rem;
+  }
+
+  /* TAG */
+  .tag {
+    display: inline-block;
+    background: var(--lavender-bg);
+    color: var(--violet);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin: 2px 4px 2px 0;
+  }
+  .tag-dark {
+    background: rgba(255,255,255,0.12);
+    color: var(--teal);
+  }
+  .tag-orange {
+    background: rgba(255,107,53,0.12);
+    color: var(--orange);
+  }
+
+  /* METRIC */
+  .metric-box {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+  }
+  .metric-box .number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--deep-purple);
+  }
+  .metric-box .label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 6px;
+  }
+
+  /* FOOTER */
+  footer {
+    background: var(--deep-purple);
+    padding: 20px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.875rem;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .hero, .section-dark, .section-light, .section-white {
+      padding: 40px 24px;
+    }
+    .hero h1 { font-size: 2rem; }
+    .grid-2, .grid-3, .grid-4 {
+      grid-template-columns: 1fr;
+    }
+    footer { padding: 16px 24px; }
+  }
+
+  /* UTILITY */
+  .mb-24 { margin-bottom: 24px; }
+  .mb-32 { margin-bottom: 32px; }
+  .mb-48 { margin-bottom: 48px; }
+  .mb-64 { margin-bottom: 64px; }
+  .mt-32 { margin-top: 32px; }
+  .flex-gap { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="ring"></div>
+  <div class="ring"></div>
+  <div class="ring"></div>
+  <div class="dot" style="width:20px;height:20px;background:#D268C5;bottom:60px;left:60px;"></div>
+  <div class="dot" style="width:14px;height:14px;background:#7C3AED;bottom:100px;left:120px;"></div>
+  <div class="dot" style="width:18px;height:18px;background:#FF6B35;bottom:40px;right:200px;"></div>
+  <div class="dot" style="width:12px;height:12px;background:#5CE8C8;top:40px;left:50%;"></div>
+
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="8" cy="8" r="5" fill="#FF6B35"/>
+      <circle cx="20" cy="8" r="3" fill="#FF6B35" opacity="0.7"/>
+      <circle cx="14" cy="20" r="4" fill="#FF6B35" opacity="0.5"/>
+    </svg>
+    Feedbackly
+  </div>
+
+  <h1>Full Product Roadmap &amp; Technical Blueprint</h1>
+  <p class="subtitle">A comprehensive guide to building an open-source Marker.io alternative: embeddable website feedback widget with screenshot capture, annotation, and team dashboard.</p>
+
+  <div class="badge">
+    <div class="icon-circle">↗</div>
+    Next.js + Supabase + Vite &nbsp;|&nbsp; Built for ScaleStation
+  </div>
+</section>
+
+
+<!-- ===================== EXECUTIVE SUMMARY ===================== -->
+<section class="section-light">
+  <div class="section-label">↗ Executive Summary</div>
+  <h2 class="section-title">What We Are Building</h2>
+  <p class="section-subtitle">A self-hosted visual feedback tool that lets your clients and QA teams report bugs directly from any website, with annotated screenshots and automatic technical context.</p>
+
+  <div class="grid-3 mb-48">
+    <div class="card">
+      <div class="icon-circle">1</div>
+      <h3>Embeddable Widget</h3>
+      <p>Lightweight JavaScript snippet that clients embed on their websites. Captures screenshots, enables annotation, collects browser metadata, and submits feedback, all without leaving the page.</p>
+    </div>
+    <div class="card">
+      <div class="icon-circle">2</div>
+      <h3>Team Dashboard</h3>
+      <p>Next.js web app where your team views, triages, comments on, and resolves feedback items. Organised by project with filtering, search, and status management.</p>
+    </div>
+    <div class="card">
+      <div class="icon-circle">3</div>
+      <h3>API &amp; Integrations</h3>
+      <p>RESTful API that receives feedback from the widget, stores data in Supabase, and can push issues to Jira, Trello, GitHub Issues, or any PM tool via webhooks.</p>
+    </div>
+  </div>
+
+  <div class="grid-4">
+    <div class="metric-box">
+      <div class="number">~6</div>
+      <div class="label">Total Sprints</div>
+    </div>
+    <div class="metric-box">
+      <div class="number">12</div>
+      <div class="label">Weeks to Full Product</div>
+    </div>
+    <div class="metric-box">
+      <div class="number">4</div>
+      <div class="label">Development Phases</div>
+    </div>
+    <div class="metric-box">
+      <div class="number">$0</div>
+      <div class="label">Infra Cost (Free Tier)</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== TECH STACK ===================== -->
+<section class="section-dark">
+  <div class="ring" style="top:-60px;right:-60px;width:300px;height:300px;border:2px solid rgba(255,255,255,0.05);border-radius:50%;position:absolute;"></div>
+  <div class="dot" style="width:16px;height:16px;background:#D268C5;bottom:40px;right:80px;position:absolute;border-radius:50%;"></div>
+
+  <div class="section-label">↗ Tech Stack</div>
+  <h2 class="section-title">Complete Technology Stack</h2>
+  <p class="section-subtitle">Every library, framework, and service you need, with the exact purpose of each.</p>
+
+  <!-- Frontend & Backend -->
+  <h3 style="color:var(--yellow);font-size:1.15rem;font-weight:600;margin-bottom:20px;margin-top:40px;">Core Application (Dashboard + API)</h3>
+  <div style="overflow-x:auto;">
+    <table class="data-table" style="margin-bottom:40px;">
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Technology</th>
+          <th>Version</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Framework</strong></td>
+          <td>Next.js (App Router)</td>
+          <td>14+</td>
+          <td>Fullstack framework: server components, API routes, SSR dashboard</td>
+        </tr>
+        <tr>
+          <td><strong>Language</strong></td>
+          <td>TypeScript</td>
+          <td>5.x</td>
+          <td>Type safety across widget, API, and dashboard</td>
+        </tr>
+        <tr>
+          <td><strong>Styling</strong></td>
+          <td>Tailwind CSS</td>
+          <td>3.x</td>
+          <td>Utility-first CSS for rapid dashboard UI development</td>
+        </tr>
+        <tr>
+          <td><strong>UI Components</strong></td>
+          <td>shadcn/ui</td>
+          <td>Latest</td>
+          <td>Pre-built accessible components (dialogs, dropdowns, tables, toasts)</td>
+        </tr>
+        <tr>
+          <td><strong>State Management</strong></td>
+          <td>Zustand</td>
+          <td>4.x</td>
+          <td>Lightweight client state for dashboard filters, UI state</td>
+        </tr>
+        <tr>
+          <td><strong>Forms</strong></td>
+          <td>React Hook Form + Zod</td>
+          <td>7.x / 3.x</td>
+          <td>Form handling and schema validation for settings, project creation</td>
+        </tr>
+        <tr>
+          <td><strong>Data Fetching</strong></td>
+          <td>TanStack Query</td>
+          <td>5.x</td>
+          <td>Server state management, caching, optimistic updates on feedback list</td>
+        </tr>
+        <tr>
+          <td><strong>Monorepo</strong></td>
+          <td>Turborepo</td>
+          <td>Latest</td>
+          <td>Manages widget package + web app in one repo with shared types</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Widget -->
+  <h3 style="color:var(--yellow);font-size:1.15rem;font-weight:600;margin-bottom:20px;">Embeddable Widget (Standalone JS)</h3>
+  <div style="overflow-x:auto;">
+    <table class="data-table" style="margin-bottom:40px;">
+      <thead>
+        <tr>
+          <th>Concern</th>
+          <th>Technology</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Screenshot Capture</strong></td>
+          <td>html2canvas</td>
+          <td>Captures the current DOM state as a canvas/image client-side</td>
+        </tr>
+        <tr>
+          <td><strong>Annotation Canvas</strong></td>
+          <td>Fabric.js</td>
+          <td>Drawing arrows, rectangles, circles, text, blur regions on screenshots</td>
+        </tr>
+        <tr>
+          <td><strong>Bundler</strong></td>
+          <td>Vite (Library Mode)</td>
+          <td>Produces a single, tiny JS file (&lt;50KB gzipped) with no React dependency</td>
+        </tr>
+        <tr>
+          <td><strong>Styling</strong></td>
+          <td>CSS-in-JS (Shadow DOM)</td>
+          <td>Encapsulated styles via Shadow DOM so widget never conflicts with host site CSS</td>
+        </tr>
+        <tr>
+          <td><strong>Metadata</strong></td>
+          <td>Native Browser APIs</td>
+          <td>navigator.userAgent, window.location, performance API, console override</td>
+        </tr>
+        <tr>
+          <td><strong>Network Capture</strong></td>
+          <td>Fetch/XHR Interceptor</td>
+          <td>Monkey-patches fetch() and XMLHttpRequest to log failed API calls</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Backend / Infra -->
+  <h3 style="color:var(--yellow);font-size:1.15rem;font-weight:600;margin-bottom:20px;">Backend &amp; Infrastructure (Supabase)</h3>
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Technology</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Database</strong></td>
+          <td>Supabase PostgreSQL</td>
+          <td>Relational data: projects, feedback, users, comments, teams</td>
+        </tr>
+        <tr>
+          <td><strong>Auth</strong></td>
+          <td>Supabase Auth</td>
+          <td>Google/GitHub OAuth + email/password for team dashboard login</td>
+        </tr>
+        <tr>
+          <td><strong>File Storage</strong></td>
+          <td>Supabase Storage (S3-compatible)</td>
+          <td>Store annotated screenshots, attachments per feedback item</td>
+        </tr>
+        <tr>
+          <td><strong>Realtime</strong></td>
+          <td>Supabase Realtime</td>
+          <td>Live updates on dashboard when new feedback arrives (WebSockets)</td>
+        </tr>
+        <tr>
+          <td><strong>Edge Functions</strong></td>
+          <td>Supabase Edge Functions (Deno)</td>
+          <td>Webhook handlers for pushing feedback to Jira, Trello, GitHub</td>
+        </tr>
+        <tr>
+          <td><strong>Email</strong></td>
+          <td>Resend</td>
+          <td>Transactional emails: feedback notifications, status updates to reporters</td>
+        </tr>
+        <tr>
+          <td><strong>Hosting</strong></td>
+          <td>Vercel</td>
+          <td>Deploy Next.js app with zero config, edge network for widget JS CDN</td>
+        </tr>
+        <tr>
+          <td><strong>CDN</strong></td>
+          <td>Vercel Edge / Cloudflare</td>
+          <td>Serve widget.js globally with low latency</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<!-- ===================== ARCHITECTURE ===================== -->
+<section class="section-light">
+  <div class="section-label">↗ Architecture</div>
+  <h2 class="section-title">System Architecture Overview</h2>
+  <p class="section-subtitle">How the widget, dashboard, API, and Supabase connect together.</p>
+
+  <div class="code-block" style="font-size:0.82rem;line-height:1.8;">
+<pre style="margin:0;white-space:pre;">
+┌─────────────────────────────────┐        ┌──────────────────────────────────┐
+│     CLIENT WEBSITE              │        │     TEAM DASHBOARD               │
+│                                 │        │     (Next.js App on Vercel)      │
+│  ┌───────────────────────────┐  │        │                                  │
+│  │  Embeddable Widget (Vite) │  │        │  ┌──────────────────────────┐    │
+│  │                           │  │        │  │  Project Management      │    │
+│  │  • Feedback Button (FAB)  │  │        │  │  • View all feedback     │    │
+│  │  • html2canvas capture    │  │        │  │  • Filter / Search       │    │
+│  │  • Fabric.js annotation   │  │        │  │  • Change status         │    │
+│  │  • Metadata collector     │  │        │  │  • Comment threads       │    │
+│  │  • Console log capture    │  │        │  │  • Team settings         │    │
+│  │  • Submit form            │  │        │  └──────────┬───────────────┘    │
+│  └──────────┬────────────────┘  │        │             │                    │
+│             │                   │        │             │                    │
+└─────────────┼───────────────────┘        └─────────────┼────────────────────┘
+              │ POST /api/feedback                       │ Supabase Client SDK
+              │ + screenshot upload                      │ (reads + writes)
+              │                                          │
+              ▼                                          ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                          SUPABASE PLATFORM                                 │
+│                                                                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────┐  │
+│  │ Postgres │  │  Auth    │  │ Storage  │  │ Realtime │  │   Edge     │  │
+│  │ Database │  │ (OAuth)  │  │ (S3)     │  │ (WS)     │  │ Functions  │  │
+│  │          │  │          │  │          │  │          │  │            │  │
+│  │ projects │  │ Google   │  │ screenshots│ │ live feed│  │ webhooks → │  │
+│  │ feedback │  │ GitHub   │  │ attachments│ │ updates  │  │ Jira       │  │
+│  │ comments │  │ Email    │  │          │  │          │  │ Trello     │  │
+│  │ users    │  │          │  │          │  │          │  │ GitHub     │  │
+│  │ teams    │  │          │  │          │  │          │  │ Slack      │  │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └────────────┘  │
+│                                                                            │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  Row Level Security (RLS)                                            │  │
+│  │  • Users can only see feedback for projects they belong to           │  │
+│  │  • Widget API key scoped to specific project for inserts only        │  │
+│  │  • Admin role has full access within their organisation              │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────────────┘
+              │
+              ▼
+┌────────────────────────────────────────────┐
+│  EXTERNAL INTEGRATIONS (via Edge Functions) │
+│                                            │
+│  • Jira Cloud → Create issue               │
+│  • Trello → Create card                    │
+│  • GitHub → Create issue                   │
+│  • Slack → Post notification               │
+│  • Linear → Create issue                   │
+│  • Custom Webhook → POST JSON              │
+└────────────────────────────────────────────┘
+</pre>
+  </div>
+</section>
+
+
+<!-- ===================== DATABASE SCHEMA ===================== -->
+<section class="section-white">
+  <div class="section-label">↗ Database</div>
+  <h2 class="section-title">Complete Database Schema</h2>
+  <p class="section-subtitle">PostgreSQL tables with Row Level Security, managed through Supabase migrations.</p>
+
+  <div class="code-block" style="margin-bottom:40px;">
+<pre style="margin:0;white-space:pre;">
+<span class="cm">-- ============================================</span>
+<span class="cm">-- ORGANISATIONS & TEAMS</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TABLE</span> <span class="type">organisations</span> (
+  <span class="fn">id</span>          uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">name</span>        text <span class="kw">NOT NULL</span>,
+  <span class="fn">slug</span>        text <span class="kw">UNIQUE NOT NULL</span>,
+  <span class="fn">plan</span>        text <span class="kw">DEFAULT</span> <span class="str">'free'</span>,        <span class="cm">-- free | pro | enterprise</span>
+  <span class="fn">created_at</span>  timestamptz <span class="kw">DEFAULT</span> now(),
+  <span class="fn">updated_at</span>  timestamptz <span class="kw">DEFAULT</span> now()
+);
+
+<span class="kw">CREATE TABLE</span> <span class="type">members</span> (
+  <span class="fn">id</span>              uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">organisation_id</span> uuid <span class="kw">REFERENCES</span> organisations(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">user_id</span>         uuid <span class="kw">REFERENCES</span> auth.users(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">role</span>            text <span class="kw">DEFAULT</span> <span class="str">'member'</span>,     <span class="cm">-- owner | admin | member</span>
+  <span class="fn">invited_at</span>      timestamptz <span class="kw">DEFAULT</span> now(),
+  <span class="fn">accepted_at</span>     timestamptz,
+  <span class="kw">UNIQUE</span>(organisation_id, user_id)
+);
+
+<span class="cm">-- ============================================</span>
+<span class="cm">-- PROJECTS (one per client website)</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TABLE</span> <span class="type">projects</span> (
+  <span class="fn">id</span>              uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">organisation_id</span> uuid <span class="kw">REFERENCES</span> organisations(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">name</span>            text <span class="kw">NOT NULL</span>,
+  <span class="fn">domain</span>          text,                      <span class="cm">-- e.g. "client-site.com"</span>
+  <span class="fn">api_key</span>         text <span class="kw">UNIQUE DEFAULT</span> <span class="str">'proj_'</span> || gen_random_uuid(),
+  <span class="fn">widget_config</span>   jsonb <span class="kw">DEFAULT</span> <span class="str">'{
+    "position": "bottom-right",
+    "color": "#7C3AED",
+    "collectConsole": true,
+    "collectNetwork": false,
+    "guestReporting": true
+  }'</span>::jsonb,
+  <span class="fn">is_active</span>       boolean <span class="kw">DEFAULT</span> true,
+  <span class="fn">created_at</span>      timestamptz <span class="kw">DEFAULT</span> now(),
+  <span class="fn">updated_at</span>      timestamptz <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ============================================</span>
+<span class="cm">-- FEEDBACK (core entity)</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TYPE</span> <span class="type">feedback_status</span> <span class="kw">AS ENUM</span> (
+  <span class="str">'open'</span>, <span class="str">'in_progress'</span>, <span class="str">'resolved'</span>, <span class="str">'closed'</span>, <span class="str">'wont_fix'</span>
+);
+
+<span class="kw">CREATE TYPE</span> <span class="type">feedback_priority</span> <span class="kw">AS ENUM</span> (
+  <span class="str">'low'</span>, <span class="str">'medium'</span>, <span class="str">'high'</span>, <span class="str">'critical'</span>
+);
+
+<span class="kw">CREATE TYPE</span> <span class="type">feedback_type</span> <span class="kw">AS ENUM</span> (
+  <span class="str">'bug'</span>, <span class="str">'suggestion'</span>, <span class="str">'question'</span>, <span class="str">'other'</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="type">feedback</span> (
+  <span class="fn">id</span>              uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">project_id</span>      uuid <span class="kw">REFERENCES</span> projects(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">assigned_to</span>     uuid <span class="kw">REFERENCES</span> auth.users(id),
+
+  <span class="cm">-- Reporter info (may be anonymous guest)</span>
+  <span class="fn">reporter_name</span>   text,
+  <span class="fn">reporter_email</span>  text,
+
+  <span class="cm">-- Content</span>
+  <span class="fn">title</span>           text,
+  <span class="fn">description</span>     text,
+  <span class="fn">type</span>            feedback_type <span class="kw">DEFAULT</span> <span class="str">'bug'</span>,
+  <span class="fn">status</span>          feedback_status <span class="kw">DEFAULT</span> <span class="str">'open'</span>,
+  <span class="fn">priority</span>        feedback_priority <span class="kw">DEFAULT</span> <span class="str">'medium'</span>,
+
+  <span class="cm">-- Screenshot</span>
+  <span class="fn">screenshot_url</span>  text,                      <span class="cm">-- Supabase Storage path</span>
+
+  <span class="cm">-- Technical metadata (auto-captured by widget)</span>
+  <span class="fn">page_url</span>        text <span class="kw">NOT NULL</span>,
+  <span class="fn">browser</span>         text,                      <span class="cm">-- "Chrome 120.0"</span>
+  <span class="fn">os</span>              text,                      <span class="cm">-- "macOS 14.2"</span>
+  <span class="fn">screen_size</span>     text,                      <span class="cm">-- "1920x1080"</span>
+  <span class="fn">viewport_size</span>   text,                      <span class="cm">-- "1440x900"</span>
+  <span class="fn">device_pixel_ratio</span> numeric,
+  <span class="fn">user_agent</span>      text,
+
+  <span class="cm">-- Console & network logs (JSON)</span>
+  <span class="fn">console_logs</span>    jsonb <span class="kw">DEFAULT</span> <span class="str">'[]'</span>::jsonb,
+  <span class="fn">network_logs</span>    jsonb <span class="kw">DEFAULT</span> <span class="str">'[]'</span>::jsonb,
+
+  <span class="cm">-- Custom metadata (passed via widget SDK)</span>
+  <span class="fn">custom_metadata</span> jsonb <span class="kw">DEFAULT</span> <span class="str">'{}'</span>::jsonb,
+
+  <span class="cm">-- External PM tool reference</span>
+  <span class="fn">external_id</span>     text,                      <span class="cm">-- Jira issue key, GitHub issue #</span>
+  <span class="fn">external_url</span>    text,                      <span class="cm">-- Direct link to the PM tool issue</span>
+
+  <span class="fn">created_at</span>      timestamptz <span class="kw">DEFAULT</span> now(),
+  <span class="fn">updated_at</span>      timestamptz <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- Indexes for common queries</span>
+<span class="kw">CREATE INDEX</span> idx_feedback_project <span class="kw">ON</span> feedback(project_id);
+<span class="kw">CREATE INDEX</span> idx_feedback_status <span class="kw">ON</span> feedback(status);
+<span class="kw">CREATE INDEX</span> idx_feedback_created <span class="kw">ON</span> feedback(created_at <span class="kw">DESC</span>);
+<span class="kw">CREATE INDEX</span> idx_feedback_assigned <span class="kw">ON</span> feedback(assigned_to);
+
+<span class="cm">-- ============================================</span>
+<span class="cm">-- COMMENTS (threaded discussion per feedback)</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TABLE</span> <span class="type">comments</span> (
+  <span class="fn">id</span>            uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">feedback_id</span>   uuid <span class="kw">REFERENCES</span> feedback(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">user_id</span>       uuid <span class="kw">REFERENCES</span> auth.users(id),
+  <span class="fn">body</span>          text <span class="kw">NOT NULL</span>,
+  <span class="fn">is_internal</span>   boolean <span class="kw">DEFAULT</span> false,   <span class="cm">-- internal = team only, not sent to reporter</span>
+  <span class="fn">created_at</span>    timestamptz <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ============================================</span>
+<span class="cm">-- ATTACHMENTS (additional files per feedback)</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TABLE</span> <span class="type">attachments</span> (
+  <span class="fn">id</span>            uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">feedback_id</span>   uuid <span class="kw">REFERENCES</span> feedback(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">file_name</span>     text <span class="kw">NOT NULL</span>,
+  <span class="fn">file_url</span>      text <span class="kw">NOT NULL</span>,
+  <span class="fn">file_size</span>     bigint,
+  <span class="fn">mime_type</span>     text,
+  <span class="fn">created_at</span>    timestamptz <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ============================================</span>
+<span class="cm">-- INTEGRATIONS (PM tool connections)</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TABLE</span> <span class="type">integrations</span> (
+  <span class="fn">id</span>              uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">project_id</span>      uuid <span class="kw">REFERENCES</span> projects(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">provider</span>        text <span class="kw">NOT NULL</span>,           <span class="cm">-- jira | trello | github | linear | slack</span>
+  <span class="fn">config</span>          jsonb <span class="kw">NOT NULL</span>,           <span class="cm">-- provider-specific config (board ID, project key, etc.)</span>
+  <span class="fn">access_token</span>    text,                      <span class="cm">-- encrypted OAuth token</span>
+  <span class="fn">is_active</span>       boolean <span class="kw">DEFAULT</span> true,
+  <span class="fn">auto_push</span>       boolean <span class="kw">DEFAULT</span> false,     <span class="cm">-- auto-create issue on new feedback?</span>
+  <span class="fn">created_at</span>      timestamptz <span class="kw">DEFAULT</span> now()
+);
+
+<span class="cm">-- ============================================</span>
+<span class="cm">-- ACTIVITY LOG (audit trail)</span>
+<span class="cm">-- ============================================</span>
+
+<span class="kw">CREATE TABLE</span> <span class="type">activity_log</span> (
+  <span class="fn">id</span>            uuid <span class="kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+  <span class="fn">feedback_id</span>   uuid <span class="kw">REFERENCES</span> feedback(id) <span class="kw">ON DELETE CASCADE</span>,
+  <span class="fn">user_id</span>       uuid <span class="kw">REFERENCES</span> auth.users(id),
+  <span class="fn">action</span>        text <span class="kw">NOT NULL</span>,           <span class="cm">-- status_changed | assigned | commented | pushed_to_jira</span>
+  <span class="fn">details</span>       jsonb,                     <span class="cm">-- { "from": "open", "to": "resolved" }</span>
+  <span class="fn">created_at</span>    timestamptz <span class="kw">DEFAULT</span> now()
+);
+</pre>
+  </div>
+
+  <div class="section-label">↗ Entity Relationship</div>
+  <div class="code-block" style="font-size:0.82rem;">
+<pre style="margin:0;white-space:pre;">
+  organisation ──┬── members ──── auth.users
+                 │
+                 └── projects ──┬── feedback ──┬── comments
+                                │              ├── attachments
+                                │              └── activity_log
+                                │
+                                └── integrations
+</pre>
+  </div>
+</section>
+
+
+<!-- ===================== PROJECT STRUCTURE ===================== -->
+<section class="section-dark">
+  <div class="section-label">↗ Project Structure</div>
+  <h2 class="section-title">Monorepo Folder Structure</h2>
+  <p class="section-subtitle">Turborepo monorepo with two packages: the Next.js dashboard and the standalone widget.</p>
+
+  <div class="grid-2">
+    <div class="code-block" style="font-size:0.82rem;">
+<pre style="margin:0;white-space:pre;">
+feedbackly/
+├── apps/
+│   └── web/                        <span class="cm"># Next.js 14 (App Router)</span>
+│       ├── app/
+│       │   ├── (auth)/
+│       │   │   ├── login/
+│       │   │   └── signup/
+│       │   ├── (dashboard)/
+│       │   │   ├── layout.tsx      <span class="cm"># Sidebar + topbar</span>
+│       │   │   ├── projects/
+│       │   │   │   ├── page.tsx    <span class="cm"># Project list</span>
+│       │   │   │   └── [id]/
+│       │   │   │       ├── page.tsx    <span class="cm"># Feedback list</span>
+│       │   │   │       ├── [feedbackId]/
+│       │   │   │       │   └── page.tsx <span class="cm"># Detail view</span>
+│       │   │   │       └── settings/
+│       │   │   │           └── page.tsx
+│       │   │   ├── settings/
+│       │   │   │   ├── team/
+│       │   │   │   ├── integrations/
+│       │   │   │   └── billing/
+│       │   │   └── onboarding/
+│       │   └── api/
+│       │       ├── feedback/
+│       │       │   └── route.ts    <span class="cm"># POST (widget) + GET</span>
+│       │       ├── projects/
+│       │       │   └── route.ts
+│       │       └── webhooks/
+│       │           └── route.ts    <span class="cm"># Incoming from PM tools</span>
+│       ├── components/
+│       │   ├── ui/                 <span class="cm"># shadcn/ui components</span>
+│       │   ├── feedback-card.tsx
+│       │   ├── screenshot-viewer.tsx
+│       │   ├── annotation-overlay.tsx
+│       │   ├── metadata-panel.tsx
+│       │   └── sidebar.tsx
+│       ├── lib/
+│       │   ├── supabase/
+│       │   │   ├── client.ts       <span class="cm"># Browser client</span>
+│       │   │   ├── server.ts       <span class="cm"># Server client</span>
+│       │   │   └── middleware.ts    <span class="cm"># Auth middleware</span>
+│       │   ├── integrations/
+│       │   │   ├── jira.ts
+│       │   │   ├── trello.ts
+│       │   │   └── github.ts
+│       │   └── utils.ts
+│       ├── middleware.ts           <span class="cm"># Auth guard</span>
+│       └── package.json
+</pre>
+    </div>
+    <div class="code-block" style="font-size:0.82rem;">
+<pre style="margin:0;white-space:pre;">
+├── packages/
+│   ├── widget/                     <span class="cm"># Standalone JS widget</span>
+│   │   ├── src/
+│   │   │   ├── index.ts           <span class="cm"># Entry: init + mount</span>
+│   │   │   ├── core/
+│   │   │   │   ├── widget.ts      <span class="cm"># Main widget controller</span>
+│   │   │   │   ├── config.ts      <span class="cm"># Parse data-* attributes</span>
+│   │   │   │   └── api.ts         <span class="cm"># HTTP calls to backend</span>
+│   │   │   ├── capture/
+│   │   │   │   ├── screenshot.ts  <span class="cm"># html2canvas wrapper</span>
+│   │   │   │   ├── metadata.ts    <span class="cm"># Browser/OS/screen info</span>
+│   │   │   │   ├── console.ts     <span class="cm"># Console log interceptor</span>
+│   │   │   │   └── network.ts     <span class="cm"># Fetch/XHR interceptor</span>
+│   │   │   ├── annotation/
+│   │   │   │   ├── canvas.ts      <span class="cm"># Fabric.js canvas setup</span>
+│   │   │   │   ├── tools.ts       <span class="cm"># Arrow, rect, text, blur</span>
+│   │   │   │   └── toolbar.ts     <span class="cm"># Tool selection UI</span>
+│   │   │   ├── ui/
+│   │   │   │   ├── button.ts      <span class="cm"># Floating action button</span>
+│   │   │   │   ├── modal.ts       <span class="cm"># Feedback form modal</span>
+│   │   │   │   ├── form.ts        <span class="cm"># Reporter form fields</span>
+│   │   │   │   └── styles.css     <span class="cm"># Widget styles</span>
+│   │   │   └── types.ts           <span class="cm"># Shared TypeScript types</span>
+│   │   ├── vite.config.ts         <span class="cm"># Library mode config</span>
+│   │   ├── tsconfig.json
+│   │   └── package.json
+│   │
+│   └── shared/                    <span class="cm"># Shared types & utils</span>
+│       ├── types/
+│       │   ├── feedback.ts
+│       │   ├── project.ts
+│       │   └── api.ts
+│       └── package.json
+│
+├── supabase/
+│   ├── migrations/                <span class="cm"># SQL migration files</span>
+│   │   ├── 001_organisations.sql
+│   │   ├── 002_projects.sql
+│   │   ├── 003_feedback.sql
+│   │   ├── 004_comments.sql
+│   │   └── 005_rls_policies.sql
+│   ├── functions/                 <span class="cm"># Edge Functions</span>
+│   │   ├── push-to-jira/
+│   │   ├── push-to-trello/
+│   │   └── send-notification/
+│   └── config.toml
+│
+├── turbo.json
+├── package.json
+├── .env.local.example
+└── README.md
+</pre>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== WIDGET FLOW ===================== -->
+<section class="section-light">
+  <div class="section-label">↗ Widget Deep Dive</div>
+  <h2 class="section-title">How the Widget Works</h2>
+  <p class="section-subtitle">Step-by-step flow from script embed to feedback submission.</p>
+
+  <div class="card mb-32">
+    <h3 style="color:var(--orange);margin-bottom:16px;">Step 1: Client Embeds the Script</h3>
+    <div class="code-block">
+<pre style="margin:0;white-space:pre;">
+<span class="cm">&lt;!-- Paste before &lt;/body&gt; on any website --&gt;</span>
+<span class="kw">&lt;script</span>
+  <span class="fn">src</span>=<span class="str">"https://feedbackly.app/widget.js"</span>
+  <span class="fn">data-project</span>=<span class="str">"proj_abc123def456"</span>
+  <span class="fn">data-position</span>=<span class="str">"bottom-right"</span>
+  <span class="fn">data-color</span>=<span class="str">"#7C3AED"</span>
+  <span class="fn">data-guest</span>=<span class="str">"true"</span>
+<span class="kw">&gt;&lt;/script&gt;</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="card mb-32">
+    <h3 style="color:var(--orange);margin-bottom:16px;">Step 2: Widget Initialises (Shadow DOM)</h3>
+    <div class="code-block">
+<pre style="margin:0;white-space:pre;">
+<span class="cm">// src/index.ts — Entry point</span>
+<span class="kw">class</span> <span class="type">FeedbacklyWidget</span> {
+  <span class="kw">private</span> shadowRoot: ShadowRoot;
+  <span class="kw">private</span> config: WidgetConfig;
+
+  <span class="fn">constructor</span>() {
+    <span class="cm">// Parse data-* attributes from the script tag</span>
+    <span class="kw">this</span>.config = parseConfig();
+
+    <span class="cm">// Create Shadow DOM container (isolates CSS from host site)</span>
+    <span class="kw">const</span> host = document.createElement(<span class="str">'div'</span>);
+    host.id = <span class="str">'feedbackly-widget'</span>;
+    document.body.appendChild(host);
+    <span class="kw">this</span>.shadowRoot = host.attachShadow({ mode: <span class="str">'closed'</span> });
+
+    <span class="cm">// Inject widget styles into shadow DOM</span>
+    <span class="kw">this</span>.injectStyles();
+
+    <span class="cm">// Start console/network interceptors</span>
+    <span class="kw">if</span> (<span class="kw">this</span>.config.collectConsole) ConsoleCapture.start();
+    <span class="kw">if</span> (<span class="kw">this</span>.config.collectNetwork) NetworkCapture.start();
+
+    <span class="cm">// Render floating action button</span>
+    <span class="kw">this</span>.renderButton();
+  }
+}
+
+<span class="cm">// Auto-initialise when script loads</span>
+<span class="kw">new</span> FeedbacklyWidget();
+</pre>
+    </div>
+  </div>
+
+  <div class="card mb-32">
+    <h3 style="color:var(--orange);margin-bottom:16px;">Step 3: Screenshot Capture + Annotation</h3>
+    <div class="code-block">
+<pre style="margin:0;white-space:pre;">
+<span class="cm">// src/capture/screenshot.ts</span>
+<span class="kw">import</span> html2canvas <span class="kw">from</span> <span class="str">'html2canvas'</span>;
+
+<span class="kw">export async function</span> <span class="fn">captureScreenshot</span>(): Promise&lt;string&gt; {
+  <span class="cm">// Hide the widget before capturing</span>
+  widgetHost.style.display = <span class="str">'none'</span>;
+
+  <span class="kw">const</span> canvas = <span class="kw">await</span> html2canvas(document.body, {
+    useCORS: <span class="kw">true</span>,
+    scale: window.devicePixelRatio,
+    logging: <span class="kw">false</span>,
+    backgroundColor: <span class="kw">null</span>,
+    ignoreElements: (el) <span class="op">=></span> el.id === <span class="str">'feedbackly-widget'</span>,
+  });
+
+  widgetHost.style.display = <span class="str">'block'</span>;
+  <span class="kw">return</span> canvas.toDataURL(<span class="str">'image/png'</span>);
+}
+
+<span class="cm">// src/annotation/canvas.ts</span>
+<span class="kw">import</span> { fabric } <span class="kw">from</span> <span class="str">'fabric'</span>;
+
+<span class="kw">export function</span> <span class="fn">createAnnotationCanvas</span>(screenshotDataUrl: string) {
+  <span class="kw">const</span> canvas = <span class="kw">new</span> fabric.Canvas(<span class="str">'annotation-canvas'</span>, {
+    isDrawingMode: <span class="kw">false</span>,
+    selection: <span class="kw">true</span>,
+  });
+
+  <span class="cm">// Set screenshot as background</span>
+  fabric.Image.fromURL(screenshotDataUrl, (img) <span class="op">=></span> {
+    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+  });
+
+  <span class="kw">return</span> canvas;
+}
+</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--orange);margin-bottom:16px;">Step 4: Submit Feedback to API</h3>
+    <div class="code-block">
+<pre style="margin:0;white-space:pre;">
+<span class="cm">// src/core/api.ts</span>
+<span class="kw">export async function</span> <span class="fn">submitFeedback</span>(data: FeedbackPayload) {
+  <span class="cm">// 1. Upload screenshot to Supabase Storage</span>
+  <span class="kw">const</span> screenshotBlob = dataURLtoBlob(data.screenshot);
+  <span class="kw">const</span> fileName = <span class="str">`</span>${data.projectKey}/${Date.now()}.png<span class="str">`</span>;
+
+  <span class="kw">const</span> { data: upload } = <span class="kw">await</span> supabase.storage
+    .from(<span class="str">'screenshots'</span>)
+    .upload(fileName, screenshotBlob, { contentType: <span class="str">'image/png'</span> });
+
+  <span class="cm">// 2. Insert feedback record</span>
+  <span class="kw">const</span> { data: feedback } = <span class="kw">await</span> supabase
+    .from(<span class="str">'feedback'</span>)
+    .insert({
+      project_id: data.projectId,
+      title: data.title,
+      description: data.description,
+      type: data.type,
+      screenshot_url: upload.path,
+      page_url: window.location.href,
+      browser: getBrowserInfo(),
+      os: getOSInfo(),
+      screen_size: <span class="str">`</span>${screen.width}x${screen.height}<span class="str">`</span>,
+      viewport_size: <span class="str">`</span>${window.innerWidth}x${window.innerHeight}<span class="str">`</span>,
+      device_pixel_ratio: window.devicePixelRatio,
+      user_agent: navigator.userAgent,
+      console_logs: ConsoleCapture.getLogs(),
+      network_logs: NetworkCapture.getLogs(),
+      reporter_name: data.reporterName,
+      reporter_email: data.reporterEmail,
+    })
+    .select()
+    .single();
+
+  <span class="kw">return</span> feedback;
+}
+</pre>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== API ENDPOINTS ===================== -->
+<section class="section-white">
+  <div class="section-label">↗ API Design</div>
+  <h2 class="section-title">API Endpoints</h2>
+  <p class="section-subtitle">Next.js API routes for dashboard operations. Widget uses Supabase client directly.</p>
+
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Endpoint</th>
+          <th>Auth</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="4" style="background:var(--lavender-bg);font-weight:600;color:var(--deep-purple);">Feedback</td></tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">POST</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback</td>
+          <td>API Key</td>
+          <td>Submit new feedback from widget</td>
+        </tr>
+        <tr>
+          <td><span class="tag" style="background:rgba(124,58,237,0.12);color:#7C3AED;">GET</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback?project_id=xxx</td>
+          <td>Session</td>
+          <td>List feedback for a project (paginated, filterable)</td>
+        </tr>
+        <tr>
+          <td><span class="tag" style="background:rgba(124,58,237,0.12);color:#7C3AED;">GET</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback/[id]</td>
+          <td>Session</td>
+          <td>Get single feedback with comments and activity</td>
+        </tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">PATCH</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback/[id]</td>
+          <td>Session</td>
+          <td>Update status, priority, assignment</td>
+        </tr>
+        <tr>
+          <td><span style="display:inline-block;background:rgba(220,38,38,0.12);color:#dc2626;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">DELETE</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback/[id]</td>
+          <td>Session (Admin)</td>
+          <td>Delete feedback item</td>
+        </tr>
+
+        <tr><td colspan="4" style="background:var(--lavender-bg);font-weight:600;color:var(--deep-purple);">Projects</td></tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">POST</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/projects</td>
+          <td>Session</td>
+          <td>Create new project (generates API key)</td>
+        </tr>
+        <tr>
+          <td><span class="tag" style="background:rgba(124,58,237,0.12);color:#7C3AED;">GET</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/projects</td>
+          <td>Session</td>
+          <td>List user's projects</td>
+        </tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">PATCH</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/projects/[id]</td>
+          <td>Session</td>
+          <td>Update project settings, widget config</td>
+        </tr>
+
+        <tr><td colspan="4" style="background:var(--lavender-bg);font-weight:600;color:var(--deep-purple);">Comments</td></tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">POST</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback/[id]/comments</td>
+          <td>Session</td>
+          <td>Add comment to feedback</td>
+        </tr>
+
+        <tr><td colspan="4" style="background:var(--lavender-bg);font-weight:600;color:var(--deep-purple);">Integrations</td></tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">POST</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/integrations</td>
+          <td>Session (Admin)</td>
+          <td>Connect a PM tool (Jira, Trello, etc.)</td>
+        </tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">POST</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/feedback/[id]/push</td>
+          <td>Session</td>
+          <td>Push feedback to connected PM tool</td>
+        </tr>
+        <tr>
+          <td><span class="tag-orange" style="display:inline-block;background:rgba(255,107,53,0.12);color:#FF6B35;font-size:0.8rem;font-weight:600;padding:4px 12px;border-radius:20px;">POST</span></td>
+          <td style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;">/api/webhooks/[provider]</td>
+          <td>Webhook Secret</td>
+          <td>Receive status updates from PM tools</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<!-- ===================== DEVELOPMENT PHASES ===================== -->
+<section class="section-dark">
+  <div class="dot" style="width:20px;height:20px;background:#5CE8C8;top:40px;right:120px;position:absolute;border-radius:50%;"></div>
+  <div class="dot" style="width:14px;height:14px;background:#D268C5;bottom:60px;left:80px;position:absolute;border-radius:50%;"></div>
+
+  <div class="section-label">↗ Roadmap</div>
+  <h2 class="section-title">Development Phases</h2>
+  <p class="section-subtitle">Four phases from MVP to full product. Each phase delivers a usable increment.</p>
+
+  <!-- PHASE 1 -->
+  <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:40px;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div class="timeline-num">1</div>
+      <div>
+        <h3 style="color:var(--yellow);font-size:1.25rem;font-weight:700;">Phase 1: MVP Foundation</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Weeks 1-3 &nbsp;|&nbsp; Sprint 1 &amp; 2</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Widget (Week 1-2)</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Vite library mode setup with TypeScript</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Shadow DOM container + floating action button</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">html2canvas screenshot capture</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Basic Fabric.js annotation (arrow, rectangle, text)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Feedback form (title, description, type, reporter name/email)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Auto-collect browser metadata (URL, browser, OS, screen size)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Submit to Supabase via API key</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Dashboard + Backend (Week 2-3)</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Next.js 14 App Router + Tailwind + shadcn/ui setup</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Supabase project + database migrations</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Supabase Auth (Google OAuth login)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Project CRUD (create, list, edit, delete)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Feedback list view with screenshot thumbnails</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Feedback detail view (screenshot + metadata panel)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Row Level Security policies</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(92,232,200,0.1);border-radius:12px;padding:16px 24px;">
+      <p style="color:var(--teal);font-weight:600;font-size:0.9rem;margin-bottom:4px;">Deliverable</p>
+      <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Working widget that captures screenshots with basic annotation, and a dashboard where team can view all feedback with metadata. Usable internally for QA.</p>
+    </div>
+  </div>
+
+  <!-- PHASE 2 -->
+  <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:40px;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div class="timeline-num">2</div>
+      <div>
+        <h3 style="color:var(--yellow);font-size:1.25rem;font-weight:700;">Phase 2: Polish &amp; Collaboration</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Weeks 4-6 &nbsp;|&nbsp; Sprint 3 &amp; 4</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Widget Enhancements</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Advanced annotation tools (freehand draw, blur, circle, colour picker)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Console log interceptor (capture errors and warnings)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Network request logger (failed fetch/XHR calls)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Custom metadata API (widget.setUser(), widget.setMetadata())</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Widget theming (match client's brand colours)</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Dashboard Features</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Status workflow (open → in progress → resolved → closed)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Priority levels + assignment to team members</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Comment threads (internal + reporter-visible)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Filtering and search (by status, type, priority, date range)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Realtime updates (new feedback appears live via Supabase Realtime)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Console/network log viewer in detail panel</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Email notifications via Resend (new feedback, status changes)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(92,232,200,0.1);border-radius:12px;padding:16px 24px;">
+      <p style="color:var(--teal);font-weight:600;font-size:0.9rem;margin-bottom:4px;">Deliverable</p>
+      <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Full collaboration workflow. Team can triage, assign, discuss, and resolve feedback. Widget captures rich technical context. Ready for client-facing use.</p>
+    </div>
+  </div>
+
+  <!-- PHASE 3 -->
+  <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:40px;margin-bottom:32px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div class="timeline-num">3</div>
+      <div>
+        <h3 style="color:var(--yellow);font-size:1.25rem;font-weight:700;">Phase 3: Integrations &amp; Teams</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Weeks 7-9 &nbsp;|&nbsp; Sprint 5</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">PM Tool Integrations</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Jira Cloud integration (OAuth, create issue, sync status)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">ClickUp integration (OAuth, create issue, sync status)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Trello integration (create card with screenshot attachment)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">GitHub Issues integration</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Slack notifications (new feedback → channel message)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Custom webhook (generic POST for any tool)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Two-way status sync via incoming webhooks</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Team &amp; Organisation</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Organisation setup + team invitations (email invite flow)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Role-based access (owner, admin, member)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Project-level access control</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Activity log / audit trail per feedback item</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Onboarding flow for new users</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(92,232,200,0.1);border-radius:12px;padding:16px 24px;">
+      <p style="color:var(--teal);font-weight:600;font-size:0.9rem;margin-bottom:4px;">Deliverable</p>
+      <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Feedback flows directly into your existing PM tools. Team members with different roles can collaborate. Full audit trail of every action.</p>
+    </div>
+  </div>
+
+  <!-- PHASE 4 -->
+  <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:40px;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <div class="timeline-num">4</div>
+      <div>
+        <h3 style="color:var(--yellow);font-size:1.25rem;font-weight:700;">Phase 4: Scale &amp; Advanced Features</h3>
+        <p style="color:rgba(255,255,255,0.5);font-size:0.9rem;">Weeks 10-12 &nbsp;|&nbsp; Sprint 6</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Advanced Capabilities</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Session replay recording (optional, using rrweb)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Full page screenshot (scroll capture)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Dashboard analytics (feedback volume, resolution time, trends)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Bulk actions (resolve multiple, assign multiple)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Widget SDK: programmatic trigger, custom forms, event hooks</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 style="color:white;font-weight:600;margin-bottom:12px;">Production Readiness</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Rate limiting on widget submissions</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Image compression before upload (reduce storage costs)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Error monitoring (Sentry integration)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">E2E tests (Playwright for dashboard, widget test harness)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">CI/CD pipeline (GitHub Actions → Vercel preview → production)</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border-radius:50px;padding:10px 18px;">
+            <span style="color:var(--teal);">✓</span>
+            <span style="color:rgba(255,255,255,0.85);font-size:0.9rem;">Documentation site for widget embedding</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:rgba(92,232,200,0.1);border-radius:12px;padding:16px 24px;">
+      <p style="color:var(--teal);font-weight:600;font-size:0.9rem;margin-bottom:4px;">Deliverable</p>
+      <p style="color:rgba(255,255,255,0.8);font-size:0.9rem;">Production-grade product with session replay, analytics, comprehensive testing, and CI/CD. Ready for use across all client projects.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== LIBRARIES SUMMARY ===================== -->
+<section class="section-light">
+  <div class="section-label">↗ Complete Library Reference</div>
+  <h2 class="section-title">Every npm Package You Need</h2>
+  <p class="section-subtitle">Grouped by purpose with exact package names for quick installation.</p>
+
+  <div class="grid-2 mb-48">
+    <div class="card">
+      <h3 style="color:var(--orange);">Dashboard (apps/web)</h3>
+      <div class="code-block" style="margin-top:16px;">
+<pre style="margin:0;white-space:pre;">
+<span class="cm"># Core</span>
+next
+react react-dom
+typescript @types/react @types/node
+
+<span class="cm"># Supabase</span>
+@supabase/supabase-js
+@supabase/ssr
+@supabase/auth-helpers-nextjs
+
+<span class="cm"># UI</span>
+tailwindcss postcss autoprefixer
+class-variance-authority
+clsx tailwind-merge
+lucide-react
+@radix-ui/react-* <span class="cm">(via shadcn/ui)</span>
+
+<span class="cm"># Data</span>
+@tanstack/react-query
+zustand
+react-hook-form @hookform/resolvers
+zod
+
+<span class="cm"># Email</span>
+resend
+
+<span class="cm"># Misc</span>
+date-fns
+sonner <span class="cm">(toast notifications)</span>
+</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="color:var(--orange);">Widget (packages/widget)</h3>
+      <div class="code-block" style="margin-top:16px;">
+<pre style="margin:0;white-space:pre;">
+<span class="cm"># Core</span>
+typescript
+
+<span class="cm"># Screenshot</span>
+html2canvas
+
+<span class="cm"># Annotation</span>
+fabric
+
+<span class="cm"># Supabase (lightweight)</span>
+@supabase/supabase-js
+
+<span class="cm"># Build</span>
+vite
+vite-plugin-css-injected-by-js
+
+<span class="cm"># Session Replay (Phase 4)</span>
+rrweb
+
+<span class="cm"># Image Compression (Phase 4)</span>
+browser-image-compression
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 style="color:var(--orange);">Dev & Testing</h3>
+      <div class="code-block" style="margin-top:16px;">
+<pre style="margin:0;white-space:pre;">
+<span class="cm"># Monorepo</span>
+turbo
+
+<span class="cm"># Linting</span>
+eslint prettier
+@typescript-eslint/parser
+
+<span class="cm"># Testing</span>
+vitest
+@testing-library/react
+@playwright/test
+
+<span class="cm"># CI/CD</span>
+github-actions <span class="cm">(config, not npm)</span>
+</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="color:var(--orange);">Infrastructure</h3>
+      <div class="code-block" style="margin-top:16px;">
+<pre style="margin:0;white-space:pre;">
+<span class="cm"># Supabase CLI</span>
+supabase <span class="cm">(npx supabase)</span>
+
+<span class="cm"># Services (no npm packages)</span>
+Supabase     <span class="cm">→ Database, Auth, Storage, Realtime</span>
+Vercel       <span class="cm">→ Hosting + CDN</span>
+Resend       <span class="cm">→ Email delivery</span>
+Sentry       <span class="cm">→ Error monitoring</span>
+GitHub       <span class="cm">→ Source control + CI/CD</span>
+</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== COST ESTIMATE ===================== -->
+<section class="section-white">
+  <div class="section-label">↗ Cost Estimate</div>
+  <h2 class="section-title">Monthly Infrastructure Cost</h2>
+  <p class="section-subtitle">Starting on free tiers, with estimates as you scale.</p>
+
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Free Tier</th>
+          <th>Growing (Pro)</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Supabase</strong></td>
+          <td>$0</td>
+          <td>$25/mo</td>
+          <td>Free: 500MB DB, 1GB storage, 50K MAU. Pro: 8GB DB, 100GB storage.</td>
+        </tr>
+        <tr>
+          <td><strong>Vercel</strong></td>
+          <td>$0</td>
+          <td>$20/mo</td>
+          <td>Free: 100GB bandwidth, serverless functions. Pro: more bandwidth + analytics.</td>
+        </tr>
+        <tr>
+          <td><strong>Resend</strong></td>
+          <td>$0</td>
+          <td>$20/mo</td>
+          <td>Free: 3,000 emails/month. Pro: 50,000 emails/month.</td>
+        </tr>
+        <tr>
+          <td><strong>Sentry</strong></td>
+          <td>$0</td>
+          <td>$26/mo</td>
+          <td>Free: 5K errors/month. Team: 50K errors/month.</td>
+        </tr>
+        <tr>
+          <td><strong>Domain</strong></td>
+          <td>—</td>
+          <td>$12/yr</td>
+          <td>feedbackly.app or similar</td>
+        </tr>
+        <tr style="background:var(--lavender-bg);">
+          <td><strong>Total</strong></td>
+          <td><strong style="color:var(--deep-purple);font-size:1.1rem;">$0/mo</strong></td>
+          <td><strong style="color:var(--deep-purple);font-size:1.1rem;">~$92/mo</strong></td>
+          <td>Start free, upgrade only when you outgrow limits</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<!-- ===================== GETTING STARTED ===================== -->
+<section class="section-dark">
+  <div class="section-label">↗ Quick Start</div>
+  <h2 class="section-title">Getting Started Commands</h2>
+  <p class="section-subtitle">Copy and run these commands to scaffold the entire project.</p>
+
+  <div class="code-block" style="margin-bottom:24px;">
+<pre style="margin:0;white-space:pre;">
+<span class="cm"># 1. Create Turborepo monorepo</span>
+npx create-turbo@latest feedbackly
+<span class="kw">cd</span> feedbackly
+
+<span class="cm"># 2. Set up Next.js app with Tailwind</span>
+<span class="kw">cd</span> apps/web
+npx shadcn@latest init
+npm install @supabase/supabase-js @supabase/ssr @tanstack/react-query zustand
+npm install react-hook-form @hookform/resolvers zod
+npm install resend date-fns sonner lucide-react
+
+<span class="cm"># 3. Set up Supabase locally</span>
+npx supabase init
+npx supabase start   <span class="cm"># starts local Postgres + Auth + Storage</span>
+
+<span class="cm"># 4. Set up the widget package</span>
+<span class="kw">cd</span> ../../packages/widget
+npm init -y
+npm install html2canvas fabric @supabase/supabase-js
+npm install -D vite typescript vite-plugin-css-injected-by-js
+
+<span class="cm"># 5. Create shared types package</span>
+<span class="kw">cd</span> ../shared
+npm init -y
+npm install -D typescript
+
+<span class="cm"># 6. Environment variables</span>
+<span class="kw">cd</span> ../../apps/web
+<span class="kw">cp</span> .env.local.example .env.local
+<span class="cm"># Fill in:</span>
+<span class="cm">#   NEXT_PUBLIC_SUPABASE_URL=</span>
+<span class="cm">#   NEXT_PUBLIC_SUPABASE_ANON_KEY=</span>
+<span class="cm">#   SUPABASE_SERVICE_ROLE_KEY=</span>
+<span class="cm">#   RESEND_API_KEY=</span>
+
+<span class="cm"># 7. Run development</span>
+<span class="kw">cd</span> ../..
+npx turbo dev    <span class="cm"># runs both web app and widget dev server</span>
+</pre>
+  </div>
+</section>
+
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="logo" style="margin-bottom:0;">
+    <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+      <circle cx="8" cy="8" r="5" fill="#FF6B35"/>
+      <circle cx="20" cy="8" r="3" fill="#FF6B35" opacity="0.7"/>
+      <circle cx="14" cy="20" r="4" fill="#FF6B35" opacity="0.5"/>
+    </svg>
+    <span style="color:rgba(255,255,255,0.6);">Feedbackly — Project Blueprint</span>
+  </div>
+  <span>Prepared for ScaleStation &nbsp;|&nbsp; March 2026</span>
+</footer>
+
+</body>
+</html>
