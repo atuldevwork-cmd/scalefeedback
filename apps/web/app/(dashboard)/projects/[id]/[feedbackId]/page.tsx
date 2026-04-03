@@ -25,6 +25,29 @@ type ClickUpTaskData = {
 interface OrgMember { user_id: string; email: string; name: string; }
 interface ResolvedComment { id: string; body: string; is_internal: boolean; created_at: string; user_id: string; userName: string; userEmail: string; }
 
+function parseBrowser(raw: string): string {
+  if (!raw || !raw.startsWith('Mozilla')) return raw;
+  if (raw.includes('Edg/')) { const m = raw.match(/Edg\/([\d.]+)/); return `Edge ${m ? m[1].split('.').slice(0,2).join('.') : ''}`.trim(); }
+  if (raw.includes('Chrome/')) { const m = raw.match(/Chrome\/([\d.]+)/); return `Chrome ${m ? m[1].split('.').slice(0,2).join('.') : ''}`.trim(); }
+  if (raw.includes('Firefox/')) { const m = raw.match(/Firefox\/([\d.]+)/); return `Firefox ${m ? m[1].split('.').slice(0,2).join('.') : ''}`.trim(); }
+  if (raw.includes('Safari/') && !raw.includes('Chrome')) { const m = raw.match(/Version\/([\d.]+)/); return `Safari ${m ? m[1].split('.').slice(0,2).join('.') : ''}`.trim(); }
+  return raw;
+}
+
+function parseOS(raw: string): string {
+  if (!raw) return raw;
+  if (raw.includes('Windows NT 10.0')) return 'Windows 10/11';
+  if (raw.includes('Windows NT')) return 'Windows';
+  if (raw.includes('Mac OS X')) { const m = raw.match(/Mac OS X ([\d_]+)/); return `macOS ${m ? m[1].replace(/_/g,'.').split('.').slice(0,2).join('.') : ''}`.trim(); }
+  if (raw === 'MacIntel' || raw === 'MacPPC') return 'macOS';
+  if (raw === 'Win32' || raw === 'Win64') return 'Windows';
+  if (raw.includes('iPhone')) return 'iOS (iPhone)';
+  if (raw.includes('iPad')) return 'iOS (iPad)';
+  if (raw.includes('Android')) { const m = raw.match(/Android ([\d.]+)/); return `Android ${m ? m[1] : ''}`.trim(); }
+  if (raw.includes('Linux')) return 'Linux';
+  return raw;
+}
+
 function getOsIcon(os: string): string {
   const o = os.toLowerCase();
   if (o.includes('android')) return '🤖';
@@ -48,12 +71,14 @@ function EnvironmentPanel({ feedback }: { feedback: Feedback }) {
   const hasEnv = feedback.browser || feedback.os || feedback.screen_size || feedback.viewport_size || feedback.device_pixel_ratio;
   if (!feedback.page_url && !hasEnv) return null;
 
-  const osIcon = feedback.os ? getOsIcon(feedback.os) : null;
-  const browserIcon = feedback.browser ? getBrowserIcon(feedback.browser) : null;
+  const browserClean = feedback.browser ? parseBrowser(feedback.browser) : null;
+  const osClean = feedback.os ? parseOS(feedback.os) : null;
+  const osIcon = osClean ? getOsIcon(osClean) : null;
+  const browserIcon = browserClean ? getBrowserIcon(browserClean) : null;
   const dpr = feedback.device_pixel_ratio;
   const dprLabel = dpr != null ? `@${dpr}x` : null;
 
-  const headerIcons = [osIcon, browserIcon, feedback.screen_size ? '📱' : null].filter(Boolean);
+  const headerIcons = [osIcon, browserIcon, feedback.screen_size ? '📱' : null].filter(Boolean) as string[];
 
   return (
     <div className="bg-card border border-border rounded-xl p-5">
@@ -80,21 +105,21 @@ function EnvironmentPanel({ feedback }: { feedback: Feedback }) {
             </dd>
           </div>
         )}
-        {feedback.os && (
+        {osClean && (
           <div className="flex items-start gap-3">
             <dt className="text-muted-foreground w-24 shrink-0">OS</dt>
             <dd className="font-medium text-foreground flex items-center gap-1.5">
               <span>{osIcon}</span>
-              <span>{feedback.os}</span>
+              <span>{osClean}</span>
             </dd>
           </div>
         )}
-        {feedback.browser && (
+        {browserClean && (
           <div className="flex items-start gap-3">
             <dt className="text-muted-foreground w-24 shrink-0">Browser</dt>
             <dd className="font-medium text-foreground flex items-center gap-1.5">
               <span>{browserIcon}</span>
-              <span>{feedback.browser}</span>
+              <span>{browserClean}</span>
             </dd>
           </div>
         )}

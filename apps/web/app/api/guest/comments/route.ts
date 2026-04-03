@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const { data: feedback } = await service
     .from('feedback')
-    .select('id, title, page_url, project_id, assigned_to, reporter_email, projects(id, name, organisation_id)')
+    .select('id, title, page_url, project_id, assigned_to, reporter_email, external_id, projects(id, name, organisation_id)')
     .eq('id', feedback_id)
     .single();
 
@@ -59,6 +59,33 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Sync comment to ClickUp (fire-and-forget)
+  if (feedback.external_id) {
+    void (async () => {
+      try {
+        const { data: cuIntegration } = await service
+          .from('integrations')
+          .select('config')
+          .eq('project_id', project.id)
+          .eq('type', 'clickup')
+          .eq('enabled', true)
+          .maybeSingle();
+
+        const token = (cuIntegration?.config as Record<string, string>)?.accessToken;
+        if (token) {
+          const commenterName = guestAccess?.name ?? user.email ?? 'Someone';
+          const commentText = `ScaleFeedback · ${commenterName} commented:\n${body.trim()}`;
+
+          await fetch(`https://api.clickup.com/api/v2/task/${feedback.external_id}/comment`, {
+            method: 'POST',
+            headers: { Authorization: token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ comment_text: commentText, notify_all: false }),
+          });
+        }
+      } catch { /* never block on ClickUp sync failures */ }
+    })();
+  }
+
   // Notifications + emails (fire-and-forget)
   void (async () => {
     try {
@@ -71,7 +98,6 @@ export async function POST(req: NextRequest) {
 
       const { data: usersResp } = await service.auth.admin.listUsers();
 
-      // In-app: notify all org members
       await notifyOrgMembers(service, project.organisation_id, user.id, {
         type: 'comment',
         title: `New comment on "${feedbackTitle}"`,
@@ -80,7 +106,6 @@ export async function POST(req: NextRequest) {
         projectId: project.id,
       });
 
-      // In-app: notify other guests
       await notifyProjectGuests(service, project.id, user.id, {
         type: 'comment',
         title: `New comment on "${feedbackTitle}"`,
@@ -89,7 +114,6 @@ export async function POST(req: NextRequest) {
         projectId: project.id,
       });
 
-      // Email: assignee
       if (feedback.assigned_to && feedback.assigned_to !== user.id) {
         const assignee = usersResp?.users.find((u) => u.id === feedback.assigned_to);
         if (assignee?.email) {
@@ -105,7 +129,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Email: reporter
       if (feedback.reporter_email) {
         void sendGuestCommentEmail({
           to: feedback.reporter_email,
@@ -118,7 +141,6 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Email: org owners/admins (only when a guest comments, not a member)
       if (guestAccess && !membership) {
         const { data: adminMembers } = await service
           .from('members')
@@ -147,4 +169,115 @@ export async function POST(req: NextRequest) {
   })();
 
   return NextResponse.json({ data: comment }, { status: 201 });
+}
+
+// GET /api/guest/comments?feedback_id=X&after=ISO_TIMESTAMP
+export async function GET(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
+  const { searchParams } = new URL(req.url);
+  const feedbackId = searchParams.get('feedback_id');
+  const after = searchParams.get('after');
+  if (!feedbackId) return NextResponse.json({ error: 'feedback_id required' }, { status: 400 });
+
+  const service = createServiceClient();
+
+  const { data: feedback } = await service
+    .from('feedback')
+    .select('id, project_id, external_id, projects(id, organisation_id)')
+    .eq('id', feedbackId)
+    .single();
+  if (!feedback) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const project = (Array.isArray(feedback.projects) ? feedback.projects[0] : feedback.projects) as { id: string; organisation_id: string } | null;
+  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const [{ data: guestRows }, { data: memberRows }] = await Promise.all([
+    service.from('project_guests').select('id, name').eq('project_id', project.id).eq('email', user.email ?? '').not('accepted_at', 'is', null).limit(1),
+    service.from('members').select('role').eq('user_id', user.id).eq('organisation_id', project.organisation_id).limit(1),
+  ]);
+  if (!guestRows?.[0] && !memberRows?.[0]) return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+
+  // Sync ClickUp comments → DB (fallback for when webhook can't reach localhost)
+  if (feedback.external_id) {
+    try {
+      const { data: integration } = await service
+        .from('integrations')
+        .select('config')
+        .eq('project_id', project.id)
+        .eq('type', 'clickup')
+        .eq('enabled', true)
+        .maybeSingle();
+
+      const token = (integration?.config as Record<string, string>)?.accessToken;
+      if (token) {
+        const cuRes = await fetch(
+          `https://api.clickup.com/api/v2/task/${feedback.external_id}/comment`,
+          { headers: { Authorization: token }, cache: 'no-store' }
+        );
+        if (cuRes.ok) {
+          const { comments: cuComments } = await cuRes.json() as {
+            comments: { id: string; comment_text: string; user: { username: string }; date: string }[]
+          };
+
+          const { data: existingComments } = await service
+            .from('comments').select('body').eq('feedback_id', feedbackId);
+          const existingBodies = new Set((existingComments ?? []).map((c: { body: string }) => c.body));
+
+          for (const cc of cuComments ?? []) {
+            const text = cc.comment_text ?? '';
+            if (!text.trim()) continue;
+            if (text.includes('ScaleFeedback ·') || text.includes('(via ScaleFeedback)')) continue;
+            const body = `[via ClickUp · ${cc.user?.username ?? 'ClickUp'}]\n${text}`;
+            if (existingBodies.has(body)) continue;
+            await service.from('comments').insert({
+              feedback_id: feedbackId,
+              user_id: null,
+              body,
+              is_internal: false,
+            });
+          }
+        }
+      }
+    } catch { /* sync failure must not block the response */ }
+  }
+
+  let query = service
+    .from('comments')
+    .select('id, body, created_at, user_id, is_internal')
+    .eq('feedback_id', feedbackId)
+    .eq('is_internal', false)
+    .order('created_at', { ascending: true });
+
+  if (after) query = query.gt('created_at', after);
+
+  const { data: comments } = await query;
+
+  const userIds = [...new Set((comments ?? []).map((c: { user_id: string | null }) => c.user_id).filter(Boolean))] as string[];
+  let commenterMap: Record<string, { name: string; email: string }> = {};
+  if (userIds.length) {
+    const { data: usersResp } = await service.auth.admin.listUsers();
+    for (const u of usersResp?.users ?? []) {
+      if (userIds.includes(u.id)) {
+        commenterMap[u.id] = {
+          name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email ?? 'Unknown',
+          email: u.email ?? '',
+        };
+      }
+    }
+  }
+
+  const CLICKUP_PREFIX = /^\[via ClickUp · (.+?)\]\n/;
+  const resolved = (comments ?? []).map((c: { id: string; body: string; created_at: string; user_id: string | null; is_internal: boolean }) => {
+    if (!c.user_id) {
+      const match = c.body.match(CLICKUP_PREFIX);
+      return { ...c, commenterName: match ? match[1] : 'ClickUp', commenterEmail: '' };
+    }
+    const info = commenterMap[c.user_id];
+    return { ...c, commenterName: info?.name ?? 'Unknown', commenterEmail: info?.email ?? '' };
+  });
+
+  return NextResponse.json({ data: resolved });
 }

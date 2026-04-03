@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { isSupabaseConfigured } from '@/lib/mock-data';
 import { formatDate } from '@/lib/utils';
 
-// Matches "[via ClickUp · AuthorName]\ncomment text"
 const CLICKUP_PREFIX = /^\[via ClickUp · (.+?)\]\n/;
+const POLL_INTERVAL = 5000;
 
 function CommentBody({ body }: { body: string }) {
   const match = body.match(CLICKUP_PREFIX);
@@ -47,10 +47,41 @@ interface Props {
 }
 
 export function CommentThread({ feedbackId, initialComments, currentUserId }: Props) {
+  const [comments, setComments] = useState<ResolvedComment[]>(initialComments);
   const [body, setBody] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const latestTimestampRef = useRef<string>(
+    initialComments.length ? initialComments[initialComments.length - 1].created_at : new Date(0).toISOString()
+  );
+
+  // Poll for new comments every 5 seconds
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `/api/comments?feedback_id=${feedbackId}&after=${encodeURIComponent(latestTimestampRef.current)}`
+        );
+        if (!res.ok) return;
+        const { data: newComments } = await res.json() as { data: ResolvedComment[] };
+        if (!newComments?.length) return;
+
+        setComments((prev) => {
+          const existingIds = new Set(prev.map((c) => c.id));
+          const fresh = newComments.filter((c: ResolvedComment) => !existingIds.has(c.id));
+          if (!fresh.length) return prev;
+          latestTimestampRef.current = fresh[fresh.length - 1].created_at;
+          return [...prev, ...fresh];
+        });
+      } catch { /* ignore poll errors */ }
+    };
+
+    const timer = setInterval(poll, POLL_INTERVAL);
+    return () => clearInterval(timer);
+  }, [feedbackId]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,23 +100,25 @@ export function CommentThread({ feedbackId, initialComments, currentUserId }: Pr
         setLoading(false);
         return;
       }
-      window.location.reload();
+      setBody('');
+      setIsInternal(false);
     }
+    setLoading(false);
   }
 
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold text-[#300a46]">
-        Comments {initialComments.length > 0 ? `(${initialComments.length})` : ''}
+        Comments {comments.length > 0 ? `(${comments.length})` : ''}
       </h2>
 
-      {initialComments.length === 0 ? (
+      {comments.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center text-sm text-gray-400">
           No comments yet.
         </div>
       ) : (
         <div className="space-y-3">
-          {initialComments.map((c) => {
+          {comments.map((c) => {
             const isMine = c.user_id === currentUserId;
             return (
               <div

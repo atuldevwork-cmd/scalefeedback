@@ -151,6 +151,11 @@ export async function POST(request: NextRequest) {
           status: 'open',
           dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/projects/${project.id}/${feedback.id}`,
           screenshotUrl: screenshotPublicUrl,
+          browser: body.browser,
+          os: body.os,
+          screenSize: body.screen_size,
+          viewportSize: body.viewport_size,
+          devicePixelRatio: body.device_pixel_ratio,
         }, supabase);
       }
     } catch { /* integrations must never break submission */ }

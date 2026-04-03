@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { NotificationBell } from '@/components/notification-bell';
+import { GuestLogoutButton } from '@/components/guest-logout-button';
 
 interface Props {
   params: Promise<{ projectId: string }>;
@@ -114,6 +115,7 @@ export default async function GuestProjectPage({ params }: Props) {
                 Open in dashboard →
               </Link>
             )}
+            <GuestLogoutButton />
           </div>
         </div>
       </header>

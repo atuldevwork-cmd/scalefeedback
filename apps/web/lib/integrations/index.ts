@@ -17,6 +17,12 @@ export interface FeedbackIntegrationData {
   status: string;
   dashboardUrl: string;
   screenshotUrl?: string;
+  // Session environment
+  browser?: string;
+  os?: string;
+  screenSize?: string;
+  viewportSize?: string;
+  devicePixelRatio?: number;
 }
 
 export interface Integration {
@@ -29,7 +35,6 @@ export interface Integration {
 export async function fireIntegrations(
   integrations: Integration[],
   data: FeedbackIntegrationData,
-  // Service client passed in so ClickUp can write external_id back to feedback
   supabase?: SupabaseClient
 ): Promise<void> {
   const enabled = integrations.filter((i) => i.enabled);
@@ -99,8 +104,12 @@ async function fireOne(
           pageUrl: data.pageUrl,
           dashboardUrl: data.dashboardUrl,
           screenshotUrl: data.screenshotUrl,
+          browser: data.browser,
+          os: data.os,
+          screenSize: data.screenSize,
+          viewportSize: data.viewportSize,
+          devicePixelRatio: data.devicePixelRatio,
         });
-        // Store the ClickUp task ID on the feedback row so the webhook can look it up
         if (result && supabase) {
           await supabase
             .from('feedback')

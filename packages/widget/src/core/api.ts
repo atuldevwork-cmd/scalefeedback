@@ -1,4 +1,5 @@
 import type { ConsoleLogEntry, NetworkLogEntry, FeedbackType } from '../types';
+import { collectMetadata } from '../capture/metadata';
 
 export interface SubmitOptions {
   apiBaseUrl: string;
@@ -29,15 +30,7 @@ export async function submitFeedback(opts: SubmitOptions): Promise<void> {
       console_logs: opts.consoleLogs,
       network_logs: opts.networkLogs,
       custom_metadata: opts.customMetadata ?? {},
-      // metadata fields are added by server from the URL etc.
-      // widget also sends them directly:
-      page_url: window.location.href,
-      browser: navigator.userAgent,
-      os: navigator.platform,
-      screen_size: `${screen.width}x${screen.height}`,
-      viewport_size: `${window.innerWidth}x${window.innerHeight}`,
-      device_pixel_ratio: window.devicePixelRatio || 1,
-      user_agent: navigator.userAgent,
+      ...collectMetadata(),
     }),
   });
 
