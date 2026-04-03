@@ -528,7 +528,7 @@ export function MembersClient({
         <RemoveConfirmModal
           member={removeTarget}
           onConfirm={handleRemove}
-          onClose={() => { setRemoveTarget(null); setRemoveError(''); }}
+          onClose={() => { setRemoveTarget(null); }}
           removing={removing}
         />
       )}

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { NotificationBell } from '@/components/notification-bell';
+import { GuestLogoutButton } from '@/components/guest-logout-button';
 import { GuestCommentForm } from './comment-form';
 import { GuestStatusSelect } from './status-select';
 import { ScreenshotLightbox } from '@/components/screenshot-lightbox';
@@ -125,6 +126,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-400">{user.email}</span>
             <NotificationBell isGuest />
+            <GuestLogoutButton />
           </div>
         </div>
       </header>

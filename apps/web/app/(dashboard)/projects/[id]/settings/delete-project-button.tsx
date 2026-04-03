@@ -82,7 +82,7 @@ export function DeleteProjectButton({ projectId, projectName }: Props) {
 
             <div className="flex gap-3">
               <button
-                onClick={() => { setOpen(false); setConfirm(''); setError(''); }}
+                onClick={() => { setOpen(false); setConfirm(''); }}
                 className="flex-1 border border-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
               >
                 Cancel
