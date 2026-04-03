@@ -1,6 +1,8 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export interface NewFeedbackEmailParams {
   to: string;
@@ -26,7 +28,7 @@ export async function sendNewFeedbackEmail(params: NewFeedbackEmailParams) {
 
   const { to, projectName, feedbackTitle, feedbackType, reporterName, pageUrl, dashboardUrl } = params;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: 'ScaleFeedback <onboarding@resend.dev>',
     to,
     subject: `New ${feedbackType} on ${projectName}`,
@@ -74,7 +76,7 @@ export async function sendGuestCommentEmail(params: GuestCommentEmailParams) {
   const { to, projectName, feedbackTitle, guestEmail, guestName, commentBody, dashboardUrl } = params;
   const from = guestName ? `${guestName} (${guestEmail})` : guestEmail;
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: 'ScaleFeedback <onboarding@resend.dev>',
     to,
     subject: `Guest comment on "${feedbackTitle}" — ${projectName}`,
@@ -113,7 +115,7 @@ export async function sendStatusChangeEmail(params: StatusChangeEmailParams) {
   const { to, projectName, feedbackTitle, oldStatus, newStatus, dashboardUrl } = params;
   const label = newStatus.replace('_', ' ');
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: 'ScaleFeedback <onboarding@resend.dev>',
     to,
     subject: `Feedback status updated to "${label}" on ${projectName}`,
