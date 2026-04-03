@@ -6,6 +6,8 @@ import { isSupabaseConfigured, MOCK_PROJECTS } from '@/lib/mock-data';
 import { CreateProjectDialog } from './create-project-dialog';
 import type { Project } from '@scalefeedback/shared';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProjectsPage() {
   let projects: Project[] = [];
   let redirectTo: string | null = null;
