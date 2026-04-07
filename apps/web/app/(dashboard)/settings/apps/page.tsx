@@ -70,30 +70,35 @@ const APPS = [
     name: 'Slack',
     description: 'Send feedback notifications to Slack channels via Incoming Webhook.',
     category: 'Notifications',
+    comingSoon: true,
   },
   {
     id: 'github',
     name: 'GitHub Issues',
     description: 'Automatically create GitHub Issues for every feedback submission.',
     category: 'Project Management',
+    comingSoon: true,
   },
   {
     id: 'jira',
     name: 'Jira',
     description: 'Create Jira issues and sync feedback status with your Jira board.',
     category: 'Project Management',
+    comingSoon: true,
   },
   {
     id: 'clickup',
     name: 'ClickUp',
     description: 'Create ClickUp tasks automatically when feedback is submitted.',
     category: 'Project Management',
+    comingSoon: false,
   },
   {
     id: 'webhook',
     name: 'Custom Webhook',
     description: 'POST feedback data as JSON to any endpoint — connect any tool.',
     category: 'Developer',
+    comingSoon: true,
   },
 ];
 
@@ -118,25 +123,32 @@ export default function ConnectedAppsPage() {
                 {apps.map((app) => (
                   <div
                     key={app.id}
-                    className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 hover:border-[#ff724f]/30 hover:shadow-sm transition-all"
+                    className={`bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4 transition-all ${app.comingSoon ? 'opacity-60' : 'hover:border-[#ff724f]/30 hover:shadow-sm'}`}
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+                    <div className={`w-12 h-12 rounded-xl border border-gray-100 flex items-center justify-center shrink-0 ${app.comingSoon ? 'bg-gray-100' : 'bg-gray-50'}`}>
                       {ICONS[app.id]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-sm font-semibold text-gray-900">{app.name}</span>
+                        {app.comingSoon && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                            Coming Soon
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 leading-relaxed">{app.description}</p>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Link
-                        href="/projects"
-                        className="text-xs font-medium text-[#ff724f] border border-[#ff724f]/30 px-3 py-1.5 rounded-lg hover:bg-[#fff3f0] transition-colors"
-                      >
-                        Configure
-                      </Link>
-                    </div>
+                    {!app.comingSoon && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                          href="/projects"
+                          className="text-xs font-medium text-[#ff724f] border border-[#ff724f]/30 px-3 py-1.5 rounded-lg hover:bg-[#fff3f0] transition-colors"
+                        >
+                          Configure
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

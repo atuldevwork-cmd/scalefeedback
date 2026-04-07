@@ -104,15 +104,22 @@ export async function POST(request: NextRequest) {
     try {
       const { data: members } = await supabase
         .from('members')
-        .select('user_id')
+        .select('user_id, notification_preferences')
         .eq('organisation_id', project.organisation_id ?? '');
 
-      // Get emails for org members via auth.users (service role only)
+      // Get emails for org members who have new_feedback notifications enabled
       if (members?.length) {
         const { data: users } = await supabase.auth.admin.listUsers();
-        const memberIds = new Set(members.map((m: { user_id: string }) => m.user_id));
+        const memberMap = new Map(
+          (members as { user_id: string; notification_preferences?: Record<string, boolean> }[])
+            .map((m) => [m.user_id, m.notification_preferences])
+        );
         const emails = users?.users
-          .filter((u) => memberIds.has(u.id) && u.email)
+          .filter((u) => {
+            if (!u.email || !memberMap.has(u.id)) return false;
+            const prefs = memberMap.get(u.id);
+            return prefs == null || prefs.new_feedback !== false;
+          })
           .map((u) => u.email as string) ?? [];
 
         for (const email of emails) {

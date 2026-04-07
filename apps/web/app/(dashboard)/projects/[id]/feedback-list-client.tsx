@@ -67,39 +67,70 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl }: P
     );
   }
 
+  const allChecked = selected.size === feedback.length && feedback.length > 0;
+  const indeterminate = selected.size > 0 && selected.size < feedback.length;
+
   return (
     <>
       {/* Select-all row */}
-      <div className="flex items-center gap-3 mb-2 px-1">
-        <input
-          type="checkbox"
-          checked={selected.size === feedback.length && feedback.length > 0}
-          onChange={toggleAll}
-          className="w-4 h-4 rounded accent-[#ff724f] cursor-pointer"
-        />
-        <span className="text-xs text-gray-400">Select all</span>
+      <div className={`flex items-center gap-3 mb-2 px-3 py-2 rounded-xl transition-colors ${selected.size > 0 ? 'bg-[#fff3f0]' : 'bg-transparent'}`}>
+        <button
+          onClick={toggleAll}
+          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+            allChecked
+              ? 'bg-[#ff724f] border-[#ff724f]'
+              : indeterminate
+              ? 'bg-[#ff724f] border-[#ff724f]'
+              : 'border-gray-300 hover:border-[#ff724f]/60 bg-white'
+          }`}
+          aria-label="Select all"
+        >
+          {allChecked && (
+            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+          {indeterminate && (
+            <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+              <path d="M2.5 6h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
+        <span className="text-xs font-medium text-gray-500">Select all</span>
         {selected.size > 0 && (
-          <span className="text-xs text-[#ff724f] font-semibold">{selected.size} selected</span>
+          <span className="text-xs font-semibold bg-[#ff724f] text-white px-2 py-0.5 rounded-full">
+            {selected.size} selected
+          </span>
         )}
       </div>
 
       <div className="space-y-2">
-        {feedback.map((fb) => (
+        {feedback.map((fb) => {
+          const isSelected = selected.has(fb.id);
+          return (
           <div
             key={fb.id}
             className={`group flex items-center gap-3 bg-white border rounded-xl p-4 transition-all ${
-              selected.has(fb.id)
+              isSelected
                 ? 'border-[#ff724f]/40 bg-[#fff3f0]/40 shadow-sm'
                 : 'border-gray-100 hover:shadow-card hover:border-gray-200'
             }`}
           >
-            <input
-              type="checkbox"
-              checked={selected.has(fb.id)}
-              onChange={() => toggle(fb.id)}
-              className="w-4 h-4 rounded accent-[#ff724f] cursor-pointer shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <button
+              onClick={(e) => { e.stopPropagation(); toggle(fb.id); }}
+              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                isSelected
+                  ? 'bg-[#ff724f] border-[#ff724f]'
+                  : 'border-gray-300 group-hover:border-[#ff724f]/50 bg-white'
+              }`}
+              aria-label="Select"
+            >
+              {isSelected && (
+                <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
             <Link href={`/projects/${projectId}/${fb.id}`} className="flex items-center gap-4 flex-1 min-w-0 group/link">
               {/* Screenshot thumbnail */}
               <div className="w-16 h-12 rounded-lg bg-gray-50 border border-gray-100 shrink-0 overflow-hidden flex items-center justify-center">
@@ -141,7 +172,8 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl }: P
               <span className="material-symbols-outlined text-[18px]">delete</span>
             </button>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <BulkActionsBar

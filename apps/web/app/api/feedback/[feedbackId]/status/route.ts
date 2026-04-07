@@ -68,18 +68,28 @@ export async function PATCH(
         projectId: project.id,
       });
 
-      // Email: assignee
+      // Email: assignee (only if they have status_change notifications enabled)
       if (feedback.assigned_to && feedback.assigned_to !== user.id) {
         const assignee = usersResp?.users.find((u) => u.id === feedback.assigned_to);
         if (assignee?.email) {
-          void sendStatusChangeEmail({
-            to: assignee.email,
-            projectName: project.name,
-            feedbackTitle,
-            oldStatus,
-            newStatus,
-            dashboardUrl,
-          });
+          const { data: assigneeMember } = await service
+            .from('members')
+            .select('notification_preferences')
+            .eq('user_id', feedback.assigned_to)
+            .eq('organisation_id', project.organisation_id)
+            .single();
+          const prefs = assigneeMember?.notification_preferences as Record<string, boolean> | null;
+          const wantsEmail = prefs == null || prefs.status_change !== false;
+          if (wantsEmail) {
+            void sendStatusChangeEmail({
+              to: assignee.email,
+              projectName: project.name,
+              feedbackTitle,
+              oldStatus,
+              newStatus,
+              dashboardUrl,
+            });
+          }
         }
       }
 

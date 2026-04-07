@@ -118,7 +118,7 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
             className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#300a46] transition-all"
           >
             <span className="material-symbols-outlined text-[16px]">settings</span>
-            Settings
+            Widget Settings
           </Link>
         </div>
       </div>

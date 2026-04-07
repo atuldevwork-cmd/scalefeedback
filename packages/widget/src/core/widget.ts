@@ -43,15 +43,25 @@ export class ScaleFeedbackWidget {
     // Single persistent click handler — never removed, never { once: true }
     this.shadowRoot.addEventListener('click', (e) => this.handleClick(e));
 
+    // Keyboard shortcut: Cmd+I (Mac) / Ctrl+I (Windows) → open widget
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'i' && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        if (this.isOpen) this.closeWidget(); else void this.openWidget();
+      }
+    });
+
     // Render FAB
     this.renderFAB();
   }
 
   private renderFAB() {
-    const pos = this.config.position ?? 'right';
-    const side = pos.includes('left') ? 'left' : 'right';
+    const pos = this.config.position ?? 'middle-right';
+    // middle-right / middle-left → side tab; everything else → corner button
+    const isSide = pos === 'middle-right' || pos === 'middle-left';
+    const layoutClass = isSide ? 'sf-side' : 'sf-corner';
     const fab = document.createElement('button');
-    fab.className = `sf-fab sf-pos-${side}`;
+    fab.className = `sf-fab ${layoutClass} sf-pos-${pos}`;
     fab.setAttribute('aria-label', 'Send feedback');
     fab.style.backgroundColor = this.config.color;
 
@@ -60,7 +70,7 @@ export class ScaleFeedbackWidget {
         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
         <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
       </svg>
-      <span class="sf-fab-label">Report issue</span>
+      <span class="sf-fab-label">${this.config.buttonText ?? 'Report issue'}</span>
       <span class="sf-fab-dots">···</span>
     `;
 

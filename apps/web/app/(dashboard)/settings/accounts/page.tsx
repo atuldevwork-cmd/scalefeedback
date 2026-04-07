@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
-const PROVIDERS = [
+const PROVIDER_META = [
   {
     id: 'google',
     label: 'Google',
@@ -14,33 +15,26 @@ const PROVIDERS = [
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
     ),
-    connected: false,
-  },
-  {
-    id: 'github',
-    label: 'GitHub',
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
-        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-      </svg>
-    ),
-    connected: false,
   },
 ];
 
 export default function AccountsPage() {
-  const [providers, setProviders] = useState(PROVIDERS);
+  const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [pwSaved, setPwSaved] = useState(false);
   const [pwError, setPwError] = useState('');
+  const supabase = createClient();
 
-  function toggleProvider(id: string) {
-    setProviders((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, connected: !p.connected } : p))
-    );
-  }
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const providers = (user?.identities ?? []).map((i) => i.provider);
+      setConnectedProviders(providers);
+      setLoading(false);
+    });
+  }, []); // eslint-disable-line
 
   function handlePasswordSave(e: React.FormEvent) {
     e.preventDefault();
@@ -60,29 +54,34 @@ export default function AccountsPage() {
       <div className="space-y-6">
         {/* Connected accounts */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Connected accounts</h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">Connected accounts</h2>
+          <p className="text-xs text-gray-400 mb-4">These are the sign-in methods linked to your account.</p>
           <div className="space-y-3">
-            {providers.map((p) => (
-              <div key={p.id} className="flex items-center gap-4 py-2">
-                <div className="text-gray-700">{p.icon}</div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">{p.label}</div>
-                  <div className="text-xs text-gray-400">
-                    {p.connected ? 'Connected' : 'Not connected'}
+            {PROVIDER_META.map((p) => {
+              const isConnected = connectedProviders.includes(p.id);
+              return (
+                <div key={p.id} className="flex items-center gap-4 py-2">
+                  <div className={`text-gray-700 ${loading ? 'opacity-40' : ''}`}>{p.icon}</div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">{p.label}</div>
+                    <div className={`text-xs ${isConnected ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
+                      {loading ? 'Loading…' : isConnected ? 'Connected' : 'Not connected'}
+                    </div>
                   </div>
+                  {!loading && !isConnected && (
+                    <span className="text-xs text-gray-400 italic">Sign in with {p.label} to link</span>
+                  )}
+                  {!loading && isConnected && (
+                    <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                      </svg>
+                      Active
+                    </span>
+                  )}
                 </div>
-                <button
-                  onClick={() => toggleProvider(p.id)}
-                  className={`text-sm font-medium px-4 py-1.5 rounded-lg border transition-colors ${
-                    p.connected
-                      ? 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      : 'border-[#ff724f]/30 text-[#ff724f] hover:bg-[#fff3f0]'
-                  }`}
-                >
-                  {p.connected ? 'Disconnect' : 'Connect'}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

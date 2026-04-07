@@ -1,24 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import type { WidgetConfig } from '@scalefeedback/shared';
-
 interface Props {
   apiKey: string;
-  widgetConfig: WidgetConfig;
 }
 
-export function WidgetInstallSnippet({ apiKey, widgetConfig }: Props) {
+export function WidgetInstallSnippet({ apiKey }: Props) {
   const [copied, setCopied] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://scalefeedback.app';
 
-  const snippet = `<script
-  src="${appUrl}/widget.js"
-  data-project="${apiKey}"
-  data-position="${widgetConfig.position}"
-  data-color="${widgetConfig.color}"
-  data-guest="${widgetConfig.guestReporting}"
-></script>`;
+  const snippet = `<script src="${appUrl}/widget.js" data-project="${apiKey}"></script>`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(snippet);

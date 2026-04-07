@@ -85,7 +85,7 @@ export function CreateProjectDialog() {
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                <label className="block text-left text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   Project name <span className="text-[#ff724f]">*</span>
                 </label>
                 <input
@@ -98,7 +98,7 @@ export function CreateProjectDialog() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
+                <label className="block text-left text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">
                   Domain <span className="text-gray-400 normal-case font-normal">(optional)</span>
                 </label>
                 <input

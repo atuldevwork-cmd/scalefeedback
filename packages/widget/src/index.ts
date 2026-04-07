@@ -14,9 +14,26 @@ declare global {
   }
 }
 
-function init() {
+async function init() {
   try {
-    const config = parseConfig();
+    const config = await parseConfig();
+
+    // pages: 'hidden' — do not render the widget at all
+    if (config.pages === 'hidden') return;
+
+    // pages: 'secret_param' — only show when the secret URL parameter is present
+    if (config.pages === 'secret_param') {
+      const params = new URLSearchParams(window.location.search);
+      if (config.secretParamType === 'custom' && config.secretParam) {
+        if (!params.has(config.secretParam)) return;
+      } else {
+        // Default: ?bug or ?feedback
+        if (!params.has('bug') && !params.has('feedback')) return;
+      }
+    }
+
+    // audience: 'members_only' — only show if user is pre-identified via setUser
+    // Widget will render but FAB is deferred until setUser is called
     const widget = new ScaleFeedbackWidget(config);
 
     // Public SDK

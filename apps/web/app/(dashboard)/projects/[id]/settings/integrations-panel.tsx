@@ -202,268 +202,6 @@ function ConfigModal({ title, logo, subtitle, onClose, onSave, saving, canSave, 
   );
 }
 
-/* ─── Slack Config ───────────────────────────────────────────────────────────── */
-// Slack OAuth returns the webhook URL directly — no post-OAuth modal needed.
-
-interface SlackConfigProps {
-  projectId: string;
-  config: Record<string, string>;
-  saved: boolean;
-}
-function SlackConfig({ projectId, config, saved }: SlackConfigProps) {
-  if (!config.accessToken) {
-    return (
-      <div className="flex items-center gap-3 py-1">
-        <a href={`/api/slack/auth?projectId=${projectId}`}
-          className="inline-flex items-center gap-2 bg-[#4A154B] hover:bg-[#3a1039] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-          <SlackLogo size={18} /> Connect Slack
-        </a>
-        <span className="text-xs text-gray-400">You&apos;ll pick the channel in Slack&apos;s UI.</span>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-2">
-      <ConnectedBadge projectId={projectId} provider="slack">
-        Connected to Slack
-      </ConnectedBadge>
-      <ConfigSummary
-        rows={[
-          { label: 'Workspace', value: config.workspaceName ?? '—' },
-          { label: 'Channel',   value: config.channel ?? '—' },
-        ]}
-        onEdit={() => window.location.assign(`/api/slack/auth?projectId=${projectId}`)}
-      />
-      {saved && <p className="text-xs text-green-600 font-medium">✓ Active</p>}
-    </div>
-  );
-}
-
-/* ─── GitHub Config ──────────────────────────────────────────────────────────── */
-
-interface GitHubOption { id: string; name: string; owner: string; repo: string; private: boolean }
-
-interface GitHubConfigProps {
-  projectId: string;
-  config: Record<string, string>;
-  onSave: (updates: Record<string, string>) => Promise<void>;
-  saving: boolean;
-  saved: boolean;
-  autoOpen: boolean;
-}
-function GitHubConfig({ projectId, config, onSave, saving, saved, autoOpen }: GitHubConfigProps) {
-  const isConnected = Boolean(config.accessToken);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [repos, setRepos] = useState<GitHubOption[]>([]);
-  const [loadingRepos, setLoadingRepos] = useState(false);
-  const [selRepo, setSelRepo] = useState<GitHubOption | null>(null);
-
-  useEffect(() => { if (autoOpen && isConnected) openModal(); }, [autoOpen, isConnected]); // eslint-disable-line
-
-  function openModal() {
-    setSelRepo(repos.find(r => r.id === config.owner + '/' + config.repo) ?? null);
-    setModalOpen(true);
-  }
-
-  useEffect(() => {
-    if (!modalOpen || !isConnected) return;
-    setLoadingRepos(true);
-    fetch(`/api/github/${projectId}/data?type=repos`)
-      .then(r => r.json()).then(j => setRepos(j.data ?? []))
-      .finally(() => setLoadingRepos(false));
-  }, [modalOpen, isConnected, projectId]);
-
-  if (!isConnected) {
-    return (
-      <div className="flex items-center gap-3 py-1">
-        <a href={`/api/github/auth?projectId=${projectId}`}
-          className="inline-flex items-center gap-2 bg-[#24292e] hover:bg-[#1a1f23] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-          <GitHubLogo size={18} /> Connect GitHub
-        </a>
-        <span className="text-xs text-gray-400">Authorize to list your repositories.</span>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="space-y-2">
-        <ConnectedBadge projectId={projectId} provider="github">Connected to GitHub ({config.githubLogin})</ConnectedBadge>
-        {config.repo ? (
-          <ConfigSummary rows={[{ label: 'Repository', value: `${config.owner}/${config.repo}` }]} onEdit={openModal} />
-        ) : (
-          <button onClick={openModal} className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-500 hover:border-[#ff724f] hover:text-[#ff724f] transition-colors text-left">
-            + Select repository
-          </button>
-        )}
-        {saved && <p className="text-xs text-green-600 font-medium">✓ Saved</p>}
-      </div>
-
-      {modalOpen && (
-        <ConfigModal
-          title="Configure GitHub Issues"
-          logo={<GitHubLogo size={20} />}
-          subtitle="Select the repository to create issues in"
-          onClose={() => setModalOpen(false)}
-          onSave={async () => {
-            if (!selRepo) return;
-            await onSave({ accessToken: config.accessToken, githubLogin: config.githubLogin, owner: selRepo.owner, repo: selRepo.repo });
-            setModalOpen(false);
-          }}
-          saving={saving}
-          canSave={Boolean(selRepo)}
-        >
-          <div>
-            <label className={LABEL_CLASS}>Repository</label>
-            <select
-              value={selRepo?.id ?? ''}
-              onChange={e => setSelRepo(repos.find(r => r.id === e.target.value) ?? null)}
-              disabled={loadingRepos}
-              className={SELECT_CLASS}
-            >
-              <option value="">{loadingRepos ? 'Loading repositories…' : 'Select repository'}</option>
-              {repos.map(r => (
-                <option key={r.id} value={r.id}>{r.name}{r.private ? ' 🔒' : ''}</option>
-              ))}
-            </select>
-          </div>
-        </ConfigModal>
-      )}
-    </>
-  );
-}
-
-/* ─── Jira Config ────────────────────────────────────────────────────────────── */
-
-interface JiraOption { id: string; name: string; url?: string; key?: string }
-
-interface JiraConfigProps {
-  projectId: string;
-  config: Record<string, string>;
-  onSave: (updates: Record<string, string>) => Promise<void>;
-  saving: boolean;
-  saved: boolean;
-  autoOpen: boolean;
-}
-function JiraConfig({ projectId, config, onSave, saving, saved, autoOpen }: JiraConfigProps) {
-  const isConnected = Boolean(config.accessToken);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [sites, setSites] = useState<JiraOption[]>([]);
-  const [projects, setProjects] = useState<JiraOption[]>([]);
-  const [loadingSites, setLoadingSites] = useState(false);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const [selSiteId, setSelSiteId] = useState('');
-  const [selSiteName, setSelSiteName] = useState('');
-  const [selProjectKey, setSelProjectKey] = useState('');
-  const [selProjectName, setSelProjectName] = useState('');
-
-  useEffect(() => { if (autoOpen && isConnected) openModal(); }, [autoOpen, isConnected]); // eslint-disable-line
-
-  function openModal() {
-    setSelSiteId(config.cloudId ?? '');
-    setSelSiteName(config.siteName ?? '');
-    setSelProjectKey(config.projectKey ?? '');
-    setSelProjectName(config.projectName ?? '');
-    setSites([]); setProjects([]);
-    setModalOpen(true);
-  }
-
-  useEffect(() => {
-    if (!modalOpen || !isConnected) return;
-    setLoadingSites(true);
-    fetch(`/api/jira/${projectId}/data?type=sites`)
-      .then(r => r.json()).then(j => setSites(j.data ?? []))
-      .finally(() => setLoadingSites(false));
-  }, [modalOpen, isConnected, projectId]);
-
-  useEffect(() => {
-    if (!modalOpen || !selSiteId) { setProjects([]); return; }
-    setLoadingProjects(true);
-    setProjects([]);
-    fetch(`/api/jira/${projectId}/data?type=projects&cloudId=${selSiteId}`)
-      .then(r => r.json()).then(j => setProjects(j.data ?? []))
-      .finally(() => setLoadingProjects(false));
-  }, [modalOpen, selSiteId, projectId]);
-
-  if (!isConnected) {
-    return (
-      <div className="flex items-center gap-3 py-1">
-        <a href={`/api/jira/auth?projectId=${projectId}`}
-          className="inline-flex items-center gap-2 bg-[#0052CC] hover:bg-[#0041a8] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-          <JiraLogo size={18} /> Connect Jira
-        </a>
-        <span className="text-xs text-gray-400">Authorize with your Atlassian account.</span>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className="space-y-2">
-        <ConnectedBadge projectId={projectId} provider="jira">Connected to Jira</ConnectedBadge>
-        {config.projectKey ? (
-          <ConfigSummary rows={[
-            { label: 'Site',    value: config.siteName ?? config.cloudId },
-            { label: 'Project', value: `${config.projectName} (${config.projectKey})` },
-          ]} onEdit={openModal} />
-        ) : (
-          <button onClick={openModal} className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-500 hover:border-[#ff724f] hover:text-[#ff724f] transition-colors text-left">
-            + Select Jira site &amp; project
-          </button>
-        )}
-        {saved && <p className="text-xs text-green-600 font-medium">✓ Saved</p>}
-      </div>
-
-      {modalOpen && (
-        <ConfigModal
-          title="Configure Jira"
-          logo={<JiraLogo size={20} />}
-          subtitle="Select your Jira site and project"
-          onClose={() => setModalOpen(false)}
-          onSave={async () => {
-            await onSave({
-              accessToken: config.accessToken,
-              refreshToken: config.refreshToken ?? '',
-              cloudId: selSiteId,
-              siteName: selSiteName,
-              projectKey: selProjectKey,
-              projectName: selProjectName,
-            });
-            setModalOpen(false);
-          }}
-          saving={saving}
-          canSave={Boolean(selSiteId && selProjectKey)}
-        >
-          <div>
-            <label className={LABEL_CLASS}>Jira Site</label>
-            <select value={selSiteId} onChange={e => {
-              const s = sites.find(x => x.id === e.target.value);
-              setSelSiteId(s?.id ?? ''); setSelSiteName(s?.name ?? '');
-              setSelProjectKey(''); setSelProjectName('');
-            }} disabled={loadingSites} className={SELECT_CLASS}>
-              <option value="">{loadingSites ? 'Loading sites…' : 'Select site'}</option>
-              {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </div>
-
-          {selSiteId && (
-            <div>
-              <label className={LABEL_CLASS}>Project</label>
-              <select value={selProjectKey} onChange={e => {
-                const p = projects.find(x => x.key === e.target.value);
-                setSelProjectKey(p?.key ?? ''); setSelProjectName(p?.name ?? '');
-              }} disabled={loadingProjects} className={SELECT_CLASS}>
-                <option value="">{loadingProjects ? 'Loading projects…' : 'Select project'}</option>
-                {projects.map(p => <option key={p.id} value={p.key!}>{p.name} ({p.key})</option>)}
-              </select>
-            </div>
-          )}
-        </ConfigModal>
-      )}
-    </>
-  );
-}
-
 /* ─── ClickUp Config ─────────────────────────────────────────────────────────── */
 
 interface ClickUpOption { id: string; name: string; folder?: string }
@@ -641,40 +379,6 @@ function ClickUpConfig({ projectId, config, onSave, saving, saved, autoOpen }: C
   );
 }
 
-/* ─── Webhook Config (manual — no OAuth) ────────────────────────────────────── */
-
-interface WebhookConfigProps {
-  config: Record<string, string>;
-  onChange: (key: string, value: string) => void;
-  onSave: () => void;
-  saving: boolean;
-  saved: boolean;
-}
-function WebhookConfig({ config, onChange, onSave, saving, saved }: WebhookConfigProps) {
-  return (
-    <div className="space-y-3">
-      <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-xs text-blue-700 leading-relaxed">
-        When feedback is submitted, we&apos;ll send a <strong>POST</strong> request with the feedback JSON to your URL.
-        Set a secret to verify requests via the <code className="bg-blue-100 px-1 rounded">X-ScaleFeedback-Secret</code> header.
-      </div>
-      <div>
-        <label className={LABEL_CLASS}>Endpoint URL</label>
-        <input type="url" value={config.url ?? ''} onChange={e => onChange('url', e.target.value)}
-          placeholder="https://your-app.com/webhook" className={INPUT_CLASS} />
-      </div>
-      <div>
-        <label className={LABEL_CLASS}>Secret <span className="normal-case font-normal text-gray-400">(optional)</span></label>
-        <input type="text" value={config.secret ?? ''} onChange={e => onChange('secret', e.target.value)}
-          placeholder="my-secret-key" className={INPUT_CLASS} />
-      </div>
-      <button onClick={onSave} disabled={!config.url || saving}
-        className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-60 ${saved ? 'bg-green-50 text-green-700' : 'bg-[#ff724f] hover:bg-[#e8603a] text-white shadow-sm'}`}>
-        {saved ? '✓ Saved' : saving ? 'Saving…' : 'Save'}
-      </button>
-    </div>
-  );
-}
-
 /* ─── Main Panel ─────────────────────────────────────────────────────────────── */
 
 export function IntegrationsPanel({ projectId }: { projectId: string }) {
@@ -711,13 +415,6 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
     setIntegrations(prev => ({ ...prev, [type]: { ...prev[type], enabled: !prev[type].enabled } }));
   }
 
-  function updateConfig(type: IntegrationType, key: string, value: string) {
-    setIntegrations(prev => ({
-      ...prev,
-      [type]: { ...prev[type], config: { ...prev[type].config, [key]: value } },
-    }));
-  }
-
   // Save with a specific config object (used by OAuth integrations)
   async function saveWithConfig(type: IntegrationType, configUpdates: Record<string, string>) {
     setSaving(type);
@@ -750,82 +447,51 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
     }
   }
 
-  // Save current state (used by webhook)
-  async function saveManual(type: IntegrationType) {
-    setSaving(type);
-    try {
-      await fetch(`/api/integrations/${projectId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(integrations[type]),
-      });
-      setSaved(type);
-      setTimeout(() => setSaved(null), 2000);
-    } finally {
-      setSaving(null);
-    }
-  }
+  const COMING_SOON: IntegrationType[] = ['slack', 'github', 'jira', 'webhook'];
 
   return (
     <div className="space-y-3">
       {(Object.keys(INTEGRATION_META) as IntegrationType[]).map((type) => {
         const meta = INTEGRATION_META[type];
         const integration = integrations[type];
+        const isComingSoon = COMING_SOON.includes(type);
 
         return (
-          <div key={type} className="border border-gray-100 rounded-2xl overflow-hidden bg-white shadow-card">
+          <div key={type} className={`border rounded-2xl overflow-hidden bg-white shadow-card ${isComingSoon ? 'border-gray-100 opacity-70' : 'border-gray-100'}`}>
             <div className="flex items-center gap-4 p-4">
-              <div className="w-10 h-10 rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center shrink-0">
+              <div className={`w-10 h-10 rounded-xl border border-gray-100 flex items-center justify-center shrink-0 ${isComingSoon ? 'bg-gray-100' : 'bg-gray-50'}`}>
                 {meta.logo}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-[#300a46] text-sm font-heading">{meta.label}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#300a46] text-sm font-heading">{meta.label}</span>
+                  {isComingSoon && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-gray-400 mt-0.5">{meta.description}</div>
               </div>
-              <button
-                onClick={() => toggleEnabled(type)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 ${integration.enabled ? 'bg-[#ff724f]' : 'bg-gray-200'}`}
-                aria-label={`Toggle ${meta.label}`}
-              >
-                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${integration.enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
-              </button>
+              {!isComingSoon && (
+                <button
+                  onClick={() => toggleEnabled(type)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none shrink-0 ${integration.enabled ? 'bg-[#ff724f]' : 'bg-gray-200'}`}
+                  aria-label={`Toggle ${meta.label}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${integration.enabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                </button>
+              )}
             </div>
 
-            {integration.enabled && (
+            {!isComingSoon && integration.enabled && (
               <div className="px-4 pb-4 border-t border-gray-100 pt-4">
-                {type === 'slack' && (
-                  <SlackConfig projectId={projectId} config={integration.config} saved={saved === 'slack'} />
-                )}
-                {type === 'github' && (
-                  <GitHubConfig
-                    projectId={projectId} config={integration.config}
-                    onSave={c => saveWithConfig('github', c)}
-                    saving={saving === 'github'} saved={saved === 'github'}
-                    autoOpen={searchParams.get('github') === 'connected'}
-                  />
-                )}
-                {type === 'jira' && (
-                  <JiraConfig
-                    projectId={projectId} config={integration.config}
-                    onSave={c => saveWithConfig('jira', c)}
-                    saving={saving === 'jira'} saved={saved === 'jira'}
-                    autoOpen={searchParams.get('jira') === 'connected'}
-                  />
-                )}
                 {type === 'clickup' && (
                   <ClickUpConfig
                     projectId={projectId} config={integration.config}
                     onSave={c => saveWithConfig('clickup', c)}
                     saving={saving === 'clickup'} saved={saved === 'clickup'}
                     autoOpen={searchParams.get('clickup') === 'connected'}
-                  />
-                )}
-                {type === 'webhook' && (
-                  <WebhookConfig
-                    config={integration.config}
-                    onChange={(k, v) => updateConfig('webhook', k, v)}
-                    onSave={() => saveManual('webhook')}
-                    saving={saving === 'webhook'} saved={saved === 'webhook'}
                   />
                 )}
               </div>

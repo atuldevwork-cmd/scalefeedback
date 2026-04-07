@@ -7,6 +7,7 @@ import { ProjectSettingsForm } from './project-settings-form';
 import { DeleteProjectButton } from './delete-project-button';
 import { IntegrationsPanel } from './integrations-panel';
 import { GuestsPanel } from './guests-panel';
+import { ButtonPanel } from './button-panel';
 import type { Project } from '@scalefeedback/shared';
 
 interface Props {
@@ -61,7 +62,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
         <span>/</span>
         <Link href={`/projects/${id}`} className="hover:text-foreground">{project.name}</Link>
         <span>/</span>
-        <span className="text-foreground font-medium">Settings</span>
+        <span className="text-foreground font-medium">Widget Settings</span>
       </div>
 
       <h1 className="text-2xl font-bold text-foreground mb-8">Project Settings</h1>
@@ -72,7 +73,15 @@ export default async function ProjectSettingsPage({ params }: Props) {
           <p className="text-sm text-muted-foreground mb-4">
             Paste this snippet before the closing <code className="bg-muted px-1 py-0.5 rounded text-xs">&lt;/body&gt;</code> tag on your website.
           </p>
-          <WidgetInstallSnippet apiKey={project.api_key} widgetConfig={project.widget_config} />
+          <WidgetInstallSnippet apiKey={project.api_key} />
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <h2 className="font-semibold text-foreground mb-1">Button</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Customize the feedback button appearance and targeting behavior.
+          </p>
+          <ButtonPanel project={project} />
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">

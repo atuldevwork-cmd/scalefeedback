@@ -195,15 +195,23 @@ export async function POST(req: NextRequest) {
         if (feedback.assigned_to && feedback.assigned_to !== user.id) {
           const assignee = usersResp?.users.find((u) => u.id === feedback.assigned_to);
           if (assignee?.email) {
-            void sendGuestCommentEmail({
-              to: assignee.email,
-              projectName: project.name,
-              feedbackTitle,
-              guestEmail: commenter?.email ?? '',
-              guestName: commenterName,
-              commentBody: body.trim(),
-              dashboardUrl,
-            });
+            const { data: assigneeMember } = await service
+              .from('members')
+              .select('notification_preferences')
+              .eq('user_id', feedback.assigned_to)
+              .single();
+            const prefs = assigneeMember?.notification_preferences as Record<string, boolean> | null;
+            if (prefs == null || prefs.comments !== false) {
+              void sendGuestCommentEmail({
+                to: assignee.email,
+                projectName: project.name,
+                feedbackTitle,
+                guestEmail: commenter?.email ?? '',
+                guestName: commenterName,
+                commentBody: body.trim(),
+                dashboardUrl,
+              });
+            }
           }
         }
 

@@ -1,9 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
-function NotificationToggle({ label, description }: { label: string; description: string }) {
-  const [enabled, setEnabled] = useState(true);
+interface NotificationPrefs {
+  new_feedback: boolean;
+  status_change: boolean;
+  comments: boolean;
+}
+
+const DEFAULT_PREFS: NotificationPrefs = {
+  new_feedback: true,
+  status_change: true,
+  comments: true,
+};
+
+function NotificationToggle({
+  label,
+  description,
+  enabled,
+  saving,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  enabled: boolean;
+  saving: boolean;
+  onChange: () => void;
+}) {
   return (
     <div className="flex items-center gap-4">
       <div className="flex-1 min-w-0">
@@ -11,8 +35,9 @@ function NotificationToggle({ label, description }: { label: string; description
         <div className="text-xs text-gray-400">{description}</div>
       </div>
       <button
-        onClick={() => setEnabled(!enabled)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${
+        onClick={onChange}
+        disabled={saving}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 disabled:opacity-60 ${
           enabled ? 'bg-[#ff724f]' : 'bg-gray-200'
         }`}
       >
@@ -24,8 +49,42 @@ function NotificationToggle({ label, description }: { label: string; description
 
 export function GeneralSettingsForm({ canManage }: { canManage: boolean }) {
   const [orgName, setOrgName] = useState('ScaleStation');
-  const [orgSlug, setOrgSlug] = useState('scalestation');
   const [saved, setSaved] = useState(false);
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [memberId, setMemberId] = useState<string | null>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadPrefs() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: member } = await supabase
+        .from('members')
+        .select('id, notification_preferences')
+        .eq('user_id', user.id)
+        .single();
+
+      if (member) {
+        setMemberId(member.id);
+        setPrefs({ ...DEFAULT_PREFS, ...(member.notification_preferences ?? {}) });
+      }
+    }
+    loadPrefs();
+  }, []); // eslint-disable-line
+
+  async function togglePref(key: keyof NotificationPrefs) {
+    if (!memberId) return;
+    const updated = { ...prefs, [key]: !prefs[key] };
+    setPrefs(updated);
+    setPrefsSaving(true);
+    await supabase
+      .from('members')
+      .update({ notification_preferences: updated })
+      .eq('id', memberId);
+    setPrefsSaving(false);
+  }
 
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -60,22 +119,6 @@ export function GeneralSettingsForm({ canManage }: { canManage: boolean }) {
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Workspace URL</label>
-              <div className={`flex items-center border border-gray-200 rounded-lg overflow-hidden ${canManage ? 'focus-within:ring-2 focus-within:ring-[#ff724f]/30 focus-within:border-[#ff724f]' : 'bg-gray-50'}`}>
-                <span className="px-3 py-2 text-sm text-gray-400 bg-gray-50 border-r border-gray-200 shrink-0">
-                  scalefeedback.app/
-                </span>
-                <input
-                  type="text"
-                  value={orgSlug}
-                  onChange={(e) => setOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  disabled={!canManage}
-                  className="flex-1 px-3 py-2 text-sm focus:outline-none disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                />
-              </div>
-              <p className="text-xs text-gray-400 mt-1">Only lowercase letters, numbers, and hyphens.</p>
-            </div>
             {canManage && (
               <div className="flex justify-end pt-1">
                 <button
@@ -91,15 +134,30 @@ export function GeneralSettingsForm({ canManage }: { canManage: boolean }) {
 
         {/* Notifications */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">Email notifications</h2>
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">Email notifications</h2>
+          <p className="text-xs text-gray-400 mb-4">Choose which emails you want to receive.</p>
           <div className="space-y-4">
-            {[
-              { id: 'new_feedback', label: 'New feedback submitted', description: 'Get notified when a new feedback is submitted to any project.' },
-              { id: 'status_change', label: 'Status changes', description: 'Get notified when a feedback status is updated.' },
-              { id: 'comments', label: 'New comments', description: 'Get notified when someone comments on a feedback item.' },
-            ].map((item) => (
-              <NotificationToggle key={item.id} label={item.label} description={item.description} />
-            ))}
+            <NotificationToggle
+              label="New feedback submitted"
+              description="Get notified when a new feedback is submitted to any project."
+              enabled={prefs.new_feedback}
+              saving={prefsSaving}
+              onChange={() => togglePref('new_feedback')}
+            />
+            <NotificationToggle
+              label="Status changes"
+              description="Get notified when a feedback status is updated."
+              enabled={prefs.status_change}
+              saving={prefsSaving}
+              onChange={() => togglePref('status_change')}
+            />
+            <NotificationToggle
+              label="New comments"
+              description="Get notified when someone comments on a feedback item."
+              enabled={prefs.comments}
+              saving={prefsSaving}
+              onChange={() => togglePref('comments')}
+            />
           </div>
         </div>
 
