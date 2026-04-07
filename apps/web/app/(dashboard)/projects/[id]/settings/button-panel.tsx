@@ -19,14 +19,14 @@ interface Props {
 }
 
 export function ButtonPanel({ project }: Props) {
-  const cfg = project.widget_config ?? {};
-  const [color, setColor] = useState<string>((cfg as Record<string, string>).color ?? '#ff724f');
-  const [buttonText, setButtonText] = useState<string>((cfg as Record<string, string>).buttonText ?? 'Report issue');
-  const [placement, setPlacement] = useState<string>((cfg as Record<string, string>).buttonPlacement ?? (cfg as Record<string, string>).position ?? 'middle-right');
-  const [audience, setAudience] = useState<string>((cfg as Record<string, string>).audience ?? 'everyone');
-  const [pages, setPages] = useState<string>((cfg as Record<string, string>).pages ?? 'all');
-  const [secretParamType, setSecretParamType] = useState<string>((cfg as Record<string, string>).secretParamType ?? 'default');
-  const [secretParam, setSecretParam] = useState<string>((cfg as Record<string, string>).secretParam ?? '');
+  const cfg = (project.widget_config ?? {}) as unknown as Record<string, string>;
+  const [color, setColor] = useState<string>(cfg.color ?? '#ff724f');
+  const [buttonText, setButtonText] = useState<string>(cfg.buttonText ?? 'Report issue');
+  const [placement, setPlacement] = useState<string>(cfg.buttonPlacement ?? cfg.position ?? 'middle-right');
+  const [audience, setAudience] = useState<string>(cfg.audience ?? 'everyone');
+  const [pages, setPages] = useState<string>(cfg.pages ?? 'all');
+  const [secretParamType, setSecretParamType] = useState<string>(cfg.secretParamType ?? 'default');
+  const [secretParam, setSecretParam] = useState<string>(cfg.secretParam ?? '');
   const [appearanceLoading, setAppearanceLoading] = useState(false);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
   const [targetingLoading, setTargetingLoading] = useState(false);
@@ -40,7 +40,7 @@ export function ButtonPanel({ project }: Props) {
     setAppearanceLoading(true);
 
     const updatedConfig = {
-      ...(cfg as object),
+      ...cfg,
       color,
       buttonText,
       buttonPlacement: placement,
@@ -280,7 +280,7 @@ export function ButtonPanel({ project }: Props) {
             onClick={async () => {
               setTargetingLoading(true);
               const updatedConfig = {
-                ...(cfg as object),
+                ...cfg,
                 color,
                 buttonText,
                 buttonPlacement: placement,
