@@ -423,7 +423,7 @@
 .sf-success h3 { font-size: 18px; font-weight: 700; color: #1a0a2e; }
 .sf-success p { font-size: 14px; color: #5a5a6a; }
 
-/* === Loading spinner === */
+/* === Loading spinner (inside submit button) === */
 .sf-spinner {
   width: 16px;
   height: 16px;
@@ -435,6 +435,44 @@
 }
 
 @keyframes sf-spin { to { transform: rotate(360deg); } }
+
+/* === Loading overlay (while capturing screenshot) === */
+.sf-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: sf-overlay-in 0.15s ease forwards;
+}
+
+.sf-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,0.96);
+  border-radius: 16px;
+  padding: 28px 36px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+.sf-loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #ffd4c8;
+  border-top-color: #ff724f;
+  border-radius: 50%;
+  animation: sf-spin 0.7s linear infinite;
+}
+
+.sf-loading-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a4a5a;
+  letter-spacing: 0.01em;
+}
 
 /* === Confirm-close dialog === */
 .sf-confirm-overlay {

@@ -87,12 +87,43 @@ export class ScaleFeedbackWidget {
     this.config.user = user ?? undefined;
   }
 
+  private showLoadingOverlay() {
+    const el = document.createElement('div');
+    el.className = 'sf-loading-overlay';
+    el.innerHTML = `
+      <div class="sf-loading-card">
+        <div class="sf-loading-spinner"></div>
+        <span class="sf-loading-text">Preparing…</span>
+      </div>
+    `;
+    this.shadowRoot.appendChild(el);
+
+    // Put FAB in loading state
+    const fab = this.shadowRoot.querySelector<HTMLButtonElement>('.sf-fab');
+    if (fab) {
+      fab.disabled = true;
+      fab.style.opacity = '0.7';
+    }
+  }
+
+  private hideLoadingOverlay() {
+    this.shadowRoot.querySelector('.sf-loading-overlay')?.remove();
+    const fab = this.shadowRoot.querySelector<HTMLButtonElement>('.sf-fab');
+    if (fab) {
+      fab.disabled = false;
+      fab.style.opacity = '';
+    }
+  }
+
   private async openWidget() {
     if (this.isOpen) return;
     this.isOpen = true;
     this.step = 'annotate';
 
     this.config.onOpen?.();
+
+    // Show loading immediately so user knows something is happening
+    this.showLoadingOverlay();
 
     try {
       // Capture screenshot first
@@ -105,6 +136,7 @@ export class ScaleFeedbackWidget {
       this.screenshotDataUrl = '';
     }
 
+    this.hideLoadingOverlay();
     this.attachBeforeUnload();
     this.renderModal();
   }
@@ -497,12 +529,16 @@ export class ScaleFeedbackWidget {
   private closeWidget() {
     this.detachBeforeUnload();
     this.shadowRoot.querySelector('.sf-confirm-overlay')?.remove();
+    this.shadowRoot.querySelector('.sf-loading-overlay')?.remove();
     this.shadowRoot.querySelector('.sf-overlay')?.remove();
     this.shadowRoot.querySelector('.sf-overlay-annotate')?.remove();
     this.annotationCanvas?.destroy();
     this.annotationCanvas = null;
     this.isOpen = false;
     this.screenshotDataUrl = '';
+    // Reset FAB state
+    const fab = this.shadowRoot.querySelector<HTMLButtonElement>('.sf-fab');
+    if (fab) { fab.disabled = false; fab.style.opacity = ''; }
     this.config.onClose?.();
   }
 }
