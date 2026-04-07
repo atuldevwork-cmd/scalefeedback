@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/auth/me', '/widget.js', '/demo.html', '/guest/join'];
+const PUBLIC_PATHS = ['/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/auth/me', '/api/widget-config', '/widget.js', '/demo.html', '/guest/join'];
+
+// API routes called cross-origin from customer websites
+const CORS_PATHS = ['/api/widget-config', '/api/feedback'] as const;
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -28,6 +31,19 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
+  const needsCors = CORS_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
+
+  // Handle CORS preflight for cross-origin API routes
+  if (needsCors && request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
@@ -46,6 +62,12 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/projects';
     url.search = '';
     return NextResponse.redirect(url);
+  }
+
+  if (needsCors) {
+    supabaseResponse.headers.set('Access-Control-Allow-Origin', '*');
+    supabaseResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    supabaseResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
 
   return supabaseResponse;
