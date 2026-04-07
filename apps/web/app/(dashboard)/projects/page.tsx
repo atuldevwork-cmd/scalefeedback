@@ -39,13 +39,21 @@ export default async function ProjectsPage({ searchParams }: Props) {
           member = rows?.[0] ?? null;
         }
         if (!member) {
+          // Order by accepted_at DESC so an invited user sees the workspace they joined,
+          // not the auto-created personal workspace (which has an earlier accepted_at).
           const { data: members } = await service
             .from('members')
-            .select('organisation_id')
+            .select('organisation_id, role, accepted_at')
             .eq('user_id', user.id)
             .not('accepted_at', 'is', null)
-            .limit(1);
-          member = members?.[0] ?? null;
+            .order('accepted_at', { ascending: false })
+            .limit(10);
+
+          if (members && members.length > 0) {
+            // Prefer an org where the user is NOT the sole owner (i.e. they were invited)
+            const invited = members.find((m) => m.role !== 'owner');
+            member = invited ?? members[0];
+          }
         }
 
         if (member) {
