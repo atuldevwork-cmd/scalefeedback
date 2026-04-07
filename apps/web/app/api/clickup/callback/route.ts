@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
@@ -40,8 +40,8 @@ export async function GET(req: NextRequest) {
 
   const { access_token } = await tokenRes.json();
 
-  // Save to integrations table
-  const supabase = await createClient();
+  // Save to integrations table (service client bypasses RLS — this is a server callback)
+  const supabase = createServiceClient();
   await supabase.from('integrations').upsert(
     {
       project_id: projectId,
