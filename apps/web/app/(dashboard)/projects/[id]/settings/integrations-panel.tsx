@@ -391,25 +391,23 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
     fetch(`/api/integrations/${projectId}`)
       .then(r => r.json())
       .then(({ data }) => {
-        if (!data?.length) return;
         const map = { ...DEFAULTS };
-        for (const row of data) {
-          map[row.type as IntegrationType] = { type: row.type, enabled: row.enabled, config: row.config ?? {} };
+        if (data?.length) {
+          for (const row of data) {
+            map[row.type as IntegrationType] = { type: row.type, enabled: row.enabled, config: row.config ?? {} };
+          }
+        }
+        // Apply URL param overrides AFTER data loads to prevent race condition
+        const providers: IntegrationType[] = ['slack', 'github', 'jira', 'clickup'];
+        for (const p of providers) {
+          if (searchParams.get(p) === 'connected') {
+            map[p] = { ...map[p], enabled: true };
+          }
         }
         setIntegrations(map);
       })
       .catch(() => {});
-  }, [projectId]);
-
-  // Auto-expand integrations that just connected via OAuth
-  useEffect(() => {
-    const providers: IntegrationType[] = ['slack', 'github', 'jira', 'clickup'];
-    for (const p of providers) {
-      if (searchParams.get(p) === 'connected') {
-        setIntegrations(prev => ({ ...prev, [p]: { ...prev[p], enabled: true } }));
-      }
-    }
-  }, [searchParams]);
+  }, [projectId, searchParams]);
 
   function toggleEnabled(type: IntegrationType) {
     setIntegrations(prev => ({ ...prev, [type]: { ...prev[type], enabled: !prev[type].enabled } }));
