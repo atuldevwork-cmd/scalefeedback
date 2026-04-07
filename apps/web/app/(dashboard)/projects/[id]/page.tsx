@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured, MOCK_PROJECTS, MOCK_FEEDBACK } from '@/lib/mock-data';
 import { FeedbackFilters } from './feedback-filters';
 import { RealtimeRefresh } from './realtime-refresh';
@@ -48,15 +48,28 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
   if (isSupabaseConfigured()) {
     try {
       const supabase = await createClient();
+      const service = createServiceClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: member } = await supabase.from('members').select('organisation_id').eq('user_id', user.id).single();
-        const { data: proj } = await supabase.from('projects').select('id, name, domain')
-          .eq('id', id).eq('organisation_id', member?.organisation_id ?? '').single();
-        project = proj;
-        if (project) {
-          const { data } = await supabase.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: false });
-          allFeedback = (data ?? []) as Feedback[];
+        // Fetch project by id first (service client bypasses RLS)
+        const { data: proj } = await service.from('projects').select('id, name, domain, organisation_id')
+          .eq('id', id).single();
+
+        if (proj) {
+          // Verify the user is a member of this project's org
+          const { data: membership } = await service
+            .from('members')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('organisation_id', proj.organisation_id)
+            .not('accepted_at', 'is', null)
+            .limit(1);
+
+          if (membership && membership.length > 0) {
+            project = proj;
+            const { data } = await service.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: false });
+            allFeedback = (data ?? []) as Feedback[];
+          }
         }
       }
     } catch { /* fall through */ }
