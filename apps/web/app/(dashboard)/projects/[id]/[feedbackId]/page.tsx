@@ -9,7 +9,6 @@ import { UpdatePrioritySelect } from './update-priority-select';
 import { AssignSelect } from './assign-select';
 import { CommentThread } from './comment-thread';
 import { ScreenshotLightbox } from '@/components/screenshot-lightbox';
-import { ActivityLogPanel } from './activity-log';
 import { ClickUpTaskPanel } from './clickup-task-panel';
 import type { Feedback, Project } from '@scalefeedback/shared';
 
@@ -413,9 +412,6 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
           {/* Comments */}
           <CommentThread feedbackId={feedbackId} initialComments={resolvedComments} currentUserId={currentUserId} />
-
-          {/* Activity log */}
-          <ActivityLogPanel feedbackId={feedbackId} />
         </div>
 
         {/* Right: metadata panel */}
