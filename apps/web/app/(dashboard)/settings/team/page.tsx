@@ -38,13 +38,19 @@ export default async function MembersPage() {
 
   if (!user) redirect('/login');
 
-  // Check workspace membership
+  // Check workspace membership — prefer invited org (non-owner role) over personal org
   const { data: memberRows } = await service
     .from('members')
     .select('organisation_id, role')
     .eq('user_id', user.id)
-    .limit(1);
-  const membership = memberRows?.[0] ?? null;
+    .not('accepted_at', 'is', null)
+    .order('accepted_at', { ascending: false })
+    .limit(10);
+
+  let membership: { organisation_id: string; role: string } | null = null;
+  if (memberRows && memberRows.length > 0) {
+    membership = memberRows.find((m) => m.role !== 'owner') ?? memberRows[0];
+  }
 
   if (!membership) {
     // Guest — redirect to their project portal

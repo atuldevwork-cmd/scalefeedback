@@ -15,8 +15,11 @@ export default async function GeneralPage() {
           .from('members')
           .select('role')
           .eq('user_id', user.id)
-          .limit(1);
-        const role = memberRows?.[0]?.role ?? 'member';
+          .not('accepted_at', 'is', null)
+          .order('accepted_at', { ascending: false })
+          .limit(10);
+        const preferred = memberRows?.find((m) => m.role !== 'owner') ?? memberRows?.[0];
+        const role = preferred?.role ?? 'member';
         canManage = role === 'owner' || role === 'admin';
       }
     } catch { /* fall through */ }
