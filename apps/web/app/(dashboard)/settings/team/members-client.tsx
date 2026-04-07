@@ -305,11 +305,13 @@ export function MembersClient({
   inviteLink,
   pendingInvitations,
   currentUserRole,
+  currentUserId = '',
 }: {
   members: Member[];
   inviteLink: string;
   pendingInvitations: PendingInvitation[];
   currentUserRole: string;
+  currentUserId?: string;
 }) {
   const toast = useToast();
   const canManage = currentUserRole === 'owner' || currentUserRole === 'admin';
@@ -442,27 +444,37 @@ export function MembersClient({
         ) : (
           <table className="w-full">
             <tbody className="divide-y divide-gray-50">
-              {filtered.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={m.name} email={m.email} />
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-[#300a46] truncate">{m.name || m.email}</div>
-                        <div className="text-xs text-gray-400 truncate">{m.email}</div>
+              {filtered.map((m) => {
+                const isYou = m.user_id === currentUserId;
+                return (
+                  <tr key={m.id} className={`transition-colors ${isYou ? 'bg-[#fff9f8]' : 'hover:bg-gray-50/50'}`}>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={m.name} email={m.email} />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-[#300a46] truncate">{m.name || m.email}</span>
+                            {isYou && (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#ff724f] text-white shrink-0">
+                                you
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-400 truncate">{m.email}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ROLE_COLORS[m.role] ?? 'text-gray-600 bg-gray-100'}`}>
-                      {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3.5 w-10 text-right">
-                    {canManage && <MemberMenu member={m} onRemove={() => setRemoveTarget(m)} onChangeRole={() => setChangeRoleTarget(m)} />}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ROLE_COLORS[m.role] ?? 'text-gray-600 bg-gray-100'}`}>
+                        {m.role.charAt(0).toUpperCase() + m.role.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 w-10 text-right">
+                      {canManage && !isYou && <MemberMenu member={m} onRemove={() => setRemoveTarget(m)} onChangeRole={() => setChangeRoleTarget(m)} />}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

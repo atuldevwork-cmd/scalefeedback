@@ -117,6 +117,7 @@ export default async function MembersPage() {
       inviteLink={inviteLink}
       pendingInvitations={pendingInvitations}
       currentUserRole={membership.role}
+      currentUserId={user.id}
     />
   );
 }
