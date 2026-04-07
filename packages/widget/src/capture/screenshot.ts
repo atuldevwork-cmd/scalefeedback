@@ -25,8 +25,10 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
         height: `${document.documentElement.scrollHeight}px`,
       },
       filter: (node) => {
-        // Skip the widget host element entirely
-        if (node instanceof HTMLElement && node.id === ignoreElementId) return false;
+        if (!(node instanceof HTMLElement)) return true;
+        // Skip the widget host and the body-level loading overlay
+        if (node.id === ignoreElementId) return false;
+        if (node.id === 'sf-body-loading-overlay') return false;
         return true;
       },
       pixelRatio: Math.min(window.devicePixelRatio, 2),
