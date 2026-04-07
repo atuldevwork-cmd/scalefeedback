@@ -84,7 +84,7 @@ export default async function AcceptInvitePage({ searchParams }: Props) {
       .update({ accepted_at: new Date().toISOString() })
       .eq('id', invitation.id);
 
-    redirect('/projects?joined=1');
+    redirect(`/projects?joined=1&org=${invitation.organisation_id}`);
   }
 
   // Not logged in — show landing page

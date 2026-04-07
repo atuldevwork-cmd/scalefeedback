@@ -8,7 +8,12 @@ import type { Project } from '@scalefeedback/shared';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ProjectsPage() {
+interface Props {
+  searchParams: Promise<{ org?: string; joined?: string }>;
+}
+
+export default async function ProjectsPage({ searchParams }: Props) {
+  const { org: orgParam } = await searchParams;
   let projects: Project[] = [];
   let redirectTo: string | null = null;
 
@@ -20,13 +25,28 @@ export default async function ProjectsPage() {
       if (user) {
         // Use service client to bypass RLS for the member lookup
         const service = createServiceClient();
-        const { data: members } = await service
-          .from('members')
-          .select('organisation_id')
-          .eq('user_id', user.id)
-          .not('accepted_at', 'is', null)
-          .limit(1);
-        const member = members?.[0] ?? null;
+
+        // If ?org= param is set (e.g. just joined via invite), prefer that org
+        let member: { organisation_id: string } | null = null;
+        if (orgParam) {
+          const { data: rows } = await service
+            .from('members')
+            .select('organisation_id')
+            .eq('user_id', user.id)
+            .eq('organisation_id', orgParam)
+            .not('accepted_at', 'is', null)
+            .limit(1);
+          member = rows?.[0] ?? null;
+        }
+        if (!member) {
+          const { data: members } = await service
+            .from('members')
+            .select('organisation_id')
+            .eq('user_id', user.id)
+            .not('accepted_at', 'is', null)
+            .limit(1);
+          member = members?.[0] ?? null;
+        }
 
         if (member) {
           const { data } = await service

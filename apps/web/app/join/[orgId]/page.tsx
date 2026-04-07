@@ -36,7 +36,7 @@ export default async function JoinPage({ params }: Props) {
       { onConflict: 'organisation_id,user_id', ignoreDuplicates: true }
     );
 
-    redirect('/projects?joined=1');
+    redirect(`/projects?joined=1&org=${orgId}`);
   }
 
   // Not logged in — show join landing page
