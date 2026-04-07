@@ -60,6 +60,21 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      keyframes: {
+        'loading-bar': {
+          '0%':   { width: '0%',   marginLeft: '0%' },
+          '50%':  { width: '60%',  marginLeft: '20%' },
+          '100%': { width: '0%',   marginLeft: '100%' },
+        },
+        'fade-in': {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'loading-bar': 'loading-bar 1.2s ease-in-out infinite',
+        'fade-in':     'fade-in 0.2s ease-out forwards',
+      },
       boxShadow: {
         card: '0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px -1px rgba(0,0,0,0.04)',
         'card-hover': '0 4px 12px 0 rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.06)',

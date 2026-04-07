@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { Spinner } from '@/components/ui/spinner';
 
 export function CreateProjectDialog() {
   const [open, setOpen] = useState(false);
@@ -42,6 +43,8 @@ export function CreateProjectDialog() {
 
       if (insertError) throw insertError;
 
+      // Brief pause so user sees the success state before close
+      await new Promise((r) => setTimeout(r, 600));
       setOpen(false);
       setName('');
       setDomain('');
@@ -66,7 +69,29 @@ export function CreateProjectDialog() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-[#300a46]/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100">
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100 overflow-hidden">
+
+            {/* Loading overlay */}
+            {loading && (
+              <div className="absolute inset-0 z-10 bg-white/95 flex flex-col items-center justify-center gap-4 rounded-2xl">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-[#fff3f0] flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[#ff724f] text-[32px]">create_new_folder</span>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
+                    <Spinner size={16} />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-[#300a46]">Creating your project…</p>
+                  <p className="text-xs text-gray-400 mt-1">Setting up your workspace</p>
+                </div>
+                <div className="w-48 h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#ff724f] rounded-full animate-[loading-bar_1.2s_ease-in-out_infinite]" />
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 mb-5">
               <div className="w-9 h-9 bg-[#fff3f0] rounded-xl flex items-center justify-center">
                 <span className="material-symbols-outlined text-[#ff724f] text-[18px]">create_new_folder</span>
@@ -76,7 +101,7 @@ export function CreateProjectDialog() {
                 <p className="text-xs text-gray-500">One project per website</p>
               </div>
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => !loading && setOpen(false)}
                 className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
@@ -93,7 +118,8 @@ export function CreateProjectDialog() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My Client Site"
                   required
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all"
+                  disabled={loading}
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all disabled:opacity-50"
                 />
               </div>
 
@@ -105,7 +131,8 @@ export function CreateProjectDialog() {
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                   placeholder="client-site.com"
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all"
+                  disabled={loading}
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all disabled:opacity-50"
                 />
               </div>
 
@@ -117,16 +144,17 @@ export function CreateProjectDialog() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="flex-1 border border-gray-200 text-gray-600 font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-sm"
+                  disabled={loading}
+                  className="flex-1 border border-gray-200 text-gray-600 font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors text-sm disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !name.trim()}
-                  className="flex-1 bg-[#ff724f] hover:bg-[#e8603a] text-white font-semibold px-4 py-2.5 rounded-xl transition-all text-sm disabled:opacity-60 shadow-sm"
+                  className="flex-1 bg-[#ff724f] hover:bg-[#e8603a] text-white font-semibold px-4 py-2.5 rounded-xl transition-all text-sm disabled:opacity-60 shadow-sm flex items-center justify-center gap-2"
                 >
-                  {loading ? 'Creating…' : 'Create Project'}
+                  {loading ? <><Spinner size={14} color="#fff" /> Creating…</> : 'Create Project'}
                 </button>
               </div>
             </form>
