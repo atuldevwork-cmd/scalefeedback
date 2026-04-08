@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 
 const CLICKUP_PREFIX = /^\[via ClickUp · (.+?)\]\n/;
 const ATTACHMENT_MARKER = '__attachments__:';
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 3000;
 
 /* ── Common emojis ──────────────────────────────────────────────────── */
 const EMOJI_GROUPS = [
@@ -36,28 +36,9 @@ function buildBody(text: string, attachments: string[]): string {
 
 /* ── CommentBody ──────────────────────────────────────────────────── */
 function CommentBody({ body }: { body: string }) {
-  const cuMatch = body.match(CLICKUP_PREFIX);
-  if (cuMatch) {
-    const author = cuMatch[1];
-    const rest = body.slice(cuMatch[0].length);
-    const { text, attachments } = parseBody(rest);
-    return (
-      <div className="text-sm text-gray-700 leading-relaxed">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <span className="inline-flex items-center gap-1 bg-[#7b68ee]/10 text-[#7b68ee] text-[10px] font-semibold px-2 py-0.5 rounded-full">
-            <svg width="10" height="10" viewBox="0 0 32 32" fill="none" className="shrink-0">
-              <path d="M4 22.4L8.3 18.7C10.7 21.4 13.2 22.7 16 22.7C18.8 22.7 21.2 21.4 23.6 18.7L28 22.3C24.6 26.2 20.6 28.3 16 28.3C11.4 28.3 7.4 26.2 4 22.4Z" fill="#8930FD"/>
-              <path d="M16 8.2L8.2 14.9L4.6 10.6L16 0.8L27.4 10.6L23.8 14.9L16 8.2Z" fill="#FF02F0"/>
-            </svg>
-            {author} via ClickUp
-          </span>
-        </div>
-        <p className="whitespace-pre-wrap">{renderMentions(text)}</p>
-        <AttachmentGrid urls={attachments} />
-      </div>
-    );
-  }
-  const { text, attachments } = parseBody(body);
+  // Strip the ClickUp prefix — the card header already shows author badge
+  const rawText = body.replace(CLICKUP_PREFIX, '');
+  const { text, attachments } = parseBody(rawText);
   return (
     <div className="text-sm text-gray-700 leading-relaxed">
       <p className="whitespace-pre-wrap">{renderMentions(text)}</p>
@@ -314,6 +295,10 @@ export function CommentThread({ feedbackId, initialComments, currentUserId, memb
         <div className="space-y-3">
           {comments.map((c) => {
             const isMine = c.user_id === currentUserId;
+            const cuMatch = c.body.match(CLICKUP_PREFIX);
+            const isClickUp = !!cuMatch;
+            const cuAuthor = cuMatch?.[1] ?? '';
+
             return (
               <div
                 key={c.id}
@@ -327,18 +312,36 @@ export function CommentThread({ feedbackId, initialComments, currentUserId, memb
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-xs">
-                      {(c.userName ?? '?')[0].toUpperCase()}
-                    </div>
+                    {isClickUp ? (
+                      /* ClickUp avatar */
+                      <div className="w-7 h-7 rounded-full bg-[#7b68ee] flex items-center justify-center font-bold text-white text-xs">
+                        C
+                      </div>
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-xs">
+                        {(c.userName ?? '?')[0].toUpperCase()}
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs font-semibold text-[#300a46]">
-                        {c.userName}
-                        {isMine && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
+                        {isClickUp ? 'ClickUp' : c.userName}
+                        {isMine && !isClickUp && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
                         {c.is_internal && (
                           <span className="ml-1.5 text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Internal</span>
                         )}
                       </p>
-                      {c.userEmail && <p className="text-[10px] text-gray-400">{c.userEmail}</p>}
+                      {isClickUp ? (
+                        /* Author badge under "ClickUp" name */
+                        <span className="inline-flex items-center gap-1 bg-[#7b68ee]/10 text-[#7b68ee] text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5">
+                          <svg width="9" height="9" viewBox="0 0 32 32" fill="none" className="shrink-0">
+                            <path d="M4 22.4L8.3 18.7C10.7 21.4 13.2 22.7 16 22.7C18.8 22.7 21.2 21.4 23.6 18.7L28 22.3C24.6 26.2 20.6 28.3 16 28.3C11.4 28.3 7.4 26.2 4 22.4Z" fill="#8930FD"/>
+                            <path d="M16 8.2L8.2 14.9L4.6 10.6L16 0.8L27.4 10.6L23.8 14.9L16 8.2Z" fill="#FF02F0"/>
+                          </svg>
+                          {cuAuthor} via ClickUp
+                        </span>
+                      ) : (
+                        c.userEmail && <p className="text-[10px] text-gray-400">{c.userEmail}</p>
+                      )}
                     </div>
                   </div>
                   <span className="text-[10px] text-gray-400 shrink-0">{formatDate(c.created_at)}</span>
