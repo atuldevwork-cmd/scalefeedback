@@ -30,6 +30,25 @@ export async function updateSession(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Set a SameSite=None; Secure cookie so the widget-session iframe can read the
+  // session token cross-origin. Regular Supabase cookies are SameSite=Lax and are
+  // blocked by Chrome's Storage Partitioning in third-party iframes — SameSite=None
+  // is the only mechanism that bypasses this restriction.
+  if (user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      supabaseResponse.cookies.set('sf-wt', session.access_token, {
+        sameSite: 'none',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        path: '/',
+        maxAge: 60 * 60, // 1 hour — matches Supabase JWT expiry
+      });
+    }
+  } else {
+    supabaseResponse.cookies.delete('sf-wt');
+  }
+
   const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
   const needsCors = CORS_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
 

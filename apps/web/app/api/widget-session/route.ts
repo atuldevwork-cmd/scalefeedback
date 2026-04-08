@@ -1,31 +1,24 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 // This endpoint returns a minimal HTML page loaded as a hidden iframe on any
 // external website that embeds the ScaleFeedback widget.
 //
-// TWO-LAYER approach to get the auth token:
+// THREE-LAYER approach to get the auth token:
 //
-// 1. SERVER-SIDE (cookies): Works when the iframe is same-origin or the cookies
-//    have SameSite=None — e.g. local dev where demo.html is on localhost:3000.
-//    The Next.js server reads the Supabase session from the request cookies and
-//    inlines the token directly into the HTML.
+// 1. SameSite=None cookie (sf-wt): Set by the middleware when the user is logged
+//    in on ScaleFeedback. Because it's SameSite=None; Secure, browsers send it
+//    even in cross-origin iframe requests — this is the only mechanism that
+//    bypasses Chrome's Storage Partitioning for third-party iframes.
 //
-// 2. CLIENT-SIDE (localStorage): Works for cross-origin iframes on external sites
-//    (e.g. HubSpot) because the iframe runs in the ScaleFeedback origin context.
-//    @supabase/ssr's createBrowserClient writes the session to localStorage in
-//    addition to cookies, so the iframe script can read it from there.
+// 2. Server-side session (cookies): Works when the iframe is same-origin
+//    (e.g. local dev where demo.html is on localhost:3000).
+//
+// 3. localStorage (sf-widget-token): Fallback for browsers without storage
+//    partitioning (older browsers / non-Chrome).
 
-export async function GET() {
-  // Layer 1: try to get token server-side from cookies
-  let serverToken: string | null = null;
-  try {
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    serverToken = session?.access_token ?? null;
-  } catch {
-    // cookies unavailable or session invalid — will fall through to client-side
-  }
+export async function GET(req: NextRequest) {
+  // Layer 1: read the dedicated cross-origin widget token cookie (SameSite=None)
+  const serverToken = req.cookies.get('sf-wt')?.value ?? null;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -33,21 +26,17 @@ export async function GET() {
 <body>
 <script>
 (function () {
-  // Layer 1: server already resolved the token from cookies (same-origin iframes)
+  // Layer 1: SameSite=None cookie was read server-side and inlined here
   var token = ${JSON.stringify(serverToken)};
   if (token) {
     window.parent.postMessage({ type: 'sf-session', token: token }, '*');
     return;
   }
 
-  // Layer 2: read sf-widget-token from localStorage.
-  // @supabase/ssr uses cookie-based storage (not localStorage), so we bridge
-  // this with WidgetTokenSync — a client component that runs in the ScaleFeedback
-  // dashboard and saves the access token to localStorage whenever it changes.
-  // The iframe runs on the ScaleFeedback origin, so it can read this key.
+  // Layer 3: localStorage fallback (works on older browsers without storage partitioning)
   try {
     token = localStorage.getItem('sf-widget-token') || null;
-  } catch (e) { /* localStorage unavailable (strict mode / Firefox tracking protection) */ }
+  } catch (e) { /* localStorage unavailable */ }
 
   window.parent.postMessage({ type: 'sf-session', token: token }, '*');
 })();
@@ -58,7 +47,6 @@ export async function GET() {
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      // Allow embedding as iframe from any origin
       'X-Frame-Options': 'ALLOWALL',
       'Content-Security-Policy': "frame-ancestors *",
       'Cache-Control': 'no-store',
