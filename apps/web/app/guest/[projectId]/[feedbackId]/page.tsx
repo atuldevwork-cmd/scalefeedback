@@ -119,11 +119,12 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
   let commenterMap: Record<string, { email: string; name: string }> = {};
   let orgMembers: { user_id: string; email: string; name: string }[] = [];
 
-  const { data: usersResp } = await service.auth.admin.listUsers();
-  const { data: memberRows } = await service
-    .from('members')
-    .select('user_id')
-    .eq('organisation_id', project.organisation_id);
+  const [{ data: usersResp }, { data: memberRows }, { data: projectGuests }] = await Promise.all([
+    service.auth.admin.listUsers(),
+    service.from('members').select('user_id').eq('organisation_id', project.organisation_id),
+    service.from('project_guests').select('email, name').eq('project_id', projectId).not('accepted_at', 'is', null),
+  ]);
+
   const memberIds = (memberRows ?? []).map((m: { user_id: string }) => m.user_id);
 
   for (const u of usersResp?.users ?? []) {
@@ -133,6 +134,13 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
     }
     if (memberIds.includes(u.id)) {
       orgMembers.push({ user_id: u.id, email: u.email ?? '', name });
+    }
+  }
+
+  // Also add other project guests so they can be @mentioned
+  for (const g of projectGuests ?? []) {
+    if (g.email && !orgMembers.some((m) => m.email === g.email)) {
+      orgMembers.push({ user_id: g.email, email: g.email, name: g.name ?? g.email });
     }
   }
 

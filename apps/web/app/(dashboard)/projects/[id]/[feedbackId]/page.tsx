@@ -196,6 +196,25 @@ export default async function FeedbackDetailPage({ params }: Props) {
                 name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email ?? u.id.slice(0, 8),
               }));
           }
+
+          // Also include project guests so admins can @mention clients
+          if (fb.project_id) {
+            const { data: guests } = await service
+              .from('project_guests')
+              .select('email, name')
+              .eq('project_id', fb.project_id)
+              .not('accepted_at', 'is', null);
+
+            for (const g of guests ?? []) {
+              if (g.email && !orgMembers.some((m) => m.email === g.email)) {
+                orgMembers.push({
+                  user_id: g.email, // use email as ID for guests
+                  email: g.email,
+                  name: g.name ?? g.email,
+                });
+              }
+            }
+          }
         }
         // Fetch ClickUp task details if external_id exists
         if (fb.external_id) {
