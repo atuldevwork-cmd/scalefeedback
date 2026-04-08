@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { NotificationBell } from './notification-bell';
@@ -47,12 +47,11 @@ function NotificationSidebarItem() {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
 
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   return (

@@ -108,6 +108,7 @@ const FAQS = [
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
@@ -232,7 +233,7 @@ export default function PricingPage() {
         </div>
 
         {/* Agency callout */}
-        <div className="mt-8 bg-orange-50 border border-orange-100 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="mt-16 bg-orange-50 border border-orange-100 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="material-symbols-outlined text-[#ff724f]" style={{ fontSize: 20 }}>business_center</span>
@@ -276,17 +277,28 @@ export default function PricingPage() {
           <h2 className="text-3xl font-extrabold text-[#300a46]">Frequently asked questions</h2>
         </div>
         <div className="space-y-4">
-          {FAQS.map((faq) => (
-            <div key={faq.q} className="border border-slate-200 rounded-xl p-5 hover:border-orange-200 transition-colors">
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-[#ff724f] shrink-0 mt-0.5" style={{ fontSize: 18 }}>
+          {FAQS.map((faq, i) => (
+            <div
+              key={faq.q}
+              className={`border rounded-xl transition-colors ${openFaq === i ? 'border-orange-300' : 'border-slate-200 hover:border-orange-200'}`}
+            >
+              <button
+                className="w-full flex items-center gap-3 p-5 text-left"
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+              >
+                <span className="material-symbols-outlined text-[#ff724f] shrink-0" style={{ fontSize: 18 }}>
                   help
                 </span>
-                <div>
-                  <p className="font-semibold text-[#300a46] text-sm mb-2">{faq.q}</p>
+                <p className="font-semibold text-[#300a46] text-sm flex-1">{faq.q}</p>
+                <span className="material-symbols-outlined text-slate-400 shrink-0 transition-transform" style={{ fontSize: 20, transform: openFaq === i ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  expand_more
+                </span>
+              </button>
+              {openFaq === i && (
+                <div className="px-5 pb-5 pl-11">
                   <p className="text-slate-500 text-sm leading-relaxed">{faq.a}</p>
                 </div>
-              </div>
+              )}
             </div>
           ))}
         </div>
@@ -309,7 +321,7 @@ export default function PricingPage() {
               <div className="w-7 h-7 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-xs">SF</div>
               <span className="font-bold text-white text-sm">ScaleFeedback</span>
             </div>
-            <p className="text-xs text-purple-400 leading-relaxed">For a web free of bugs. Built by ScaleStation.</p>
+            <p className="text-xs leading-relaxed">For a web free of bugs. Built by ScaleStation.</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-purple-200 uppercase tracking-widest mb-3">Product</p>
@@ -335,7 +347,7 @@ export default function PricingPage() {
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto px-6 pt-6 border-t border-purple-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-purple-500">
+        <div className="max-w-6xl mx-auto px-6 pt-6 border-t border-purple-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p>© {new Date().getFullYear()} ScaleFeedback. All rights reserved.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:text-purple-300 transition-colors">Privacy Policy</a>

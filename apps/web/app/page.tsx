@@ -322,7 +322,7 @@ export default function HomePage() {
               <div className="w-7 h-7 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-xs">SF</div>
               <span className="font-bold text-white text-sm">ScaleFeedback</span>
             </div>
-            <p className="text-xs text-purple-400 leading-relaxed">For a web free of bugs. Built by ScaleStation.</p>
+            <p className="text-xs leading-relaxed">For a web free of bugs. Built by ScaleStation.</p>
           </div>
           <div>
             <p className="text-xs font-semibold text-purple-200 uppercase tracking-widest mb-3">Product</p>
@@ -348,7 +348,7 @@ export default function HomePage() {
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto px-6 pt-6 border-t border-purple-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-purple-500">
+        <div className="max-w-6xl mx-auto px-6 pt-6 border-t border-purple-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p>© {new Date().getFullYear()} ScaleFeedback. All rights reserved.</p>
           <div className="flex gap-4">
             <a href="#" className="hover:text-purple-300 transition-colors">Privacy Policy</a>

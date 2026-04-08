@@ -2,17 +2,15 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
 
 export function GuestLogoutButton() {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   async function handleLogout() {
     setLoading(true);
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   return (
