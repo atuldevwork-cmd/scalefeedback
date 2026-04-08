@@ -1,36 +1,30 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
-// This endpoint returns a minimal HTML page that is loaded as a hidden iframe
-// on any external website that embeds the ScaleFeedback widget.
-// Because the iframe is served from the ScaleFeedback origin, it can read
-// the Supabase auth token from localStorage and post it back to the parent
-// window — solving the cross-origin localStorage restriction.
+// This endpoint returns a minimal HTML page loaded as a hidden iframe on any
+// external website that embeds the ScaleFeedback widget.
+// Because the iframe is served from the ScaleFeedback origin, the Next.js
+// server can read the user's session from their cookies and embed the access
+// token directly in the response — solving the cross-origin localStorage/cookie
+// restriction without any client-side storage access.
 
 export async function GET() {
+  let token: string | null = null;
+
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token ?? null;
+  } catch {
+    // If auth check fails, continue with null token (widget shows name/email fields)
+  }
+
   const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body>
 <script>
-(function () {
-  var token = null;
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var key = localStorage.key(i);
-      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-        var raw = localStorage.getItem(key);
-        if (raw) {
-          var parsed = JSON.parse(raw);
-          token = parsed.access_token
-            || (parsed.session && parsed.session.access_token)
-            || null;
-          if (token) break;
-        }
-      }
-    }
-  } catch (e) { /* localStorage unavailable (e.g. strict mode) */ }
-  window.parent.postMessage({ type: 'sf-session', token: token }, '*');
-})();
+window.parent.postMessage({ type: 'sf-session', token: ${JSON.stringify(token)} }, '*');
 </script>
 </body>
 </html>`;
