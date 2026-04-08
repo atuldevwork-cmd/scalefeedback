@@ -27,6 +27,40 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: 'bg-gray-100 text-gray-500',
 };
 
+const ATTACHMENT_MARKER = '__attachments__:';
+
+function GuestCommentBody({ body }: { body: string }) {
+  const idx = body.lastIndexOf(ATTACHMENT_MARKER);
+  let text = body;
+  let attachments: string[] = [];
+  if (idx !== -1) {
+    text = body.slice(0, idx).trimEnd();
+    try { attachments = JSON.parse(body.slice(idx + ATTACHMENT_MARKER.length)); } catch { /* ignore */ }
+  }
+  const parts = text.split(/(@\w[\w\s]*)/g);
+  return (
+    <div className="text-sm text-gray-700 leading-relaxed">
+      <p className="whitespace-pre-wrap">
+        {parts.map((part, i) =>
+          part.startsWith('@')
+            ? <span key={i} className="text-[#ff724f] font-semibold">{part}</span>
+            : part
+        )}
+      </p>
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {attachments.map((url, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+              <img src={url} alt={`attachment-${i + 1}`} className="h-24 w-auto object-cover rounded-lg border border-gray-200 hover:border-[#ff724f] transition-colors" />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default async function GuestFeedbackDetailPage({ params }: Props) {
   const { projectId, feedbackId } = await params;
 
@@ -80,18 +114,25 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
     .eq('is_internal', false)
     .order('created_at', { ascending: true });
 
-  // Resolve commenter display names from auth.users
+  // Resolve commenter display names + org members for @mention
   const commenterIds = [...new Set((comments ?? []).map((c: { user_id: string }) => c.user_id).filter(Boolean))];
   let commenterMap: Record<string, { email: string; name: string }> = {};
-  if (commenterIds.length) {
-    const { data: usersResp } = await service.auth.admin.listUsers();
-    for (const u of usersResp?.users ?? []) {
-      if (commenterIds.includes(u.id)) {
-        commenterMap[u.id] = {
-          email: u.email ?? '',
-          name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email ?? 'Unknown',
-        };
-      }
+  let orgMembers: { user_id: string; email: string; name: string }[] = [];
+
+  const { data: usersResp } = await service.auth.admin.listUsers();
+  const { data: memberRows } = await service
+    .from('members')
+    .select('user_id')
+    .eq('organisation_id', project.organisation_id);
+  const memberIds = (memberRows ?? []).map((m: { user_id: string }) => m.user_id);
+
+  for (const u of usersResp?.users ?? []) {
+    const name = u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email ?? 'Unknown';
+    if (commenterIds.includes(u.id)) {
+      commenterMap[u.id] = { email: u.email ?? '', name };
+    }
+    if (memberIds.includes(u.id)) {
+      orgMembers.push({ user_id: u.id, email: u.email ?? '', name });
     }
   }
 
@@ -203,7 +244,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
                       </div>
                       <span className="text-[10px] text-gray-400">{formatDate(comment.created_at)}</span>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">{comment.body}</p>
+                    <GuestCommentBody body={comment.body} />
                   </div>
                 );
               })}
@@ -211,7 +252,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
           )}
 
           {/* Comment form */}
-          <GuestCommentForm feedbackId={feedbackId} />
+          <GuestCommentForm feedbackId={feedbackId} members={orgMembers} />
         </div>
       </main>
     </div>
