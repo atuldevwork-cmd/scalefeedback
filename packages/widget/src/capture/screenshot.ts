@@ -15,6 +15,9 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
   try {
     const dataUrl = await toPng(document.body, {
       cacheBust: true,
+      // Skip font embedding — prevents SecurityError when html-to-image tries to
+      // read cssRules from cross-origin stylesheets (e.g. AOS, Google Fonts from CDN)
+      skipFonts: true,
       // Capture only the visible viewport
       width: window.innerWidth,
       height: window.innerHeight,
