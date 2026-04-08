@@ -55,13 +55,13 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="w-[220px] shrink-0 border-r border-gray-100 bg-white flex flex-col h-screen sticky top-0 shadow-[1px_0_0_0_#f0f0f5]">
+    <aside className="w-[240px] shrink-0 border-r border-gray-100 bg-white flex flex-col h-screen sticky top-0 shadow-[1px_0_0_0_#f0f0f5]">
       {/* Logo */}
       <div className="px-5 pt-6 pb-5 border-b border-gray-100">
-        <Link href="/projects" className="flex items-center">
-          <ScaleStationLogo />
+        <Link href="/projects" className="flex items-center gap-2 shrink-0">
+          <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">SF</div>
+          <span className="font-bold text-lg text-[#300a46]">ScaleFeedback</span>
         </Link>
-        <p className="text-[12px] text-[#ff724f] font-semibold tracking-widest uppercase mt-2 ml-0.5">Feedback</p>
       </div>
 
       {/* Navigation */}
