@@ -18,12 +18,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing key' }, { status: 400, headers: CORS });
   }
 
-  let project: { widget_config: unknown } | null = null;
+  const supabase = createServiceClient();
+
+  let project: { id: string; widget_config: unknown } | null = null;
   try {
-    const supabase = createServiceClient();
     const { data } = await supabase
       .from('projects')
-      .select('widget_config')
+      .select('id, widget_config')
       .eq('api_key', key)
       .single();
     project = data;
@@ -32,7 +33,6 @@ export async function GET(req: NextRequest) {
   }
 
   if (!project) {
-    // Return defaults instead of 404 — widget should always load
     return NextResponse.json(
       { color: '#7C3AED', position: 'bottom-right', buttonText: 'Report issue',
         guestReporting: true, collectConsole: true, collectNetwork: false,
@@ -43,22 +43,43 @@ export async function GET(req: NextRequest) {
 
   const cfg = (project.widget_config ?? {}) as Record<string, unknown>;
 
-  // If the request includes a valid Supabase auth token, return the logged-in user's
-  // name and email so the widget can hide the name/email fields automatically.
+  // If the request includes a valid Supabase auth token, auto-identify the reporter
+  // so the widget hides the name/email fields.
+  // This covers: members, owners, admins, and accepted guests — anyone logged in.
   let loggedInUser: { name: string; email: string } | undefined;
+
   const authHeader = req.headers.get('Authorization');
   if (authHeader?.startsWith('Bearer ')) {
     try {
       const token = authHeader.slice(7);
-      const supabase = createServiceClient();
       const { data: { user } } = await supabase.auth.getUser(token);
-      if (user) {
-        loggedInUser = {
-          name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? '',
-          email: user.email ?? '',
-        };
+
+      if (user?.email) {
+        // Prefer name from user_metadata (set on signup / OAuth)
+        let name: string =
+          user.user_metadata?.full_name ??
+          user.user_metadata?.name ??
+          '';
+
+        // If no name in metadata, check project_guests table (guests log in via email link)
+        if (!name && project.id) {
+          const { data: guestRow } = await supabase
+            .from('project_guests')
+            .select('name')
+            .eq('project_id', project.id)
+            .eq('email', user.email)
+            .not('accepted_at', 'is', null)
+            .maybeSingle();
+
+          if (guestRow?.name) name = guestRow.name;
+        }
+
+        // Fallback to email prefix if still no name
+        if (!name) name = user.email.split('@')[0];
+
+        loggedInUser = { name, email: user.email };
       }
-    } catch { /* ignore auth errors — just don't pre-fill */ }
+    } catch { /* ignore — just don't pre-fill */ }
   }
 
   return NextResponse.json(
