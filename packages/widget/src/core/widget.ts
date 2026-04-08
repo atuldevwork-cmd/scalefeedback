@@ -99,25 +99,22 @@ export class ScaleFeedbackWidget {
       'display:flex',
       'align-items:center',
       'justify-content:center',
-      'pointer-events:none',
+      'background:rgba(0,0,0,0.75)',
+      'pointer-events:all',
     ].join(';');
 
     el.innerHTML = `
       <div style="
         display:flex;flex-direction:column;align-items:center;gap:14px;
-        background:rgba(255,255,255,0.96);border-radius:16px;
-        padding:28px 36px;
-        box-shadow:0 8px 40px rgba(0,0,0,0.18);
-        pointer-events:auto;
         font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
       ">
         <div id="sf-body-spinner" style="
-          width:36px;height:36px;
-          border:3px solid #ffd4c8;border-top-color:#ff724f;
+          width:40px;height:40px;
+          border:3px solid rgba(255,255,255,0.2);border-top-color:#ffffff;
           border-radius:50%;
           animation:sf-body-spin 0.7s linear infinite;
         "></div>
-        <span style="font-size:14px;font-weight:600;color:#4a4a5a;letter-spacing:0.01em;">Preparing…</span>
+        <span style="font-size:14px;font-weight:600;color:#ffffff;letter-spacing:0.01em;">Preparing…</span>
       </div>
       <style>
         @keyframes sf-body-spin { to { transform: rotate(360deg); } }
