@@ -411,7 +411,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
           )}
 
           {/* Comments */}
-          <CommentThread feedbackId={feedbackId} initialComments={resolvedComments} currentUserId={currentUserId} />
+          <CommentThread feedbackId={feedbackId} initialComments={resolvedComments} currentUserId={currentUserId} members={orgMembers} />
         </div>
 
         {/* Right: metadata panel */}

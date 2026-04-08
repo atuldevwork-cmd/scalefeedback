@@ -128,7 +128,7 @@ const SECTIONS = [
 /* ── Page ─────────────────────────────────────────────────────────────── */
 
 export default function DocsPage() {
-  const [apiKey, setApiKey] = useState('proj_your_api_key_here');
+  const [apiKey] = useState('proj_your_api_key_here');
   const [framework, setFramework] = useState<'html' | 'react' | 'nextjs' | 'vue'>('html');
   const [active, setActive] = useState('quickstart');
 
@@ -181,7 +181,7 @@ export default function DocsPage() {
             </h2>
             <ol className="space-y-3 text-sm text-muted-foreground">
               {[
-                <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the <strong className="text-foreground">API Key</strong> from the settings tab.</>,
+                <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the <strong className="text-foreground">snippet</strong> from the Widget Settings tab.</>,
                 <>Paste the snippet below before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag of your site.</>,
                 <>Reload your site — a <strong className="text-[#ff724f]">Feedback</strong> tab appears on the edge of the screen.</>,
                 <>Submit a test report. It appears instantly in your ScaleFeedback dashboard.</>,
@@ -201,34 +201,16 @@ export default function DocsPage() {
               Installation
             </h2>
 
-            {/* Step 1 — configure */}
-            <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <SectionBadge n={1} />
-                <h3 className="font-medium text-foreground">Configure your widget</h3>
-              </div>
-              <div className="bg-card border border-border rounded-xl p-5">
-                <div>
-                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">API Key</label>
-                  <input
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="proj_..."
-                    className="w-full border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] bg-background"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Find your API key in <strong className="text-foreground">Projects → Settings → API Key</strong>.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 2 — snippet */}
+            {/* Step 1 — snippet */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <SectionBadge n={2} />
+                <SectionBadge n={1} />
                 <h3 className="font-medium text-foreground">Add to your site</h3>
               </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Copy your Snippet code from <strong className="text-foreground">Projects → Settings → Widget Settings
+                </strong>, then paste the snippet before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag.
+              </p>
 
               {/* Framework tabs */}
               <div className="flex gap-1 mb-3 bg-muted rounded-lg p-1 w-fit">
