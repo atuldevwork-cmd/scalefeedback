@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/', '/pricing', '/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/auth/me', '/api/widget-config', '/widget.js', '/demo.html', '/guest/join'];
+const PUBLIC_PATHS = ['/', '/pricing', '/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/auth/me', '/api/widget-config', '/api/widget-session', '/widget.js', '/demo.html', '/guest/join'];
 
 // API routes called cross-origin from customer websites
 const CORS_PATHS = ['/api/widget-config', '/api/feedback'] as const;
