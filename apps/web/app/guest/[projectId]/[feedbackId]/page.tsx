@@ -30,12 +30,14 @@ const PRIORITY_COLORS: Record<string, string> = {
 const ATTACHMENT_MARKER = '__attachments__:';
 
 function GuestCommentBody({ body }: { body: string }) {
-  const idx = body.lastIndexOf(ATTACHMENT_MARKER);
-  let text = body;
+  // Strip ClickUp prefix — already shown in card header
+  const stripped = body.replace(/^\[via ClickUp · .+?\]\n/, '');
+  const idx = stripped.lastIndexOf(ATTACHMENT_MARKER);
+  let text = stripped;
   let attachments: string[] = [];
   if (idx !== -1) {
-    text = body.slice(0, idx).trimEnd();
-    try { attachments = JSON.parse(body.slice(idx + ATTACHMENT_MARKER.length)); } catch { /* ignore */ }
+    text = stripped.slice(0, idx).trimEnd();
+    try { attachments = JSON.parse(stripped.slice(idx + ATTACHMENT_MARKER.length)); } catch { /* ignore */ }
   }
   const parts = text.split(/(@\w[\w\s]*)/g);
   return (
@@ -235,19 +237,37 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
               {comments.map((comment: { id: string; body: string; created_at: string; user_id: string }) => {
                 const commenter = commenterMap[comment.user_id];
                 const isMine = comment.user_id === user.id;
+                const cuMatch = comment.body.match(/^\[via ClickUp · (.+?)\]\n/);
+                const isClickUp = !!cuMatch;
+                const cuAuthor = cuMatch?.[1] ?? '';
+
                 return (
                   <div key={comment.id} className={`bg-white rounded-2xl border p-4 ${isMine ? 'border-[#ff724f]/20 bg-[#fff9f8]' : 'border-gray-100'}`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-xs">
-                          {(commenter?.name ?? '?')[0].toUpperCase()}
-                        </div>
+                        {isClickUp ? (
+                          <div className="w-7 h-7 rounded-full bg-[#7b68ee] flex items-center justify-center font-bold text-white text-xs">C</div>
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-xs">
+                            {(commenter?.name ?? '?')[0].toUpperCase()}
+                          </div>
+                        )}
                         <div>
                           <p className="text-xs font-semibold text-[#300a46]">
-                            {commenter?.name ?? 'Unknown'}
-                            {isMine && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
+                            {isClickUp ? 'ClickUp' : (commenter?.name ?? 'Unknown')}
+                            {isMine && !isClickUp && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
                           </p>
-                          <p className="text-[10px] text-gray-400">{commenter?.email}</p>
+                          {isClickUp ? (
+                            <span className="inline-flex items-center gap-1 bg-[#7b68ee]/10 text-[#7b68ee] text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5">
+                              <svg width="9" height="9" viewBox="0 0 32 32" fill="none" className="shrink-0">
+                                <path d="M4 22.4L8.3 18.7C10.7 21.4 13.2 22.7 16 22.7C18.8 22.7 21.2 21.4 23.6 18.7L28 22.3C24.6 26.2 20.6 28.3 16 28.3C11.4 28.3 7.4 26.2 4 22.4Z" fill="#8930FD"/>
+                                <path d="M16 8.2L8.2 14.9L4.6 10.6L16 0.8L27.4 10.6L23.8 14.9L16 8.2Z" fill="#FF02F0"/>
+                              </svg>
+                              {cuAuthor} via ClickUp
+                            </span>
+                          ) : (
+                            <p className="text-[10px] text-gray-400">{commenter?.email}</p>
+                          )}
                         </div>
                       </div>
                       <span className="text-[10px] text-gray-400">{formatDate(comment.created_at)}</span>
