@@ -9,6 +9,24 @@ function getScriptTag(): HTMLScriptElement {
   return script;
 }
 
+/** Try to read the Supabase access token from localStorage (any sb-*-auth-token key). */
+function getSupabaseToken(): string | null {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const token = parsed?.access_token ?? parsed?.session?.access_token;
+          if (token) return token as string;
+        }
+      }
+    }
+  } catch { /* localStorage may be unavailable */ }
+  return null;
+}
+
 export async function parseConfig(): Promise<WidgetConfig> {
   const script = getScriptTag();
 
@@ -17,31 +35,53 @@ export async function parseConfig(): Promise<WidgetConfig> {
 
   const apiBaseUrl = script.dataset['api'] ?? (script.src ? new URL(script.src).origin : window.location.origin);
 
-  // Fetch config from dashboard — changes in project settings auto-apply
+  // Read optional pre-identified reporter from host-page config
+  const hostCfg = (window as unknown as { ScaleFeedbackConfig?: Record<string, unknown> }).ScaleFeedbackConfig ?? {};
+  const hostReporterName  = hostCfg['reporterName']  as string | undefined;
+  const hostReporterEmail = hostCfg['reporterEmail'] as string | undefined;
+  const hostUser = (hostCfg['user'] as { name: string; email: string } | undefined);
+
+  // Build the pre-identified user from host config (if provided)
+  let presetUser: WidgetConfig['user'] =
+    hostUser ??
+    (hostReporterName && hostReporterEmail ? { name: hostReporterName, email: hostReporterEmail } : undefined);
+
+  // Try to fetch config from dashboard — also sends auth token so logged-in users are auto-identified
   try {
-    const res = await fetch(`${apiBaseUrl}/api/widget-config?key=${projectApiKey}`);
+    const token = getSupabaseToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${apiBaseUrl}/api/widget-config?key=${projectApiKey}`, { headers });
     if (res.ok) {
       const remote = await res.json();
+
+      // If the API returned logged-in user info, use it (overrides host config)
+      if (remote.user?.name && remote.user?.email) {
+        presetUser = remote.user as { name: string; email: string };
+      }
+
       return {
         projectApiKey,
         apiBaseUrl,
         color:          remote.color          ?? '#7C3AED',
         position:       remote.position       ?? 'bottom-right',
-        buttonText:     remote.buttonText      ?? 'Report issue',
+        buttonText:     remote.buttonText     ?? 'Report issue',
         guestReporting: remote.guestReporting ?? true,
         collectConsole: remote.collectConsole ?? true,
         collectNetwork: remote.collectNetwork ?? false,
-        audience:         remote.audience         ?? 'everyone',
-        pages:            remote.pages            ?? 'all',
-        secretParamType:  remote.secretParamType  ?? 'default',
-        secretParam:      remote.secretParam      ?? '',
+        audience:       remote.audience       ?? 'everyone',
+        pages:          remote.pages          ?? 'all',
+        secretParamType: remote.secretParamType ?? 'default',
+        secretParam:     remote.secretParam    ?? '',
+        user: presetUser,
       };
     }
   } catch {
     // fall through to script-tag fallback
   }
 
-  // Fallback: read from script tag attributes (backwards compat)
+  // Fallback: read from script tag attributes
   return {
     projectApiKey,
     apiBaseUrl,
@@ -53,5 +93,6 @@ export async function parseConfig(): Promise<WidgetConfig> {
     collectNetwork: script.dataset['network']  === 'true',
     audience:       'everyone',
     pages:          'all',
+    user:           presetUser,
   };
 }

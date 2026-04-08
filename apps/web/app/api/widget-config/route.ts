@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export async function OPTIONS() {
@@ -43,6 +43,24 @@ export async function GET(req: NextRequest) {
 
   const cfg = (project.widget_config ?? {}) as Record<string, unknown>;
 
+  // If the request includes a valid Supabase auth token, return the logged-in user's
+  // name and email so the widget can hide the name/email fields automatically.
+  let loggedInUser: { name: string; email: string } | undefined;
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.slice(7);
+      const supabase = createServiceClient();
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) {
+        loggedInUser = {
+          name: user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email ?? '',
+          email: user.email ?? '',
+        };
+      }
+    } catch { /* ignore auth errors — just don't pre-fill */ }
+  }
+
   return NextResponse.json(
     {
       color:           cfg.color           ?? '#7C3AED',
@@ -55,6 +73,7 @@ export async function GET(req: NextRequest) {
       pages:           cfg.pages           ?? 'all',
       secretParamType: cfg.secretParamType ?? 'default',
       secretParam:     cfg.secretParam     ?? '',
+      ...(loggedInUser ? { user: loggedInUser } : {}),
     },
     { headers: CORS }
   );
