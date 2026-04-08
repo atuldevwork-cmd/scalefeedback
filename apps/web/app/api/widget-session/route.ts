@@ -40,23 +40,13 @@ export async function GET() {
     return;
   }
 
-  // Layer 2: read from localStorage — works for cross-origin iframes because
-  // the iframe is served from the ScaleFeedback origin and can access its own
-  // localStorage. @supabase/ssr's createBrowserClient writes the session here.
+  // Layer 2: read sf-widget-token from localStorage.
+  // @supabase/ssr uses cookie-based storage (not localStorage), so we bridge
+  // this with WidgetTokenSync — a client component that runs in the ScaleFeedback
+  // dashboard and saves the access token to localStorage whenever it changes.
+  // The iframe runs on the ScaleFeedback origin, so it can read this key.
   try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var key = localStorage.key(i);
-      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-        var raw = localStorage.getItem(key);
-        if (raw) {
-          var parsed = JSON.parse(raw);
-          token = parsed.access_token
-            || (parsed.session && parsed.session.access_token)
-            || null;
-          if (token) break;
-        }
-      }
-    }
+    token = localStorage.getItem('sf-widget-token') || null;
   } catch (e) { /* localStorage unavailable (strict mode / Firefox tracking protection) */ }
 
   window.parent.postMessage({ type: 'sf-session', token: token }, '*');
