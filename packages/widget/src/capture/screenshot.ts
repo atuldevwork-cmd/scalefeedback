@@ -8,7 +8,7 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
   // box-shadow → white rectangle artifact, filter → solid blob artifact
   const fix = document.createElement('style');
   fix.id = 'sf-cap-fix';
-  fix.textContent = '* { box-shadow: none !important; filter: none !important; -webkit-filter: none !important; }';
+  fix.textContent = '*, *::before, *::after { box-shadow: none !important; filter: none !important; -webkit-filter: none !important; }';
   document.head.appendChild(fix);
 
   await new Promise((r) => setTimeout(r, 80));
