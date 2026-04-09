@@ -13,20 +13,14 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
   await new Promise((r) => setTimeout(r, 60));
 
   try {
-    const dataUrl = await toPng(document.body, {
+    // Capture the full document at 1:1 pixel ratio. Setting explicit canvas
+    // width/height that differ from the element's natural size causes html-to-image
+    // to scale (stretch/squish) the content — so we let it capture everything at
+    // native size, then manually crop to the visible viewport below.
+    const fullDataUrl = await toPng(document.body, {
       cacheBust: true,
-      // Skip font embedding — prevents SecurityError when html-to-image tries to
-      // read cssRules from cross-origin stylesheets (e.g. AOS, Google Fonts from CDN)
       skipFonts: true,
-      // Capture only the visible viewport
-      width: window.innerWidth,
-      height: window.innerHeight,
-      style: {
-        transform: `translate(-${window.scrollX}px, -${window.scrollY}px)`,
-        transformOrigin: 'top left',
-        width: `${document.documentElement.scrollWidth}px`,
-        height: `${document.documentElement.scrollHeight}px`,
-      },
+      pixelRatio: 1,
       filter: (node) => {
         if (!(node instanceof HTMLElement)) return true;
         // Skip the widget host and the body-level loading overlay
@@ -34,10 +28,28 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
         if (node.id === 'sf-body-loading-overlay') return false;
         return true;
       },
-      pixelRatio: Math.min(window.devicePixelRatio, 2),
     });
 
-    return dataUrl;
+    // Crop the full-document image to the visible viewport
+    const img = new Image();
+    img.src = fullDataUrl;
+    await new Promise<void>((resolve) => { img.onload = () => resolve(); });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d')!;
+
+    // Draw only the scrolled viewport region (pixelRatio is 1 so coords are 1:1)
+    ctx.drawImage(
+      img,
+      window.scrollX, window.scrollY,       // source: top-left of visible area
+      window.innerWidth, window.innerHeight, // source: viewport size
+      0, 0,                                  // dest: top-left of canvas
+      window.innerWidth, window.innerHeight  // dest: fill entire canvas
+    );
+
+    return canvas.toDataURL('image/png');
   } finally {
     if (widgetHost) {
       widgetHost.style.removeProperty('display');
