@@ -39,7 +39,7 @@ function GuestCommentBody({ body }: { body: string }) {
     text = stripped.slice(0, idx).trimEnd();
     try { attachments = JSON.parse(stripped.slice(idx + ATTACHMENT_MARKER.length)); } catch { /* ignore */ }
   }
-  const parts = text.split(/(@\w[\w\s]*)/g);
+  const parts = text.split(/(@\w+(?:\s\w+)?)/g);
   return (
     <div className="text-sm text-gray-700 leading-relaxed">
       <p className="whitespace-pre-wrap">

@@ -48,7 +48,9 @@ function CommentBody({ body }: { body: string }) {
 }
 
 function renderMentions(text: string): React.ReactNode {
-  const parts = text.split(/(@\w[\w\s]*)/g);
+  // Match @FirstName or @First Last — stops after at most one trailing space+word
+  // so the rest of the sentence stays plain text
+  const parts = text.split(/(@\w+(?:\s\w+)?)/g);
   return parts.map((part, i) =>
     part.startsWith('@') ? (
       <span key={i} className="text-[#ff724f] font-semibold">{part}</span>
