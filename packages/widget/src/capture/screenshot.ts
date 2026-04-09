@@ -32,8 +32,10 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
   await new Promise((r) => setTimeout(r, 80));
 
   try {
-    // Capture full page at device pixel ratio for sharpness
-    const fullCanvas = await html2canvas(document.body, {
+    // Capture only the visible viewport to avoid exceeding mobile canvas size
+    // limits (iOS GPUs reject canvases larger than ~16.7MP, producing a blank
+    // white image when the full page is captured at 3x DPR).
+    const canvas = await html2canvas(document.body, {
       useCORS: true,
       allowTaint: true,
       scale: window.devicePixelRatio,
@@ -41,25 +43,15 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
       backgroundColor: null,
       windowWidth: document.documentElement.clientWidth,
       windowHeight: document.documentElement.clientHeight,
+      x: window.scrollX,
+      y: window.scrollY,
+      width: window.innerWidth,
+      height: window.innerHeight,
       ignoreElements: (el) =>
         el.id === ignoreElementId || el.id === 'sf-body-loading-overlay',
     });
 
-    // Crop to the visible viewport (account for devicePixelRatio scaling)
-    const dpr = window.devicePixelRatio;
-    const out = document.createElement('canvas');
-    out.width  = window.innerWidth  * dpr;
-    out.height = window.innerHeight * dpr;
-    const ctx  = out.getContext('2d')!;
-    ctx.drawImage(
-      fullCanvas,
-      window.scrollX * dpr, window.scrollY * dpr,
-      window.innerWidth * dpr, window.innerHeight * dpr,
-      0, 0,
-      window.innerWidth * dpr, window.innerHeight * dpr,
-    );
-
-    return out.toDataURL('image/png');
+    return canvas.toDataURL('image/png');
   } finally {
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
     document.getElementById('sf-cap-fix')?.remove();
