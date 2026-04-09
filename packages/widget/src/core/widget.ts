@@ -369,8 +369,8 @@ export class ScaleFeedbackWidget {
     // area.clientWidth / clientHeight return the real rendered dimensions.
     // Fallback subtracts the overlay padding (60px each side) + toolbar (52px).
     requestAnimationFrame(() => {
-      const areaW = area.clientWidth  || (window.innerWidth  - 120);
-      const areaH = area.clientHeight || (window.innerHeight - 172);
+      const areaW = area.clientWidth  || (window.innerWidth  - 56);
+      const areaH = area.clientHeight || (window.innerHeight - 108);
 
       // Set the buffer size to match the container exactly.
       // The CSS width/height:100% handles display — we must NOT also set
