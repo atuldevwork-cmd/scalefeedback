@@ -363,26 +363,26 @@ export class ScaleFeedbackWidget {
     const canvasEl = this.shadowRoot.querySelector<HTMLCanvasElement>('#sf-annotation-canvas');
     if (!canvasEl) return;
 
-    const area = canvasEl.parentElement as HTMLElement;
-
-    // Use requestAnimationFrame so the shadow DOM layout is computed first.
-    // Without this, area.clientWidth/clientHeight return 0 and the canvas buffer
-    // gets sized to window.innerWidth — larger than its CSS 100% display size,
-    // causing content to appear squished.
-    requestAnimationFrame(() => {
-      const areaW = area.clientWidth;
-      const areaH = area.clientHeight;
-      if (!areaW || !areaH) return;
-
-      // Set the canvas BUFFER to exactly match its CSS-rendered container size.
-      // The CSS already sets width/height to 100% — we do NOT set inline styles
-      // here or they'll fight the CSS and cause a mismatch.
-      canvasEl.width = areaW;
-      canvasEl.height = areaH;
+    const initWithSize = (w: number, h: number) => {
+      // Size the canvas buffer AND its CSS dimensions to match the screenshot exactly,
+      // like marker.io: canvas = screenshot size, area is scrollable — no scaling.
+      canvasEl.width = w;
+      canvasEl.height = h;
+      canvasEl.style.width = w + 'px';
+      canvasEl.style.height = h + 'px';
 
       this.annotationCanvas = new AnnotationCanvas(canvasEl, this.screenshotDataUrl);
       this.annotationCanvas.setTool(this.currentTool);
-    });
+    };
+
+    if (this.screenshotDataUrl) {
+      // Read dimensions from the screenshot image itself — no guessing
+      const img = new Image();
+      img.onload = () => initWithSize(img.naturalWidth, img.naturalHeight);
+      img.src = this.screenshotDataUrl;
+    } else {
+      initWithSize(window.innerWidth, window.innerHeight);
+    }
   }
 
   // Single persistent handler — handles all steps, never re-bound

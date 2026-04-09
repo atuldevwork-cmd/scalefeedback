@@ -16,19 +16,16 @@ export class AnnotationCanvas {
       selection: true,
     });
 
-    // Set screenshot as background using COVER scaling:
-    // use a single uniform scale (the larger of the two axes) so the image
-    // fills the entire canvas without distortion or gray bars.
-    fabric.Image.fromURL(screenshotDataUrl, (img) => {
-      const scale = Math.max(
-        this.canvas.width!  / (img.width  || 1),
-        this.canvas.height! / (img.height || 1),
-      );
-      this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
-        scaleX: scale,
-        scaleY: scale,
+    // Canvas is sized to the screenshot dimensions (marker.io approach),
+    // so the background is always 1:1 — no scaling needed.
+    if (screenshotDataUrl) {
+      fabric.Image.fromURL(screenshotDataUrl, (img) => {
+        this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
+          scaleX: 1,
+          scaleY: 1,
+        });
       });
-    });
+    }
 
     // Configure freehand brush
     this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
