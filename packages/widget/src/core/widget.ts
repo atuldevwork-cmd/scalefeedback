@@ -365,17 +365,24 @@ export class ScaleFeedbackWidget {
 
     const area = canvasEl.parentElement as HTMLElement;
 
-    // Canvas fills the full available area — screenshot stretches to cover (marker.io style)
-    const areaW = area.clientWidth || window.innerWidth;
-    const areaH = area.clientHeight || (window.innerHeight - 52);
+    // Use requestAnimationFrame so the shadow DOM layout is computed first.
+    // Without this, area.clientWidth/clientHeight return 0 and the canvas buffer
+    // gets sized to window.innerWidth — larger than its CSS 100% display size,
+    // causing content to appear squished.
+    requestAnimationFrame(() => {
+      const areaW = area.clientWidth;
+      const areaH = area.clientHeight;
+      if (!areaW || !areaH) return;
 
-    canvasEl.width = areaW;
-    canvasEl.height = areaH;
-    canvasEl.style.width = areaW + 'px';
-    canvasEl.style.height = areaH + 'px';
+      // Set the canvas BUFFER to exactly match its CSS-rendered container size.
+      // The CSS already sets width/height to 100% — we do NOT set inline styles
+      // here or they'll fight the CSS and cause a mismatch.
+      canvasEl.width = areaW;
+      canvasEl.height = areaH;
 
-    this.annotationCanvas = new AnnotationCanvas(canvasEl, this.screenshotDataUrl);
-    this.annotationCanvas.setTool(this.currentTool);
+      this.annotationCanvas = new AnnotationCanvas(canvasEl, this.screenshotDataUrl);
+      this.annotationCanvas.setTool(this.currentTool);
+    });
   }
 
   // Single persistent handler — handles all steps, never re-bound

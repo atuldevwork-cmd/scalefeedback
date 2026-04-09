@@ -16,11 +16,17 @@ export class AnnotationCanvas {
       selection: true,
     });
 
-    // Set screenshot as background
+    // Set screenshot as background using COVER scaling:
+    // use a single uniform scale (the larger of the two axes) so the image
+    // fills the entire canvas without distortion or gray bars.
     fabric.Image.fromURL(screenshotDataUrl, (img) => {
+      const scale = Math.max(
+        this.canvas.width!  / (img.width  || 1),
+        this.canvas.height! / (img.height || 1),
+      );
       this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
-        scaleX: this.canvas.width! / (img.width || 1),
-        scaleY: this.canvas.height! / (img.height || 1),
+        scaleX: scale,
+        scaleY: scale,
       });
     });
 
