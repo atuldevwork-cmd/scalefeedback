@@ -1,28 +1,60 @@
 import html2canvas from 'html2canvas';
 
+const IGNORE_ATTR = 'data-html2canvas-ignore';
+
+/**
+ * Elements with a large CSS blur filter (e.g. filter:blur(200px)) are purely
+ * decorative background glows. html2canvas cannot render high-radius blurs
+ * correctly — it renders them as solid/harsh colored shapes instead of soft
+ * glows, tinting every section with unwanted colors.
+ *
+ * Fix: temporarily mark those elements with data-html2canvas-ignore so
+ * html2canvas skips them entirely. The background becomes clean/neutral,
+ * which matches the real page far better than a distorted blob.
+ */
+function disableLargeBlurElements(): Element[] {
+  const ignored: Element[] = [];
+
+  document.querySelectorAll<HTMLElement>('*').forEach((el) => {
+    // Skip invisible / already-ignored elements
+    if (el.hasAttribute(IGNORE_ATTR)) return;
+
+    const filter = window.getComputedStyle(el).filter;
+    if (!filter || filter === 'none') return;
+
+    const match = filter.match(/blur\(([\d.]+)px\)/);
+    if (match && parseFloat(match[1]) > 40) {
+      el.setAttribute(IGNORE_ATTR, 'true');
+      ignored.push(el);
+    }
+  });
+
+  // Also inject a <style> that hides ::before/::after pseudo-elements whose
+  // parent has a large blur — we can't read pseudo computed styles in JS,
+  // so we hide ALL decorative pseudo-elements to keep backgrounds clean.
+  const style = document.createElement('style');
+  style.id = 'sf-pseudo-override';
+  style.textContent =
+    '*, *::before, *::after { backdrop-filter: none !important; }' +
+    '*::before, *::after { opacity: 0 !important; }';
+  document.head.appendChild(style);
+
+  return ignored;
+}
+
+function restoreLargeBlurElements(els: Element[]) {
+  els.forEach((el) => el.removeAttribute(IGNORE_ATTR));
+  document.getElementById('sf-pseudo-override')?.remove();
+}
+
 export async function captureScreenshot(ignoreElementId: string): Promise<string> {
   const widgetHost = document.getElementById(ignoreElementId);
   if (widgetHost) widgetHost.style.setProperty('display', 'none', 'important');
 
-  // --- Disable CSS blur filters -----------------------------------------------
-  // html2canvas cannot render CSS filter:blur() — it renders the element without
-  // the blur, causing background blobs / glows to appear as harsh solid shapes.
-  // Fix: inject a <style> that strips ALL filters from every element and
-  // pseudo-element for the duration of the capture, then remove it.
-  const filterOverride = document.createElement('style');
-  filterOverride.id = 'sf-filter-override';
-  filterOverride.textContent =
-    '*, *::before, *::after { filter: none !important; backdrop-filter: none !important; }';
-  document.head.appendChild(filterOverride);
+  // Hide elements that html2canvas can't render correctly (large blur filters)
+  const blurEls = disableLargeBlurElements();
 
-  // Also handle elements with inline filter styles
-  const inlineFiltered: { el: HTMLElement; original: string }[] = [];
-  document.querySelectorAll<HTMLElement>('[style*="filter"]').forEach((el) => {
-    inlineFiltered.push({ el, original: el.style.filter });
-    el.style.setProperty('filter', 'none', 'important');
-  });
-
-  // Small pause so the browser repaints without filters before capture
+  // Let the browser repaint without those elements
   await new Promise((r) => setTimeout(r, 80));
 
   try {
@@ -50,12 +82,7 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
 
     return out.toDataURL('image/png');
   } finally {
-    // Restore everything
-    filterOverride.remove();
-    inlineFiltered.forEach(({ el, original }) => {
-      if (original) el.style.filter = original;
-      else el.style.removeProperty('filter');
-    });
+    restoreLargeBlurElements(blurEls);
     if (widgetHost) widgetHost.style.removeProperty('display');
   }
 }
