@@ -16,13 +16,17 @@ export class AnnotationCanvas {
       selection: true,
     });
 
-    // Canvas is sized to the screenshot dimensions (marker.io approach),
-    // so the background is always 1:1 — no scaling needed.
+    // COVER scaling: one uniform scale so the screenshot fills the entire
+    // canvas without distortion or gray bars (may crop a few px at bottom).
     if (screenshotDataUrl) {
       fabric.Image.fromURL(screenshotDataUrl, (img) => {
+        const scale = Math.max(
+          this.canvas.width!  / (img.width  || 1),
+          this.canvas.height! / (img.height || 1),
+        );
         this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
-          scaleX: 1,
-          scaleY: 1,
+          scaleX: scale,
+          scaleY: scale,
         });
       });
     }

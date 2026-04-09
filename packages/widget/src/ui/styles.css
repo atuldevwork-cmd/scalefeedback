@@ -148,17 +148,18 @@
   z-index: 1;
 }
 
-/* Canvas area is scrollable — canvas is sized to the screenshot, not the container */
+/* Canvas area fills remaining space; canvas scales to fit */
 .sf-annotate-canvas-area {
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   min-height: 0;
   position: relative;
-  background: #555;
 }
 
 .sf-annotate-canvas-area canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Divider in toolbar */

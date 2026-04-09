@@ -7,31 +7,36 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
     widgetHost.style.setProperty('display', 'none', 'important');
   }
 
-  // Small pause so the browser paints the page without the widget
   await new Promise((r) => setTimeout(r, 60));
 
   try {
-    // Capture the visible viewport at 1:1 CSS pixel scale (same as marker.io).
-    // scale:1 means canvas pixel = CSS pixel, so the output dimensions exactly
-    // match the viewport — no stretching in the annotation canvas.
-    const canvas = await html2canvas(document.body, {
-      x: window.scrollX,
-      y: window.scrollY,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      scrollX: -window.scrollX,
-      scrollY: -window.scrollY,
-      scale: 1,
+    // Step 1: capture the FULL document at 1:1 scale (no x/y/scroll options —
+    // those have confusing interactions in html2canvas and cause wrong-section bugs).
+    const fullCanvas = await html2canvas(document.body, {
       useCORS: true,
       allowTaint: true,
-      windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight,
+      scale: 1,
       logging: false,
       ignoreElements: (el) =>
         el.id === ignoreElementId || el.id === 'sf-body-loading-overlay',
     });
 
-    return canvas.toDataURL('image/png');
+    // Step 2: manually crop to the visible viewport.
+    // At scale:1 the coordinates are exactly CSS pixels, so scrollX/scrollY
+    // map directly to pixel offsets in the full-document canvas.
+    const out = document.createElement('canvas');
+    out.width  = window.innerWidth;
+    out.height = window.innerHeight;
+    const ctx  = out.getContext('2d')!;
+    ctx.drawImage(
+      fullCanvas,
+      window.scrollX, window.scrollY,           // source: viewport top-left
+      window.innerWidth, window.innerHeight,     // source: viewport size
+      0, 0,                                      // dest: top-left of output
+      window.innerWidth, window.innerHeight      // dest: full output (1:1)
+    );
+
+    return out.toDataURL('image/png');
   } finally {
     if (widgetHost) {
       widgetHost.style.removeProperty('display');
