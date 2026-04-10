@@ -50,9 +50,9 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl }: P
   function doDelete() {
     if (!confirmDeleteId) return;
     const id = confirmDeleteId;
-    setConfirmDeleteId(null);
     startDeleteTransition(async () => {
       await fetch(`/api/feedback/${id}`, { method: 'DELETE' });
+      setConfirmDeleteId(null);
       toast('Feedback deleted');
       router.refresh();
     });
