@@ -8,6 +8,7 @@ import { submitFeedback } from './api';
 import widgetStyles from '../ui/styles.css?inline';
 
 const HOST_ID = 'scalefeedback-widget';
+const SF_GUEST_KEY = 'sf_guest_identity';
 
 type Step = 'annotate' | 'form' | 'submitting' | 'success';
 
@@ -21,6 +22,7 @@ export class ScaleFeedbackWidget {
   private feedbackType: FeedbackType = 'bug';
   private isOpen = false;
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
+  private guestIdentityOverride = false; // true when user clicked "Change"
 
   constructor(config: WidgetConfig) {
     this.config = config;
@@ -276,6 +278,20 @@ export class ScaleFeedbackWidget {
     `;
   }
 
+  private getGuestIdentity(): { name: string; email: string } | null {
+    try {
+      const raw = localStorage.getItem(SF_GUEST_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed?.name && parsed?.email) return parsed;
+    } catch { /* ignore */ }
+    return null;
+  }
+
+  private saveGuestIdentity(name: string, email: string) {
+    try { localStorage.setItem(SF_GUEST_KEY, JSON.stringify({ name, email })); } catch { /* ignore */ }
+  }
+
   private renderFormStep(): string {
     return `
       ${this.renderHeader('Share Feedback')}
@@ -317,18 +333,30 @@ export class ScaleFeedbackWidget {
         </div>
 
         ${this.config.guestReporting ? (() => {
-          // If the host app has pre-identified the user, hide the fields entirely
+          // Host app has pre-identified the user — no fields needed
           if (this.config.user) return '';
-          // Otherwise name + email are required — the reporter must identify themselves
+          const saved = this.getGuestIdentity();
+          // Saved identity exists and user hasn't requested to change it
+          if (saved && !this.guestIdentityOverride) {
+            return `
+            <div style="display:flex;align-items:center;gap:6px;padding:10px 12px;background:#f5f3ff;border-radius:8px;font-size:13px;color:#4b5563">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2.5" style="flex-shrink:0"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span style="flex:1">Submitting as <strong>${saved.name}</strong> &middot; <span style="color:#6b7280">${saved.email}</span></span>
+              <button data-action="change-identity" style="background:none;border:none;cursor:pointer;color:#7c3aed;font-size:12px;font-weight:600;padding:0;text-decoration:underline">Change</button>
+            </div>
+            <input type="hidden" id="sf-name" value="${saved.name}" />
+            <input type="hidden" id="sf-email" value="${saved.email}" />`;
+          }
+          // No saved identity (or user clicked Change) — show input fields
           return `
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="sf-field">
               <label class="sf-label" for="sf-name">Your name <span style="color:#dc2626">*</span></label>
-              <input id="sf-name" class="sf-input" type="text" placeholder="Jane Smith" required />
+              <input id="sf-name" class="sf-input" type="text" placeholder="Jane Smith" value="${this.guestIdentityOverride && saved ? saved.name : ''}" required />
             </div>
             <div class="sf-field">
               <label class="sf-label" for="sf-email">Email <span style="color:#dc2626">*</span></label>
-              <input id="sf-email" class="sf-input" type="email" placeholder="jane@company.com" required />
+              <input id="sf-email" class="sf-input" type="email" placeholder="jane@company.com" value="${this.guestIdentityOverride && saved ? saved.email : ''}" required />
             </div>
           </div>`;
         })() : ''}
@@ -421,6 +449,7 @@ export class ScaleFeedbackWidget {
     if (this.step === 'form') {
       if (action === 'back') { this.step = 'annotate'; this.renderModal(); return; }
       if (action === 'submit') { void this.handleSubmit(); return; }
+      if (action === 'change-identity') { this.guestIdentityOverride = true; this.renderModal(); return; }
       if (typeBtn) {
         this.feedbackType = typeBtn;
         this.shadowRoot.querySelectorAll('[data-type]').forEach((btn) => {
@@ -507,6 +536,12 @@ export class ScaleFeedbackWidget {
       ConsoleCapture.clear();
       NetworkCapture.clear();
 
+      // Persist guest identity so they aren't asked again in this browser
+      if (this.config.guestReporting && !this.config.user && name && email) {
+        this.saveGuestIdentity(name, email);
+        this.guestIdentityOverride = false;
+      }
+
       this.config.onSubmit?.({ type: this.feedbackType, title, description });
 
       this.step = 'success';
@@ -566,6 +601,7 @@ export class ScaleFeedbackWidget {
     this.annotationCanvas = null;
     this.isOpen = false;
     this.screenshotDataUrl = '';
+    this.guestIdentityOverride = false;
     // Reset FAB state
     const fab = this.shadowRoot.querySelector<HTMLButtonElement>('.sf-fab');
     if (fab) { fab.disabled = false; fab.style.opacity = ''; }
