@@ -546,6 +546,7 @@ export class ScaleFeedbackWidget {
 
       this.step = 'success';
       this.renderModal();
+      setTimeout(() => { if (this.step === 'success') this.closeWidget(); }, 3000);
     } catch (err) {
       if (errorEl) {
         errorEl.textContent = err instanceof Error ? err.message : 'Submission failed. Please try again.';
