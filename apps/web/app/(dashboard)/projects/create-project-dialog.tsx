@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { Spinner } from '@/components/ui/spinner';
 
 export function CreateProjectDialog() {
@@ -12,7 +11,6 @@ export function CreateProjectDialog() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const supabase = createClient();
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -22,29 +20,15 @@ export function CreateProjectDialog() {
     setError('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, domain }),
+      });
 
-      const { data: member } = await supabase
-        .from('members')
-        .select('organisation_id')
-        .eq('user_id', user.id)
-        .single();
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Something went wrong');
 
-      if (!member) throw new Error('No organisation found');
-
-      const { error: insertError } = await supabase
-        .from('projects')
-        .insert({
-          name: name.trim(),
-          domain: domain.trim() || null,
-          organisation_id: member.organisation_id,
-        });
-
-      if (insertError) throw insertError;
-
-      // Brief pause so user sees the success state before close
-      await new Promise((r) => setTimeout(r, 600));
       setOpen(false);
       setName('');
       setDomain('');
@@ -68,7 +52,7 @@ export function CreateProjectDialog() {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-[#300a46]/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-[#300a46]/30 backdrop-blur-sm" onClick={() => !loading && setOpen(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 border border-gray-100 overflow-hidden">
 
             {/* Loading overlay */}

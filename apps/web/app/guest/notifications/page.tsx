@@ -21,5 +21,5 @@ export default async function GuestNotificationsPage() {
     .eq('user_id', user.id)
     .eq('is_read', false);
 
-  return <GuestNotificationsClient notifications={data ?? []} />;
+  return <GuestNotificationsClient notifications={data ?? []} userEmail={user.email ?? undefined} />;
 }

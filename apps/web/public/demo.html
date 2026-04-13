@@ -86,7 +86,35 @@
     .card p { color: #6b7280; font-size: 0.9rem; line-height: 1.6; }
 
     /* Pricing */
-    .pricing { background: #f8f5ff; padding: 80px 48px; }
+    .pricing {
+    background: transparent;
+    padding: 80px 48px;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+.pricing:before {
+    background: #fff;
+    filter: blur(200px);
+    left: 198px;
+    opacity: .5;
+    top: -229px;
+    z-index: 3;
+}
+.pricing:after {
+    background-color: #ff724f;
+    border-radius: 100vw;
+    filter: blur(200px);
+    opacity: .2;
+    right: -183px;
+    top: -183px;
+}
+.pricing:after, .pricing:before {
+    content: "";
+    height: 703px;
+    position: absolute;
+    width: 703px;
+}
     .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; max-width: 720px; margin: 0 auto; }
     .pricing-card {
       background: #fff; border-radius: 20px; padding: 36px;
