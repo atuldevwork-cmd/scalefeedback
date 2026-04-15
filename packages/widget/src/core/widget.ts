@@ -323,12 +323,12 @@ export class ScaleFeedbackWidget {
         </div>
 
         <div class="sf-field">
-          <label class="sf-label" for="sf-title">Title <span style="color:#6b5b8a;font-weight:400">(optional)</span></label>
+          <label class="sf-label" for="sf-title">Title <span style="color:#dc2626">*</span></label>
           <input id="sf-title" class="sf-input" type="text" placeholder="Brief summary…" />
         </div>
 
         <div class="sf-field">
-          <label class="sf-label" for="sf-description">Description</label>
+          <label class="sf-label" for="sf-description">Description <span style="color:#6b5b8a;font-weight:400">(optional)</span></label>
           <textarea id="sf-description" class="sf-textarea" placeholder="What happened? What did you expect?"></textarea>
         </div>
 
@@ -496,7 +496,7 @@ export class ScaleFeedbackWidget {
       if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
     };
 
-    if (!description) { showError('Please describe the issue.'); return; }
+    if (!title) { showError('Please enter a title.'); return; }
 
     // Name and email are required when guestReporting is on and no user is pre-set
     if (this.config.guestReporting && !this.config.user) {

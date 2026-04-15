@@ -19,12 +19,13 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
   }
 
-  const { data: callerMembership } = await service
+  const { data: callerRows } = await service
     .from('members')
     .select('organisation_id, role')
     .eq('user_id', user.id)
-    .limit(1)
-    .then((r) => ({ data: r.data?.[0] ?? null }));
+    .not('accepted_at', 'is', null)
+    .order('accepted_at', { ascending: false });
+  const callerMembership = callerRows?.find((m) => m.role !== 'owner') ?? callerRows?.[0] ?? null;
 
   if (!callerMembership) return NextResponse.json({ error: 'Not a member' }, { status: 403 });
   if (!['owner', 'admin'].includes(callerMembership.role)) {
@@ -59,13 +60,15 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
-  // Get the caller's membership
-  const { data: callerRows } = await service
+  // Get the caller's membership — mirror the same org-selection logic as the page:
+  // filter to accepted memberships, prefer non-owner (invited admin) over owned org
+  const { data: callerDeleteRows } = await service
     .from('members')
     .select('organisation_id, role')
     .eq('user_id', user.id)
-    .limit(1);
-  const callerMembership = callerRows?.[0] ?? null;
+    .not('accepted_at', 'is', null)
+    .order('accepted_at', { ascending: false });
+  const callerMembership = callerDeleteRows?.find((m) => m.role !== 'owner') ?? callerDeleteRows?.[0] ?? null;
 
   if (!callerMembership) return NextResponse.json({ error: 'Not a member' }, { status: 403 });
   if (!['owner', 'admin'].includes(callerMembership.role)) {
