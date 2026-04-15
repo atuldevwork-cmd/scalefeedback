@@ -8,10 +8,28 @@ export async function GET(
 ) {
   const { projectId } = await params;
   const supabase = await createClient();
+  const service = createServiceClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 
-  const { data, error } = await supabase
+  // Verify caller is a member of the org that owns this project
+  const { data: project } = await service
+    .from('projects')
+    .select('organisation_id')
+    .eq('id', projectId)
+    .single();
+  if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+
+  const { data: membership } = await service
+    .from('members')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('organisation_id', project.organisation_id)
+    .not('accepted_at', 'is', null)
+    .single();
+  if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { data, error } = await service
     .from('project_guests')
     .select('*')
     .eq('project_id', projectId)
@@ -30,7 +48,7 @@ export async function POST(
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
   const supabase = await createClient();
-  const service = await createServiceClient();
+  const service = createServiceClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
 

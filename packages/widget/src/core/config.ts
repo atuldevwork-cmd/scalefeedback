@@ -17,11 +17,8 @@ function getScriptTag(): HTMLScriptElement {
  */
 function getTokenViaIframe(apiBaseUrl: string): Promise<string | null> {
   return new Promise((resolve) => {
-    console.log('[ScaleFeedback] Starting session bridge iframe →', `${apiBaseUrl}/api/widget-session`);
-
     // Timeout after 5 s — if the iframe doesn't respond, continue without auth
     const timer = setTimeout(() => {
-      console.warn('[ScaleFeedback] Session bridge timed out — iframe may be blocked by page CSP');
       cleanup(); resolve(null);
     }, 5000);
 
@@ -31,14 +28,10 @@ function getTokenViaIframe(apiBaseUrl: string): Promise<string | null> {
     iframe.style.cssText =
       'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;border:none;top:-9999px;left:-9999px;';
 
-    iframe.onerror = () => {
-      console.error('[ScaleFeedback] Session bridge iframe failed to load');
-      cleanup(); resolve(null);
-    };
+    iframe.onerror = () => { cleanup(); resolve(null); };
 
     function onMessage(ev: MessageEvent) {
       if (ev.data?.type === 'sf-session') {
-        console.log('[ScaleFeedback] Session bridge received token:', ev.data.token ? 'found' : 'null');
         cleanup();
         resolve((ev.data.token as string | null) ?? null);
       }
@@ -89,9 +82,6 @@ export async function parseConfig(): Promise<WidgetConfig> {
       // If the API returned a logged-in user, it overrides everything
       if (remote.user?.name && remote.user?.email) {
         presetUser = remote.user as { name: string; email: string };
-        console.log('[ScaleFeedback] User auto-identified:', remote.user.email);
-      } else {
-        console.log('[ScaleFeedback] No logged-in user returned from config API');
       }
 
       return {

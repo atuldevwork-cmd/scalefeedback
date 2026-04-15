@@ -13,12 +13,28 @@ export async function DELETE(
 
   const service = createServiceClient();
 
-  // Fetch external_id + project_id before deleting so we can clean up ClickUp
+  // Fetch feedback + project to verify ownership before deleting with service client
   const { data: feedback } = await service
     .from('feedback')
-    .select('external_id, project_id')
+    .select('external_id, project_id, projects(organisation_id)')
     .eq('id', feedbackId)
     .single();
+
+  if (!feedback) return NextResponse.json({ error: 'Feedback not found' }, { status: 404 });
+
+  const orgId = (feedback.projects as unknown as { organisation_id: string } | null)?.organisation_id;
+  if (orgId) {
+    const { data: membership } = await service
+      .from('members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('organisation_id', orgId)
+      .not('accepted_at', 'is', null)
+      .single();
+    if (!membership || !['owner', 'admin'].includes(membership.role)) {
+      return NextResponse.json({ error: 'Only owners and admins can delete feedback' }, { status: 403 });
+    }
+  }
 
   // Delete from ScaleFeedback
   const { error } = await service.from('feedback').delete().eq('id', feedbackId);

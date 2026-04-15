@@ -27,6 +27,9 @@ supabase/.branches
 supabase/.temp
 supabase/.env
 
+# Local dev / test files — not for production
+apps/web/public/demo.html
+
 # Misc
 .DS_Store
 *.pem
