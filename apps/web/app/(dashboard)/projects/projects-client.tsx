@@ -173,47 +173,47 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
-        {/* Active / Archived tabs */}
-        <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5">
-          <button
-            onClick={() => setTab('active')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-              tab === 'active'
-                ? 'bg-white text-[#300a46] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Active
-            <span
-              className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
-                tab === 'active' ? 'bg-[#ff724f] text-white' : 'bg-gray-200 text-gray-500'
+      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm mb-5 flex items-center px-4 gap-0 overflow-hidden">
+        {/* Active / Archived underline tabs */}
+        <div className="flex items-center shrink-0">
+          {([
+            { value: 'active' as TabFilter,   label: 'Active',   count: activeCount },
+            { value: 'archived' as TabFilter, label: 'Archived', count: archivedCount },
+          ] as const).map(({ value, label, count }) => (
+            <button
+              key={value}
+              onClick={() => setTab(value)}
+              className={`relative flex items-center gap-2 px-4 py-3.5 text-sm font-semibold transition-colors ${
+                tab === value
+                  ? 'text-[#300a46]'
+                  : 'text-gray-400 hover:text-gray-600'
               }`}
             >
-              {activeCount}
-            </span>
-          </button>
-          <button
-            onClick={() => setTab('archived')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-              tab === 'archived'
-                ? 'bg-white text-[#300a46] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Archived
-            <span
-              className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${
-                tab === 'archived' ? 'bg-gray-500 text-white' : 'bg-gray-200 text-gray-500'
-              }`}
-            >
-              {archivedCount}
-            </span>
-          </button>
+              {label}
+              <span
+                className={`text-[11px] font-bold min-w-[20px] text-center px-1.5 py-0.5 rounded-full transition-colors ${
+                  tab === value
+                    ? value === 'active'
+                      ? 'bg-[#fff3f0] text-[#ff724f]'
+                      : 'bg-gray-100 text-gray-600'
+                    : 'bg-gray-100 text-gray-400'
+                }`}
+              >
+                {count}
+              </span>
+              {/* Active underline indicator */}
+              {tab === value && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ff724f] rounded-t-full" />
+              )}
+            </button>
+          ))}
         </div>
 
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-100 mx-2 shrink-0" />
+
         {/* Search */}
-        <div className="relative flex-1 max-w-xs">
+        <div className="relative flex-1">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[16px] pointer-events-none">
             search
           </span>
@@ -222,32 +222,40 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search projects…"
-            className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all bg-white"
+            className="w-full bg-transparent pl-9 pr-4 py-3.5 text-sm placeholder:text-gray-400 focus:outline-none text-gray-700"
           />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
+            </button>
+          )}
         </div>
 
-        <div className="flex-1" />
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-100 mx-2 shrink-0" />
 
         {/* Grid / List toggle */}
-        <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5">
-          <button
-            onClick={() => setView('grid')}
-            title="Grid view"
-            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
-              view === 'grid' ? 'bg-white shadow-sm text-[#300a46]' : 'text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">grid_view</span>
-          </button>
-          <button
-            onClick={() => setView('list')}
-            title="List view"
-            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
-              view === 'list' ? 'bg-white shadow-sm text-[#300a46]' : 'text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[18px]">list</span>
-          </button>
+        <div className="flex items-center gap-0.5 shrink-0 py-2">
+          {([
+            { value: 'grid' as ViewMode, icon: 'grid_view',  title: 'Grid view' },
+            { value: 'list' as ViewMode, icon: 'view_agenda', title: 'List view' },
+          ] as const).map(({ value, icon, title }) => (
+            <button
+              key={value}
+              onClick={() => setView(value)}
+              title={title}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                view === value
+                  ? 'bg-[#fff3f0] text-[#ff724f]'
+                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">{icon}</span>
+            </button>
+          ))}
         </div>
       </div>
 
