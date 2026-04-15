@@ -435,6 +435,9 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
         {/* Right: metadata panel */}
         <div className="space-y-4">
+          {/* ClickUp task — top of sidebar when linked */}
+          {clickupTask && <ClickUpTaskPanel task={clickupTask} />}
+
           {/* Status */}
           <div className="bg-card border border-border rounded-xl p-5">
             <h2 className="text-sm font-semibold text-foreground mb-3">Status</h2>
@@ -470,9 +473,6 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
           {/* Environment */}
           <EnvironmentPanel feedback={feedback} />
-
-          {/* ClickUp task */}
-          {clickupTask && <ClickUpTaskPanel task={clickupTask} />}
 
           {/* Timeline */}
           <div className="bg-card border border-border rounded-xl p-5">
