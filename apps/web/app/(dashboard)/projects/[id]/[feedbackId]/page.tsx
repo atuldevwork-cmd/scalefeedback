@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { formatDate } from '@/lib/utils';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured, MOCK_PROJECTS, MOCK_FEEDBACK } from '@/lib/mock-data';
 import { FeedbackStatusBadge } from '@/components/feedback-status-badge';
