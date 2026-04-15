@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { writeAuditLog } from '@/lib/audit';
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -37,6 +38,15 @@ export async function POST(req: Request) {
     .single();
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
+
+  writeAuditLog(service, {
+    organisation_id: member.organisation_id,
+    actor_id: user.id,
+    action: 'project.created',
+    target_type: 'project',
+    target_id: project.id,
+    details: { name: project.name, domain: project.domain ?? null },
+  });
 
   return NextResponse.json({ project }, { status: 201 });
 }

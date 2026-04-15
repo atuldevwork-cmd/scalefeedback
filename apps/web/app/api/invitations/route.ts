@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/mock-data';
 import { Resend } from 'resend';
+import { writeAuditLog } from '@/lib/audit';
 
 export async function POST(req: NextRequest) {
   const { email, role } = await req.json();
@@ -46,6 +47,16 @@ export async function POST(req: NextRequest) {
   );
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const service = createServiceClient();
+  writeAuditLog(service, {
+    organisation_id: membership.organisation_id,
+    actor_id: user.id,
+    action: 'member.invited',
+    target_type: 'invitation',
+    target_id: email,
+    details: { email, role },
+  });
 
   // Send invite email if Resend configured
   const resendKey = process.env.RESEND_API_KEY;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { Resend } from 'resend';
+import { writeAuditLog } from '@/lib/audit';
 
 const VALID_ROLES = ['admin', 'member'];
 
@@ -44,6 +45,15 @@ export async function PATCH(
 
   const { error } = await service.from('members').update({ role }).eq('id', memberId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  writeAuditLog(service, {
+    organisation_id: callerMembership.organisation_id,
+    actor_id: user.id,
+    action: 'member.role_changed',
+    target_type: 'member',
+    target_id: memberId,
+    details: { previous_role: target.role, new_role: role },
+  });
 
   return NextResponse.json({ success: true });
 }
@@ -110,6 +120,15 @@ export async function DELETE(
   // Remove the member
   const { error } = await service.from('members').delete().eq('id', memberId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  writeAuditLog(service, {
+    organisation_id: callerMembership.organisation_id,
+    actor_id: user.id,
+    action: 'member.removed',
+    target_type: 'member',
+    target_id: memberId,
+    details: { removed_email: targetEmail ?? null, removed_role: target.role },
+  });
 
   // Send removal email if Resend configured
   const resendKey = process.env.RESEND_API_KEY;
