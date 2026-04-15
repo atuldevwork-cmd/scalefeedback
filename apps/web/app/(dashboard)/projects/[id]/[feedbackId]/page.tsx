@@ -10,6 +10,7 @@ import { AssignSelect } from './assign-select';
 import { CommentThread } from './comment-thread';
 import { ScreenshotLightbox } from '@/components/screenshot-lightbox';
 import { ClickUpTaskPanel } from './clickup-task-panel';
+import { TimelinePanel } from './timeline-panel';
 import type { Feedback, Project } from '@scalefeedback/shared';
 
 type ClickUpTaskData = {
@@ -475,15 +476,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
           <EnvironmentPanel feedback={feedback} />
 
           {/* Timeline */}
-          <div className="bg-card border border-border rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-foreground mb-3">Timeline</h2>
-            <dl className="space-y-2 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Submitted</dt>
-                <dd className="font-medium text-foreground">{formatDate(feedback.created_at)}</dd>
-              </div>
-            </dl>
-          </div>
+          <TimelinePanel createdAt={feedback.created_at} updatedAt={feedback.updated_at} />
         </div>
       </div>
     </div>
