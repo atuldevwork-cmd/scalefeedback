@@ -5,6 +5,7 @@ import { isSupabaseConfigured, MOCK_PROJECTS } from '@/lib/mock-data';
 import { WidgetInstallSnippet } from './widget-install-snippet';
 import { ProjectSettingsForm } from './project-settings-form';
 import { DeleteProjectButton } from './delete-project-button';
+import { ArchiveProjectButton } from './archive-project-button';
 import { IntegrationsPanel } from './integrations-panel';
 import { GuestsPanel } from './guests-panel';
 import { ButtonPanel } from './button-panel';
@@ -117,10 +118,40 @@ export default async function ProjectSettingsPage({ params }: Props) {
         {canManage && (
           <div className="bg-card border border-red-200 rounded-xl p-6">
             <h2 className="font-semibold text-red-700 mb-1">Danger Zone</h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              Permanently delete this project and all its feedback.
-            </p>
-            <DeleteProjectButton projectId={project.id} projectName={project.name} />
+
+            {/* Archive / Restore */}
+            <div className="flex items-start justify-between gap-4 py-4 border-b border-gray-100">
+              <div>
+                <p className="text-sm font-medium text-gray-800">
+                  {project.is_active ? 'Archive project' : 'Restore project'}
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  {project.is_active
+                    ? 'Hide this project and pause feedback collection. All data is kept and it can be restored anytime.'
+                    : 'Reactivate this project so it appears in the active list and accepts feedback again.'}
+                </p>
+              </div>
+              <div className="shrink-0">
+                <ArchiveProjectButton
+                  projectId={project.id}
+                  projectName={project.name}
+                  isActive={project.is_active}
+                />
+              </div>
+            </div>
+
+            {/* Delete */}
+            <div className="flex items-start justify-between gap-4 pt-4">
+              <div>
+                <p className="text-sm font-medium text-gray-800">Delete project</p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Permanently delete this project and all its feedback. This cannot be undone.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <DeleteProjectButton projectId={project.id} projectName={project.name} />
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import type { Project } from '@scalefeedback/shared';
 import { CreateProjectDialog } from './create-project-dialog';
+import { useToast } from '@/components/ui/toast';
 
 type ViewMode = 'grid' | 'list';
 type TabFilter = 'active' | 'archived';
@@ -32,67 +35,101 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
-function GridCard({ project }: { project: Project }) {
+function GridCard({ project, onRestore }: { project: Project; onRestore: (id: string) => void }) {
   return (
-    <Link
-      href={`/projects/${project.id}`}
-      className="group bg-white border border-gray-100 rounded-2xl p-5 hover:shadow-card-hover hover:border-[#ff724f]/20 transition-all"
-    >
-      <div className="flex items-start justify-between mb-4">
-        <ProjectAvatar project={project} />
-        <StatusBadge isActive={project.is_active} />
-      </div>
+    <div className="relative group">
+      <Link
+        href={`/projects/${project.id}`}
+        className={`block bg-white border rounded-2xl p-5 hover:shadow-card-hover transition-all ${
+          project.is_active
+            ? 'border-gray-100 hover:border-[#ff724f]/20'
+            : 'border-gray-100 opacity-70 hover:opacity-100'
+        }`}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <ProjectAvatar project={project} />
+          <StatusBadge isActive={project.is_active} />
+        </div>
 
-      <h3 className="font-semibold text-[#300a46] text-sm group-hover:text-[#ff724f] transition-colors font-heading">
-        {project.name}
-      </h3>
-      {project.domain && (
-        <p className="text-xs text-gray-400 mt-0.5 truncate">{project.domain}</p>
+        <h3 className="font-semibold text-[#300a46] text-sm group-hover:text-[#ff724f] transition-colors font-heading">
+          {project.name}
+        </h3>
+        {project.domain && (
+          <p className="text-xs text-gray-400 mt-0.5 truncate">{project.domain}</p>
+        )}
+
+        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+          <code className="text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg truncate flex-1">
+            {project.api_key}
+          </code>
+          <span className="text-[11px] text-gray-400 shrink-0">{formatDate(project.created_at)}</span>
+        </div>
+      </Link>
+
+      {/* Restore button shown on archived cards */}
+      {!project.is_active && (
+        <button
+          onClick={() => onRestore(project.id)}
+          className="absolute bottom-4 right-4 flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors"
+        >
+          <span className="material-symbols-outlined text-[13px]">unarchive</span>
+          Restore
+        </button>
       )}
-
-      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
-        <code className="text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg truncate flex-1">
-          {project.api_key}
-        </code>
-        <span className="text-[11px] text-gray-400 shrink-0">{formatDate(project.created_at)}</span>
-      </div>
-    </Link>
+    </div>
   );
 }
 
-function ListRow({ project }: { project: Project }) {
+function ListRow({ project, onRestore }: { project: Project; onRestore: (id: string) => void }) {
   return (
-    <Link
-      href={`/projects/${project.id}`}
-      className="group flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors border-b border-gray-50 last:border-0"
-    >
-      <ProjectAvatar project={project} />
+    <div className={`flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors border-b border-gray-50 last:border-0 ${!project.is_active ? 'opacity-70 hover:opacity-100' : ''}`}>
+      <Link
+        href={`/projects/${project.id}`}
+        className="flex items-center gap-4 flex-1 min-w-0 group"
+      >
+        <ProjectAvatar project={project} />
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-[#300a46] group-hover:text-[#ff724f] transition-colors truncate font-heading">
-          {project.name}
-        </p>
-        {project.domain && (
-          <p className="text-xs text-gray-400 truncate">{project.domain}</p>
-        )}
-      </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[#300a46] group-hover:text-[#ff724f] transition-colors truncate font-heading">
+            {project.name}
+          </p>
+          {project.domain && (
+            <p className="text-xs text-gray-400 truncate">{project.domain}</p>
+          )}
+        </div>
 
-      <code className="hidden md:block text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg truncate max-w-[180px]">
-        {project.api_key}
-      </code>
+        <code className="hidden md:block text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg truncate max-w-[180px]">
+          {project.api_key}
+        </code>
 
-      <StatusBadge isActive={project.is_active} />
+        <StatusBadge isActive={project.is_active} />
 
-      <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{formatDate(project.created_at)}</span>
+        <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{formatDate(project.created_at)}</span>
 
-      <span className="material-symbols-outlined text-gray-300 group-hover:text-[#ff724f] text-[18px] transition-colors shrink-0">
-        chevron_right
-      </span>
-    </Link>
+        <span className="material-symbols-outlined text-gray-300 group-hover:text-[#ff724f] text-[18px] transition-colors shrink-0">
+          chevron_right
+        </span>
+      </Link>
+
+      {/* Restore button for archived rows */}
+      {!project.is_active && (
+        <button
+          onClick={() => onRestore(project.id)}
+          className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors shrink-0"
+        >
+          <span className="material-symbols-outlined text-[13px]">unarchive</span>
+          Restore
+        </button>
+      )}
+    </div>
   );
 }
 
 export function ProjectsClient({ projects }: { projects: Project[] }) {
+  const toast = useToast();
+  const router = useRouter();
+  const supabase = createClient();
+
   const [tab, setTab] = useState<TabFilter>('active');
   const [search, setSearch] = useState('');
   const [view, setView] = useState<ViewMode>('grid');
@@ -108,6 +145,19 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
       (p.domain ?? '').toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
   });
+
+  const handleRestore = useCallback(async (projectId: string) => {
+    const { error } = await supabase
+      .from('projects')
+      .update({ is_active: true })
+      .eq('id', projectId);
+    if (error) {
+      toast(error.message, 'error');
+    } else {
+      toast('Project restored successfully.');
+      router.refresh();
+    }
+  }, [supabase, router, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-8">
@@ -220,7 +270,7 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
             {search
               ? 'Try a different name or clear the search.'
               : tab === 'archived'
-              ? 'Projects you deactivate will appear here.'
+              ? 'Projects you archive from their settings will appear here.'
               : 'Create your first project to get a widget snippet and start collecting feedback.'}
           </p>
           {!search && tab === 'active' && <CreateProjectDialog />}
@@ -228,13 +278,13 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((project) => (
-            <GridCard key={project.id} project={project} />
+            <GridCard key={project.id} project={project} onRestore={handleRestore} />
           ))}
         </div>
       ) : (
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-card">
           {filtered.map((project) => (
-            <ListRow key={project.id} project={project} />
+            <ListRow key={project.id} project={project} onRestore={handleRestore} />
           ))}
         </div>
       )}
