@@ -1,5 +1,5 @@
-import puppeteer, { type Browser } from 'puppeteer';
 import { load } from 'cheerio';
+import type { Browser } from 'puppeteer-core';
 
 export interface PageContent {
   url: string;
@@ -208,11 +208,28 @@ async function discoverUrls(browser: Browser, startUrl: string, maxPages: number
   return [...found].slice(0, maxPages);
 }
 
-export async function crawlWebsite(url: string, maxPages = 10): Promise<CrawlResult> {
-  const browser = await puppeteer.launch({
+async function launchBrowser(): Promise<Browser> {
+  if (process.env.VERCEL) {
+    // Production: use Lambda-compatible Chromium
+    const chromium = await import('@sparticuz/chromium');
+    const puppeteerCore = await import('puppeteer-core');
+    return puppeteerCore.default.launch({
+      args: chromium.default.args,
+      defaultViewport: chromium.default.defaultViewport,
+      executablePath: await chromium.default.executablePath(),
+      headless: chromium.default.headless as boolean,
+    });
+  }
+  // Local dev: use bundled Puppeteer + Chromium
+  const puppeteer = await import('puppeteer');
+  return puppeteer.default.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
+}
+
+export async function crawlWebsite(url: string, maxPages = 10): Promise<CrawlResult> {
+  const browser = await launchBrowser();
 
   try {
     let urlsToScan: string[];
