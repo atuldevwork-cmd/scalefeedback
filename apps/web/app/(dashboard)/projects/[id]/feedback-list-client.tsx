@@ -11,18 +11,58 @@ import { PriorityBadge } from '@/components/priority-badge';
 import { formatDate } from '@/lib/utils';
 import type { Feedback } from '@scalefeedback/shared';
 
+function ClickUpMark() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+      <path d="M3 14.4L5.9 12c1.5 1.8 3.1 2.7 4.8 2.7 1.7 0 3.3-.9 4.7-2.7l2.9 2.4C16.4 17 13.7 18.6 10.7 18.6c-3 0-5.7-1.6-7.7-4.2z" fill="currentColor"/>
+      <path d="M10.7 5.4L5 10.3 3 8.1 10.7 1l7.7 7.1-2 2.2-5.7-4.9z" fill="currentColor"/>
+    </svg>
+  );
+}
+
 interface Props {
   feedback: Feedback[];
   projectId: string;
   screenshotBaseUrl?: string;
+  userRole?: string | null;
+  clickupConnected?: boolean;
 }
 
-export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl }: Props) {
+export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, userRole, clickupConnected }: Props) {
   const toast = useToast();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [pushingIds, setPushingIds] = useState<Set<string>>(new Set());
+  const [pushedMap, setPushedMap] = useState<Map<string, string>>(new Map()); // feedbackId → taskUrl
+
+  const canPushClickUp = clickupConnected && (userRole === 'owner' || userRole === 'admin');
+
+  async function pushToClickUp(feedbackId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setPushingIds((prev) => new Set(prev).add(feedbackId));
+    try {
+      const res = await fetch('/api/clickup/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feedbackId }),
+      });
+      const data = await res.json() as { taskUrl?: string; error?: string };
+      if (!res.ok) {
+        toast(data.error ?? 'Failed to push to ClickUp', 'error');
+      } else {
+        setPushedMap((prev) => new Map(prev).set(feedbackId, data.taskUrl ?? ''));
+        toast('Pushed to ClickUp successfully');
+        router.refresh();
+      }
+    } catch {
+      toast('Network error — could not push to ClickUp', 'error');
+    } finally {
+      setPushingIds((prev) => { const s = new Set(prev); s.delete(feedbackId); return s; });
+    }
+  }
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -147,6 +187,12 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl }: P
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <FeedbackTypeBadge type={fb.type} />
                   <PriorityBadge priority={fb.priority} />
+                  {fb.custom_metadata?.source === 'ai-scan' && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 to-[#ff724f]/10 text-violet-600 border border-violet-200/60 shrink-0">
+                      <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+                      AI
+                    </span>
+                  )}
                   <span className="text-sm font-medium text-[#300a46] group-hover/link:text-[#ff724f] transition-colors truncate">
                     {fb.title ?? fb.page_url}
                   </span>
@@ -156,12 +202,36 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl }: P
                 </p>
               </div>
 
-              {/* Meta */}
+              {/* Meta — status badge, ClickUp indicator (if pushed), date */}
               <div className="flex flex-col items-end gap-1 shrink-0">
+                {(fb.external_id || pushedMap.has(fb.id)) && (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-[#7B68EE]">
+                    <ClickUpMark />
+                    In ClickUp
+                  </span>
+                )}
                 <FeedbackStatusBadge status={fb.status} />
                 <span className="text-xs text-gray-400">{formatDate(fb.created_at)}</span>
               </div>
             </Link>
+
+            {/* Push to ClickUp — only for unpushed AI-scan issues, owners/admins, on hover */}
+            {canPushClickUp && fb.custom_metadata?.source === 'ai-scan' &&
+             !fb.external_id && !pushedMap.has(fb.id) && (
+              <button
+                onClick={(e) => pushToClickUp(fb.id, e)}
+                disabled={pushingIds.has(fb.id)}
+                title="Push to ClickUp"
+                className="hidden group-hover:flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg text-[10px] font-semibold border border-[#7B68EE]/30 text-[#7B68EE] hover:bg-[#7B68EE]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {pushingIds.has(fb.id) ? (
+                  <span className="w-3 h-3 border border-[#7B68EE] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <ClickUpMark />
+                )}
+                {pushingIds.has(fb.id) ? 'Pushing…' : 'Push'}
+              </button>
+            )}
 
             {/* Delete button — visible on row hover */}
             <button

@@ -5,6 +5,7 @@ import { isSupabaseConfigured, MOCK_PROJECTS, MOCK_FEEDBACK } from '@/lib/mock-d
 import { FeedbackFilters } from './feedback-filters';
 import { RealtimeRefresh } from './realtime-refresh';
 import { FeedbackListClient } from './feedback-list-client';
+import { AiScanDialog } from './ai-scan-dialog';
 import type { Project, Feedback, FeedbackStatus } from '@scalefeedback/shared';
 
 interface Props {
@@ -44,6 +45,8 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
 
   let project: Pick<Project, 'id' | 'name' | 'domain'> | null = null;
   let allFeedback: Feedback[] = [];
+  let userRole: string | null = null;
+  let clickupConnected = false;
 
   if (isSupabaseConfigured()) {
     try {
@@ -56,19 +59,24 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
           .eq('id', id).single();
 
         if (proj) {
-          // Verify the user is a member of this project's org
+          // Verify the user is a member and get their role
           const { data: membership } = await service
             .from('members')
-            .select('id')
+            .select('role')
             .eq('user_id', user.id)
             .eq('organisation_id', proj.organisation_id)
             .not('accepted_at', 'is', null)
-            .limit(1);
+            .single();
 
-          if (membership && membership.length > 0) {
+          if (membership) {
+            userRole = membership.role;
             project = proj;
-            const { data } = await service.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: false });
-            allFeedback = (data ?? []) as Feedback[];
+            const [feedbackResult, clickupResult] = await Promise.all([
+              service.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+              service.from('integrations').select('id').eq('project_id', id).eq('type', 'clickup').eq('enabled', true).maybeSingle(),
+            ]);
+            allFeedback = (feedbackResult.data ?? []) as Feedback[];
+            clickupConnected = !!clickupResult.data;
           }
         }
       }
@@ -119,6 +127,7 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
           )}
         </div>
         <div className="flex items-center gap-2">
+          <AiScanDialog projectId={id} projectDomain={project.domain ?? undefined} />
           <Link
             href={`/projects/${id}/analytics`}
             className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#300a46] transition-all"
@@ -173,6 +182,8 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
         feedback={feedbackList}
         projectId={id}
         screenshotBaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/screenshots` : undefined}
+        userRole={userRole}
+        clickupConnected={clickupConnected}
       />
     </div>
   );

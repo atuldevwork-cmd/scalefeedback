@@ -9,6 +9,7 @@ import { AssignSelect } from './assign-select';
 import { CommentThread } from './comment-thread';
 import { ScreenshotLightbox } from '@/components/screenshot-lightbox';
 import { ClickUpTaskPanel } from './clickup-task-panel';
+import { ClickUpPushButton } from './clickup-push-button';
 import { TimelinePanel } from './timeline-panel';
 import type { Feedback, Project } from '@scalefeedback/shared';
 
@@ -162,6 +163,8 @@ export default async function FeedbackDetailPage({ params }: Props) {
   let resolvedComments: ResolvedComment[] = [];
   let currentUserId = '';
   let clickupTask: ClickUpTaskData | null = null;
+  let userRole: string | null = null;
+  let clickupConnected = false;
 
   if (isSupabaseConfigured()) {
     try {
@@ -178,12 +181,17 @@ export default async function FeedbackDetailPage({ params }: Props) {
         if (fb.screenshot_url) {
           screenshotPublicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/screenshots/${fb.screenshot_url}`;
         }
-        // Fetch org members for assignee list with real names
+        // Fetch role, ClickUp config, and org members in parallel
         if (proj?.organisation_id) {
-          const { data: members } = await supabase
-            .from('members')
-            .select('user_id')
-            .eq('organisation_id', proj.organisation_id);
+          const [membershipResult, clickupResult] = await Promise.all([
+            service.from('members').select('role, user_id').eq('organisation_id', proj.organisation_id).not('accepted_at', 'is', null),
+            service.from('integrations').select('id').eq('project_id', fb.project_id).eq('type', 'clickup').eq('enabled', true).maybeSingle(),
+          ]);
+          const currentMember = membershipResult.data?.find((m: { user_id: string; role: string }) => m.user_id === user?.id);
+          userRole = currentMember?.role ?? null;
+          clickupConnected = !!clickupResult.data;
+
+          const { data: members } = membershipResult;
 
           if (members?.length) {
             const memberIds = members.map((m: { user_id: string }) => m.user_id);
@@ -437,6 +445,13 @@ export default async function FeedbackDetailPage({ params }: Props) {
         <div className="space-y-4">
           {/* ClickUp task — top of sidebar when linked */}
           {clickupTask && <ClickUpTaskPanel task={clickupTask} />}
+
+          {/* Push to ClickUp — shown for AI-scan issues not yet pushed */}
+          {!clickupTask && !feedback.external_id && clickupConnected &&
+           feedback.custom_metadata?.source === 'ai-scan' &&
+           (userRole === 'owner' || userRole === 'admin') && (
+            <ClickUpPushButton feedbackId={feedbackId} />
+          )}
 
           {/* Status */}
           <div className="bg-card border border-border rounded-xl p-5">
