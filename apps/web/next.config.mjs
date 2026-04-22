@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Prevent Next.js from bundling these packages into serverless functions
+  // (puppeteer ships with a ~300MB Chromium binary; @sparticuz/chromium downloads at runtime)
+  serverExternalPackages: ['puppeteer', 'puppeteer-core', '@sparticuz/chromium', 'cheerio'],
   images: {
     remotePatterns: [
       {

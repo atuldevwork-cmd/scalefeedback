@@ -169,7 +169,9 @@ export async function POST(request: NextRequest) {
       failedUrls,
     });
   } catch (err) {
-    console.error('AI scan error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error('[ai-scan] Fatal error:', message, stack);
+    return NextResponse.json({ error: 'Internal server error', detail: message }, { status: 500 });
   }
 }
