@@ -85,29 +85,30 @@ Return ONLY the JSON array.`;
 
     const messageContent: ContentBlock[] = [];
 
+    const hasScreenshots = !!(page.screenshotBuffer || page.mobileScreenshotBuffer);
+
     if (page.screenshotBuffer) {
       messageContent.push({
         type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/png',
-          data: page.screenshotBuffer.toString('base64'),
-        },
+        source: { type: 'base64', media_type: 'image/png', data: page.screenshotBuffer.toString('base64') },
       });
     }
 
     if (page.mobileScreenshotBuffer) {
       messageContent.push({
         type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/png',
-          data: page.mobileScreenshotBuffer.toString('base64'),
-        },
+        source: { type: 'base64', media_type: 'image/png', data: page.mobileScreenshotBuffer.toString('base64') },
       });
     }
 
-    messageContent.push({ type: 'text', text: textContent });
+    const analysisText = hasScreenshots
+      ? textContent
+      : textContent.replace(
+          'Screenshots provided above: first image is desktop view (1440px wide), second image is mobile view (375px wide).\nExamine the mobile screenshot for responsiveness issues: overflowing content, tiny text, cramped tap targets, broken layout.\nExamine the desktop screenshot for visual/UI issues: cluttered layout, contrast problems, confusing navigation.\nSet "view" to "mobile" ONLY when the issue is specifically visible on the mobile screenshot (e.g. layout break, overflow, tiny tap target). For SEO, missing meta tags, console errors, and general issues use "desktop".',
+          'No screenshots available — analyze based on HTML metadata only. Set "view" to "desktop" for all issues.'
+        );
+
+    messageContent.push({ type: 'text', text: analysisText });
 
     try {
       const message = await client.messages.create({
