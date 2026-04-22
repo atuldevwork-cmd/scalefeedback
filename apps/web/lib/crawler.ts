@@ -210,14 +210,14 @@ async function discoverUrls(browser: Browser, startUrl: string, maxPages: number
 
 async function launchBrowser(): Promise<Browser> {
   if (process.env.VERCEL) {
-    // Production: use Lambda-compatible Chromium
+    // Production: download Chromium to /tmp (only writable dir on Vercel Lambda)
     const chromium = await import('@sparticuz/chromium');
     const puppeteerCore = await import('puppeteer-core');
     return puppeteerCore.default.launch({
       args: chromium.default.args,
       defaultViewport: chromium.default.defaultViewport,
-      executablePath: await chromium.default.executablePath(),
-      headless: chromium.default.headless as boolean,
+      executablePath: await chromium.default.executablePath('/tmp/chromium'),
+      headless: true,
     });
   }
   // Local dev: use bundled Puppeteer + Chromium
