@@ -67,6 +67,62 @@ function getBrowserIcon(browser: string): string {
   return '🌐';
 }
 
+const CATEGORY_META: Record<string, { label: string; color: string; icon: string }> = {
+  accessibility: { label: 'Accessibility', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: '♿' },
+  seo:           { label: 'SEO',           color: 'bg-green-100 text-green-700 border-green-200', icon: '🔍' },
+  ux:            { label: 'UI / UX',       color: 'bg-violet-100 text-violet-700 border-violet-200', icon: '🎨' },
+  content:       { label: 'Content',       color: 'bg-amber-100 text-amber-700 border-amber-200', icon: '📝' },
+  technical:     { label: 'Technical',     color: 'bg-red-100 text-red-700 border-red-200', icon: '⚙️' },
+};
+
+function AiScanPanel({ feedback }: { feedback: Feedback }) {
+  if (feedback.custom_metadata?.source !== 'ai-scan') return null;
+  const category = feedback.custom_metadata?.category as string | undefined;
+  const view = feedback.custom_metadata?.view as string | undefined;
+  const meta = category ? CATEGORY_META[category] : null;
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <span className="material-symbols-outlined text-violet-500 text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+        <h2 className="text-sm font-semibold text-foreground">AI Scan</h2>
+      </div>
+      <dl className="space-y-3 text-sm">
+        {meta && (
+          <div className="flex items-center gap-3">
+            <dt className="text-muted-foreground w-24 shrink-0">Category</dt>
+            <dd>
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${meta.color}`}>
+                <span>{meta.icon}</span>
+                {meta.label}
+              </span>
+            </dd>
+          </div>
+        )}
+        {view && (
+          <div className="flex items-center gap-3">
+            <dt className="text-muted-foreground w-24 shrink-0">View tested</dt>
+            <dd className="font-medium text-foreground flex items-center gap-1.5">
+              <span>{view === 'mobile' ? '📱' : '🖥️'}</span>
+              <span className="capitalize">{view}</span>
+            </dd>
+          </div>
+        )}
+        {!!feedback.custom_metadata?.scan_url && (
+          <div className="flex items-start gap-3">
+            <dt className="text-muted-foreground w-24 shrink-0">Scanned from</dt>
+            <dd className="font-medium min-w-0">
+              <span className="text-muted-foreground truncate block max-w-[160px]" title={String(feedback.custom_metadata.scan_url)}>
+                {String(feedback.custom_metadata.scan_url).replace(/^https?:\/\//, '')}
+              </span>
+            </dd>
+          </div>
+        )}
+      </dl>
+    </div>
+  );
+}
+
 function EnvironmentPanel({ feedback }: { feedback: Feedback }) {
   const hasEnv = feedback.browser || feedback.os || feedback.screen_size || feedback.viewport_size || feedback.device_pixel_ratio;
   if (!feedback.page_url && !hasEnv) return null;
@@ -488,6 +544,9 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
           {/* Environment */}
           <EnvironmentPanel feedback={feedback} />
+
+          {/* AI Scan metadata */}
+          <AiScanPanel feedback={feedback} />
 
           {/* Timeline */}
           <TimelinePanel createdAt={feedback.created_at} updatedAt={feedback.updated_at} />

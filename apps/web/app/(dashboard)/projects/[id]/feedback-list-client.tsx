@@ -193,6 +193,31 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
                       AI
                     </span>
                   )}
+                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'ux' && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200 shrink-0">
+                      🎨 UI / UX
+                    </span>
+                  )}
+                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'accessibility' && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 shrink-0">
+                      ♿ Accessibility
+                    </span>
+                  )}
+                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'seo' && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200 shrink-0">
+                      🔍 SEO
+                    </span>
+                  )}
+                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'technical' && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 shrink-0">
+                      ⚙️ Technical
+                    </span>
+                  )}
+                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'content' && (
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 shrink-0">
+                      📝 Content
+                    </span>
+                  )}
                   <span className="text-sm font-medium text-[#300a46] group-hover/link:text-[#ff724f] transition-colors truncate">
                     {fb.title ?? fb.page_url}
                   </span>
