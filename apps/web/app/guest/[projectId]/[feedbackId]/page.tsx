@@ -155,15 +155,14 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
     <div className="min-h-screen bg-[#f9f9fb]">
       {/* Header */}
       <header className="bg-white border-b border-gray-100 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <svg width="28" height="11" viewBox="0 0 67 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M52.6249 20.8102C55.174 20.8102 57.2471 18.7396 57.2471 16.1792C57.2471 13.6187 55.1805 11.5482 52.6249 11.5482C50.0693 11.5482 48.0026 13.6187 48.0026 16.1792C48.0026 18.7396 50.0693 20.8102 52.6249 20.8102ZM52.6249 14.0825C53.7853 14.0825 54.7176 15.0231 54.7176 16.1792C54.7176 17.3353 53.7788 18.2759 52.6249 18.2759C51.4709 18.2759 50.5321 17.3353 50.5321 16.1792C50.5321 15.0231 51.4709 14.0825 52.6249 14.0825ZM60.6959 13.1093C61.2501 13.5926 62.065 13.5926 62.6191 13.1093C64.2164 11.731 67.2479 8.70684 67.2479 5.59772C67.2479 2.4886 64.7445 0 61.6608 0C58.5771 0 56.0736 2.5082 56.0736 5.59772C56.0736 8.68725 59.1052 11.718 60.7024 13.1093H60.6959ZM58.5901 5.59772C58.5901 3.89946 59.9592 2.52779 61.6543 2.52779C63.3493 2.52779 64.7184 3.89946 64.7184 5.59772C64.7184 7.29598 63.3493 8.66765 61.6543 8.66765C59.9592 8.66765 58.5901 7.29598 58.5901 5.59772ZM52.6184 27.1525C50.0693 27.1525 47.9961 29.2231 47.9961 31.7836C47.9961 34.344 50.0627 36.4146 52.6184 36.4146C55.174 36.4146 57.2406 34.344 57.2406 31.7836C57.2406 29.2231 55.174 27.1525 52.6184 27.1525ZM52.6184 33.8803C51.4579 33.8803 50.5256 32.9397 50.5256 31.7836C50.5256 30.6274 51.4644 29.6869 52.6184 29.6869C53.7723 29.6869 54.7111 30.6274 54.7111 31.7836C54.7111 32.9397 53.7723 33.8803 52.6184 33.8803ZM60.6829 19.3536C58.1338 19.3536 56.0606 21.4242 56.0606 23.9846C56.0606 26.5451 58.1273 28.6157 60.6829 28.6157C63.2385 28.6157 65.3051 26.5451 65.3051 23.9846C65.3051 21.4242 63.2385 19.3536 60.6829 19.3536ZM60.6829 26.0813C59.5224 26.0813 58.5901 25.1408 58.5901 23.9846C58.5901 22.8285 59.5289 21.8879 60.6829 21.8879C61.8368 21.8879 62.7756 22.8285 62.7756 23.9846C62.7756 25.1408 61.8368 26.0813 60.6829 26.0813Z" fill="#FF724F"/>
-            </svg>
-            <div>
-              <p className="text-[#300a46] font-semibold text-xs leading-none">ScaleStation</p>
-              <p className="text-[#ff724f] text-[8px] font-semibold tracking-widest uppercase">Feedback</p>
-            </div>
+            <div className="flex items-center gap-2">
+              <a className="flex items-center gap-2 shrink-0" href="/projects">
+                <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">SF</div>
+                <span className="font-bold text-lg text-[#300a46]">ScaleFeedback</span>
+              </a>
+              </div>
             <span className="text-gray-300">/</span>
             <Link href={`/guest/${projectId}`} className="text-sm font-semibold text-[#300a46] hover:text-[#ff724f]">
               {project.name}
@@ -182,105 +181,107 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        {/* Back link */}
-        <Link href={`/guest/${projectId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#ff724f]">
-          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          Back to all feedback
-        </Link>
+      <main className="px-6 py-8">
+        <div className="max-w-7xl mx-auto">
+            {/* Back link */}
+          <Link href={`/guest/${projectId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#ff724f]">
+            <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+            Back to all feedback
+          </Link>
 
-        {/* Feedback card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <h1 className="text-lg font-bold text-[#300a46]">{feedback.title || 'Untitled'}</h1>
-            <div className="flex items-center gap-2 shrink-0">
-              <GuestStatusSelect feedbackId={feedbackId} currentStatus={feedback.status} />
-              {feedback.priority && (
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${PRIORITY_COLORS[feedback.priority] ?? 'bg-gray-100 text-gray-500'}`}>
-                  {feedback.priority}
-                </span>
-              )}
+          {/* Feedback card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h1 className="text-lg font-bold text-[#300a46]">{feedback.title || 'Untitled'}</h1>
+              <div className="flex items-center gap-2 shrink-0">
+                <GuestStatusSelect feedbackId={feedbackId} currentStatus={feedback.status} />
+                {feedback.priority && (
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${PRIORITY_COLORS[feedback.priority] ?? 'bg-gray-100 text-gray-500'}`}>
+                    {feedback.priority}
+                  </span>
+                )}
+              </div>
             </div>
+
+            {feedback.description && (
+              <p className="text-gray-700 text-sm leading-relaxed mb-4">{feedback.description}</p>
+            )}
+
+            <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-gray-400 border-t border-gray-50 pt-4">
+              {feedback.reporter_name && <span>Reporter: <span className="text-gray-600">{feedback.reporter_name}</span></span>}
+              {feedback.reporter_email && <span>Email: <span className="text-gray-600">{feedback.reporter_email}</span></span>}
+              {feedback.page_url && <span>Page: <span className="text-gray-600 truncate max-w-xs">{feedback.page_url}</span></span>}
+              <span>Submitted: <span className="text-gray-600">{formatDate(feedback.created_at)}</span></span>
+            </div>
+
+            {screenshotUrl && (
+              <div className="mt-4">
+                <p className="text-xs text-gray-400 mb-2">Screenshot</p>
+                <ScreenshotLightbox src={screenshotUrl} alt="Screenshot" />
+              </div>
+            )}
           </div>
 
-          {feedback.description && (
-            <p className="text-gray-700 text-sm leading-relaxed mb-4">{feedback.description}</p>
-          )}
+          {/* Comments */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-[#300a46]">
+              Comments {comments?.length ? `(${comments.length})` : ''}
+            </h2>
 
-          <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-gray-400 border-t border-gray-50 pt-4">
-            {feedback.reporter_name && <span>Reporter: <span className="text-gray-600">{feedback.reporter_name}</span></span>}
-            {feedback.reporter_email && <span>Email: <span className="text-gray-600">{feedback.reporter_email}</span></span>}
-            {feedback.page_url && <span>Page: <span className="text-gray-600 truncate max-w-xs">{feedback.page_url}</span></span>}
-            <span>Submitted: <span className="text-gray-600">{formatDate(feedback.created_at)}</span></span>
-          </div>
+            {!comments?.length ? (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center text-sm text-gray-400">
+                No comments yet. Be the first to leave a note.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {comments.map((comment: { id: string; body: string; created_at: string; user_id: string }) => {
+                  const commenter = commenterMap[comment.user_id];
+                  const isMine = comment.user_id === user.id;
+                  const cuMatch = comment.body.match(/^\[via ClickUp · (.+?)\]\n/);
+                  const isClickUp = !!cuMatch;
+                  const cuAuthor = cuMatch?.[1] ?? '';
 
-          {screenshotUrl && (
-            <div className="mt-4">
-              <p className="text-xs text-gray-400 mb-2">Screenshot</p>
-              <ScreenshotLightbox src={screenshotUrl} alt="Screenshot" />
-            </div>
-          )}
-        </div>
-
-        {/* Comments */}
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-[#300a46]">
-            Comments {comments?.length ? `(${comments.length})` : ''}
-          </h2>
-
-          {!comments?.length ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center text-sm text-gray-400">
-              No comments yet. Be the first to leave a note.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {comments.map((comment: { id: string; body: string; created_at: string; user_id: string }) => {
-                const commenter = commenterMap[comment.user_id];
-                const isMine = comment.user_id === user.id;
-                const cuMatch = comment.body.match(/^\[via ClickUp · (.+?)\]\n/);
-                const isClickUp = !!cuMatch;
-                const cuAuthor = cuMatch?.[1] ?? '';
-
-                return (
-                  <div key={comment.id} className={`bg-white rounded-2xl border p-4 ${isMine ? 'border-[#ff724f]/20 bg-[#fff9f8]' : 'border-gray-100'}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {isClickUp ? (
-                          <div className="w-7 h-7 rounded-full bg-[#7b68ee] flex items-center justify-center font-bold text-white text-xs">C</div>
-                        ) : (
-                          <div className="w-7 h-7 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-xs">
-                            {(commenter?.name ?? '?')[0].toUpperCase()}
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-xs font-semibold text-[#300a46]">
-                            {isClickUp ? 'ClickUp' : (commenter?.name ?? 'Unknown')}
-                            {isMine && !isClickUp && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
-                          </p>
+                  return (
+                    <div key={comment.id} className={`bg-white rounded-2xl border p-4 ${isMine ? 'border-[#ff724f]/20 bg-[#fff9f8]' : 'border-gray-100'}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
                           {isClickUp ? (
-                            <span className="inline-flex items-center gap-1 bg-[#7b68ee]/10 text-[#7b68ee] text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5">
-                              <svg width="9" height="9" viewBox="0 0 32 32" fill="none" className="shrink-0">
-                                <path d="M4 22.4L8.3 18.7C10.7 21.4 13.2 22.7 16 22.7C18.8 22.7 21.2 21.4 23.6 18.7L28 22.3C24.6 26.2 20.6 28.3 16 28.3C11.4 28.3 7.4 26.2 4 22.4Z" fill="#8930FD"/>
-                                <path d="M16 8.2L8.2 14.9L4.6 10.6L16 0.8L27.4 10.6L23.8 14.9L16 8.2Z" fill="#FF02F0"/>
-                              </svg>
-                              {cuAuthor} via ClickUp
-                            </span>
+                            <div className="w-7 h-7 rounded-full bg-[#7b68ee] flex items-center justify-center font-bold text-white text-xs">C</div>
                           ) : (
-                            <p className="text-[10px] text-gray-400">{commenter?.email}</p>
+                            <div className="w-7 h-7 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-xs">
+                              {(commenter?.name ?? '?')[0].toUpperCase()}
+                            </div>
                           )}
+                          <div>
+                            <p className="text-xs font-semibold text-[#300a46]">
+                              {isClickUp ? 'ClickUp' : (commenter?.name ?? 'Unknown')}
+                              {isMine && !isClickUp && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
+                            </p>
+                            {isClickUp ? (
+                              <span className="inline-flex items-center gap-1 bg-[#7b68ee]/10 text-[#7b68ee] text-[10px] font-semibold px-2 py-0.5 rounded-full mt-0.5">
+                                <svg width="9" height="9" viewBox="0 0 32 32" fill="none" className="shrink-0">
+                                  <path d="M4 22.4L8.3 18.7C10.7 21.4 13.2 22.7 16 22.7C18.8 22.7 21.2 21.4 23.6 18.7L28 22.3C24.6 26.2 20.6 28.3 16 28.3C11.4 28.3 7.4 26.2 4 22.4Z" fill="#8930FD"/>
+                                  <path d="M16 8.2L8.2 14.9L4.6 10.6L16 0.8L27.4 10.6L23.8 14.9L16 8.2Z" fill="#FF02F0"/>
+                                </svg>
+                                {cuAuthor} via ClickUp
+                              </span>
+                            ) : (
+                              <p className="text-[10px] text-gray-400">{commenter?.email}</p>
+                            )}
+                          </div>
                         </div>
+                        <span className="text-[10px] text-gray-400">{formatDate(comment.created_at)}</span>
                       </div>
-                      <span className="text-[10px] text-gray-400">{formatDate(comment.created_at)}</span>
+                      <GuestCommentBody body={comment.body} />
                     </div>
-                    <GuestCommentBody body={comment.body} />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
 
-          {/* Comment form */}
-          <GuestCommentForm feedbackId={feedbackId} members={orgMembers} />
+            {/* Comment form */}
+            <GuestCommentForm feedbackId={feedbackId} members={orgMembers} />
+          </div>
         </div>
       </main>
     </div>
