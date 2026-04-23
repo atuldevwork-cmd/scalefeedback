@@ -129,6 +129,8 @@ export async function POST(request: NextRequest) {
         ? `${supabaseUrl}/storage/v1/object/public/screenshots/${screenshotPath}`
         : null;
 
+      const isMobile = issue.view === 'mobile';
+
       return {
         project_id: projectId,
         title: issue.title,
@@ -138,6 +140,11 @@ export async function POST(request: NextRequest) {
         status: 'open',
         page_url: issue.pageUrl,
         screenshot_url: screenshotPath ?? null,
+        browser: 'Headless Chromium (AI Scan)',
+        os: 'Linux (Server)',
+        screen_size: isMobile ? '375x812' : '1440x900',
+        viewport_size: isMobile ? '375x812' : '1440x900',
+        device_pixel_ratio: 1,
         console_logs: page.consoleErrors.map((e) => ({ level: 'error', message: e })),
         network_logs: [],
         custom_metadata: {
