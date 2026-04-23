@@ -13,17 +13,19 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
   fix.id = 'sf-cap-fix';
   fix.textContent = [
     '*, *::before, *::after { box-shadow: none !important; }',
-    '* { filter: none !important; -webkit-filter: none !important; }',
     '.sf-cap-hide-pseudo::before, .sf-cap-hide-pseudo::after { opacity: 0 !important; }',
   ].join('\n');
   document.head.appendChild(fix);
 
-  // Tag every element whose ::before or ::after carries a filter
+  // Only hide pseudo-elements that use blur() — these cause solid-blob artifacts
+  // in html2canvas. Non-blur filters (color, hue-rotate, etc.) are left intact
+  // so third-party widgets like TrustIndex render their icons correctly.
   const blurPseudoEls: Element[] = [];
   document.querySelectorAll<HTMLElement>('*').forEach((el) => {
     const bf = window.getComputedStyle(el, '::before').filter;
     const af = window.getComputedStyle(el, '::after').filter;
-    if ((bf && bf !== 'none') || (af && af !== 'none')) {
+    const hasBlur = (f: string) => f && f !== 'none' && f.includes('blur(');
+    if (hasBlur(bf) || hasBlur(af)) {
       el.classList.add('sf-cap-hide-pseudo');
       blurPseudoEls.push(el);
     }
