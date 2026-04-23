@@ -190,7 +190,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
           </Link>
 
           {/* Feedback card */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-4">
             <div className="flex items-start justify-between gap-4 mb-4">
               <h1 className="text-lg font-bold text-[#300a46]">{feedback.title || 'Untitled'}</h1>
               <div className="flex items-center gap-2 shrink-0">
@@ -207,11 +207,46 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
               <p className="text-gray-700 text-sm leading-relaxed mb-4">{feedback.description}</p>
             )}
 
-            <div className="flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-gray-400 border-t border-gray-50 pt-4">
-              {feedback.reporter_name && <span>Reporter: <span className="text-gray-600">{feedback.reporter_name}</span></span>}
-              {feedback.reporter_email && <span>Email: <span className="text-gray-600">{feedback.reporter_email}</span></span>}
-              {feedback.page_url && <span>Page: <span className="text-gray-600 truncate max-w-xs">{feedback.page_url}</span></span>}
-              <span>Submitted: <span className="text-gray-600">{formatDate(feedback.created_at)}</span></span>
+            <div className="border-t border-gray-100 pt-5 mt-1 space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+                {feedback.reporter_name && (
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Reporter</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-[10px] shrink-0">
+                        {feedback.reporter_name[0].toUpperCase()}
+                      </div>
+                      <span className="text-sm font-medium text-[#300a46]">{feedback.reporter_name}</span>
+                    </div>
+                  </div>
+                )}
+                {feedback.reporter_email && (
+                  <div>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Email</p>
+                    <a href={`mailto:${feedback.reporter_email}`} className="text-sm text-[#ff724f] hover:underline truncate block">
+                      {feedback.reporter_email}
+                    </a>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Submitted</p>
+                  <span className="text-sm font-medium text-[#300a46]">{formatDate(feedback.created_at)}</span>
+                </div>
+              </div>
+              {feedback.page_url && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Page URL</p>
+                  <a
+                    href={feedback.page_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[#ff724f] hover:underline break-all"
+                    title={feedback.page_url}
+                  >
+                    {feedback.page_url}
+                  </a>
+                </div>
+              )}
             </div>
 
             {screenshotUrl && (
@@ -223,7 +258,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
           </div>
 
           {/* Comments */}
-          <div className="space-y-3">
+          <div className="space-y-3 mt-8">
             <h2 className="text-sm font-semibold text-[#300a46]">
               Comments {comments?.length ? `(${comments.length})` : ''}
             </h2>
