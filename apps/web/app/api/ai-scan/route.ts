@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
         page_url: issue.pageUrl,
         screenshot_url: screenshotPath ?? null,
         browser: 'Headless Chromium (AI Scan)',
-        os: 'Linux (Server)',
+        os: null,
         screen_size: isMobile ? '375x812' : '1440x900',
         viewport_size: isMobile ? '375x812' : '1440x900',
         device_pixel_ratio: 1,
