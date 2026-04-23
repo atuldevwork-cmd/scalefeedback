@@ -154,7 +154,7 @@ export class ScaleFeedbackWidget {
 
     try {
       // Capture screenshot first
-      this.screenshotDataUrl = await captureScreenshot(HOST_ID);
+      this.screenshotDataUrl = await captureScreenshot(HOST_ID, this.config.apiBaseUrl);
       // Compress screenshot (reduces upload size by ~60-80%)
       const { compressScreenshot } = await import('../capture/compress');
       this.screenshotDataUrl = await compressScreenshot(this.screenshotDataUrl);

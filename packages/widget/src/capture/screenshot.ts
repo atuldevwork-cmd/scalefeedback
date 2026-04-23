@@ -1,6 +1,6 @@
 import html2canvas from 'html2canvas';
 
-export async function captureScreenshot(ignoreElementId: string): Promise<string> {
+export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: string): Promise<string> {
   const widgetHost = document.getElementById(ignoreElementId);
   if (widgetHost) widgetHost.style.setProperty('display', 'none', 'important');
 
@@ -37,9 +37,12 @@ export async function captureScreenshot(ignoreElementId: string): Promise<string
     // Capture only the visible viewport to avoid exceeding mobile canvas size
     // limits (iOS GPUs reject canvases larger than ~16.7MP, producing a blank
     // white image when the full page is captured at 3x DPR).
+    const proxyUrl = apiBaseUrl ? `${apiBaseUrl}/api/image-proxy` : undefined;
+
     const canvas = await html2canvas(document.body, {
       useCORS: true,
       allowTaint: true,
+      proxy: proxyUrl,
       scale: window.devicePixelRatio,
       logging: false,
       backgroundColor: null,
