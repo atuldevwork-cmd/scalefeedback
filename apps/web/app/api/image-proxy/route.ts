@@ -25,10 +25,13 @@ export async function GET(request: NextRequest) {
     });
     if (!resp.ok) return new NextResponse('Upstream error', { status: resp.status });
 
+    const rawContentType = resp.headers.get('content-type') ?? 'image/png';
+    const contentType = rawContentType.split(';')[0].trim(); // strip charset/params
     const buffer = await resp.arrayBuffer();
     const base64 = Buffer.from(buffer).toString('base64');
+    const dataUrl = `data:${contentType};base64,${base64}`;
 
-    return new NextResponse(base64, {
+    return new NextResponse(dataUrl, {
       headers: {
         'Content-Type': 'text/plain',
         'Access-Control-Allow-Origin': '*',
