@@ -35,10 +35,11 @@ function svgDataUrlToPng(dataUrl: string, w: number, h: number): Promise<string>
   });
 }
 
-// --- CSS Color Level 4 patch ---
+// --- CSS Color Level 4 patch for html2canvas ---
 // html2canvas cannot parse lab(), lch(), oklab(), oklch() color functions.
-// Before capture we replace them in <style> tags and same-origin <link> sheets
-// with browser-resolved rgb() values using a 1×1 canvas trick.
+// We pre-fetch same-origin stylesheets and patch them in html2canvas's
+// onclone callback (which runs on the cloned doc before rendering).
+// This way the original DOM is never touched.
 
 const HAS_UNSUPPORTED_COLOR = /\b(?:lab|lch|oklab|oklch)\s*\(/i;
 
@@ -67,23 +68,20 @@ function makeColorResolver(): (cssColor: string) => string {
 }
 
 function patchCssText(css: string, resolve: (c: string) => string): string {
-  // lab/lch/oklab/oklch don't use nested parens, so [^)]* is safe
   return css.replace(/\b(?:lab|lch|oklab|oklch)\s*\([^)]*\)/gi, resolve);
 }
 
-async function patchUnsupportedColors(): Promise<() => void> {
+/**
+ * Pre-fetches same-origin link stylesheets and returns a synchronous function
+ * to be passed as html2canvas `onclone`. The clone callback patches <style>
+ * tags and replaces <link> tags with patched <style> tags so html2canvas
+ * never encounters an unsupported color function.
+ */
+async function buildColorPatch(): Promise<(clonedDoc: Document) => void> {
   const resolve = makeColorResolver();
-  const undoFns: Array<() => void> = [];
 
-  // 1. Inline <style> elements
-  document.querySelectorAll<HTMLStyleElement>('style').forEach((el) => {
-    const original = el.textContent ?? '';
-    if (!HAS_UNSUPPORTED_COLOR.test(original)) return;
-    el.textContent = patchCssText(original, resolve);
-    undoFns.push(() => { el.textContent = original; });
-  });
-
-  // 2. Same-origin <link rel="stylesheet"> elements
+  // Pre-fetch same-origin <link> stylesheets that contain unsupported colors
+  const patchedLinks = new Map<string, string>(); // href → patched CSS text
   await Promise.all(
     Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]'))
       .filter((link) => {
@@ -95,16 +93,31 @@ async function patchUnsupportedColors(): Promise<() => void> {
           if (!res.ok) return;
           const text = await res.text();
           if (!HAS_UNSUPPORTED_COLOR.test(text)) return;
-          const style = document.createElement('style');
-          style.textContent = patchCssText(text, resolve);
-          link.insertAdjacentElement('afterend', style);
-          link.disabled = true;
-          undoFns.push(() => { link.disabled = false; style.remove(); });
-        } catch { /* cross-origin or fetch failed — skip */ }
+          patchedLinks.set(link.href, patchCssText(text, resolve));
+        } catch { /* cross-origin or network error — skip */ }
       }),
   );
 
-  return () => undoFns.forEach((fn) => fn());
+  // Return a synchronous onclone patcher
+  return (clonedDoc: Document) => {
+    // Patch inline <style> tags in the clone
+    clonedDoc.querySelectorAll<HTMLStyleElement>('style').forEach((el) => {
+      const original = el.textContent ?? '';
+      if (HAS_UNSUPPORTED_COLOR.test(original)) {
+        el.textContent = patchCssText(original, resolve);
+      }
+    });
+
+    // Replace <link> tags with patched <style> tags so html2canvas never
+    // fetches the original stylesheet URL (which contains unsupported colors).
+    clonedDoc.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]').forEach((link) => {
+      const patched = patchedLinks.get(link.href);
+      if (!patched) return;
+      const style = clonedDoc.createElement('style');
+      style.textContent = patched;
+      link.parentNode?.replaceChild(style, link);
+    });
+  };
 }
 
 export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: string): Promise<string> {
@@ -142,11 +155,11 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     })
   ));
 
-  // Convert unsupported CSS Color 4 functions so html2canvas doesn't throw
-  let restoreColors: (() => void) | undefined;
+  // Pre-fetch stylesheets and build a synchronous onclone color patcher
+  let onclone: ((clonedDoc: Document) => void) | undefined;
   try {
-    restoreColors = await patchUnsupportedColors();
-  } catch { /* non-critical — proceed without patch */ }
+    onclone = await buildColorPatch();
+  } catch { /* non-critical — proceed without color patch */ }
 
   if (apiBaseUrl) {
     await Promise.all(
@@ -185,6 +198,7 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       y: window.scrollY,
       width: window.innerWidth,
       height: window.innerHeight,
+      onclone,
       ignoreElements: (el) =>
         el.id === ignoreElementId || el.id === 'sf-body-loading-overlay',
     });
@@ -194,7 +208,6 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     restorations.forEach(({ img, originalSrc }) => { img.src = originalSrc; });
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
     document.getElementById('sf-cap-fix')?.remove();
-    restoreColors?.();
     if (widgetHost) widgetHost.style.removeProperty('display');
   }
 }
