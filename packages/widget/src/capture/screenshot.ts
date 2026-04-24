@@ -1,13 +1,10 @@
 import html2canvas from 'html2canvas';
 
-// Fetches a cross-origin image via the ScaleFeedback server-side proxy and
-// returns a data URL. html2canvas cannot load cross-origin images directly
-// when the CDN doesn't return CORS headers (TrustIndex, Google logos, etc.).
 async function toDataUrl(src: string, apiBaseUrl: string): Promise<string | null> {
   try {
     const resp = await fetch(`${apiBaseUrl}/api/image-proxy?url=${encodeURIComponent(src)}`);
     if (!resp.ok) return null;
-    return await resp.text(); // proxy returns full "data:<mime>;base64,..." string
+    return await resp.text();
   } catch {
     return null;
   }
@@ -21,8 +18,6 @@ function isCrossOrigin(src: string): boolean {
   }
 }
 
-// html2canvas cannot reliably render <img src="*.svg"> or SVG data URLs.
-// Convert to PNG via an offscreen canvas so html2canvas gets a raster image.
 function svgDataUrlToPng(dataUrl: string, w: number, h: number): Promise<string> {
   return new Promise((resolve) => {
     const tmp = new Image();
@@ -40,11 +35,82 @@ function svgDataUrlToPng(dataUrl: string, w: number, h: number): Promise<string>
   });
 }
 
+// --- CSS Color Level 4 patch ---
+// html2canvas cannot parse lab(), lch(), oklab(), oklch() color functions.
+// Before capture we replace them in <style> tags and same-origin <link> sheets
+// with browser-resolved rgb() values using a 1×1 canvas trick.
+
+const HAS_UNSUPPORTED_COLOR = /\b(?:lab|lch|oklab|oklch)\s*\(/i;
+
+function makeColorResolver(): (cssColor: string) => string {
+  const c = document.createElement('canvas');
+  c.width = 1; c.height = 1;
+  const ctx = c.getContext('2d');
+  const cache = new Map<string, string>();
+  return (cssColor: string): string => {
+    if (cache.has(cssColor)) return cache.get(cssColor)!;
+    if (!ctx) return cssColor;
+    try {
+      ctx.clearRect(0, 0, 1, 1);
+      ctx.fillStyle = cssColor;
+      ctx.fillRect(0, 0, 1, 1);
+      const d = ctx.getImageData(0, 0, 1, 1).data;
+      const resolved = d[3] < 255
+        ? `rgba(${d[0]},${d[1]},${d[2]},${(d[3] / 255).toFixed(3)})`
+        : `rgb(${d[0]},${d[1]},${d[2]})`;
+      cache.set(cssColor, resolved);
+      return resolved;
+    } catch {
+      return cssColor;
+    }
+  };
+}
+
+function patchCssText(css: string, resolve: (c: string) => string): string {
+  // lab/lch/oklab/oklch don't use nested parens, so [^)]* is safe
+  return css.replace(/\b(?:lab|lch|oklab|oklch)\s*\([^)]*\)/gi, resolve);
+}
+
+async function patchUnsupportedColors(): Promise<() => void> {
+  const resolve = makeColorResolver();
+  const undoFns: Array<() => void> = [];
+
+  // 1. Inline <style> elements
+  document.querySelectorAll<HTMLStyleElement>('style').forEach((el) => {
+    const original = el.textContent ?? '';
+    if (!HAS_UNSUPPORTED_COLOR.test(original)) return;
+    el.textContent = patchCssText(original, resolve);
+    undoFns.push(() => { el.textContent = original; });
+  });
+
+  // 2. Same-origin <link rel="stylesheet"> elements
+  await Promise.all(
+    Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]'))
+      .filter((link) => {
+        try { return new URL(link.href).origin === window.location.origin; } catch { return false; }
+      })
+      .map(async (link) => {
+        try {
+          const res = await fetch(link.href);
+          if (!res.ok) return;
+          const text = await res.text();
+          if (!HAS_UNSUPPORTED_COLOR.test(text)) return;
+          const style = document.createElement('style');
+          style.textContent = patchCssText(text, resolve);
+          link.insertAdjacentElement('afterend', style);
+          link.disabled = true;
+          undoFns.push(() => { link.disabled = false; style.remove(); });
+        } catch { /* cross-origin or fetch failed — skip */ }
+      }),
+  );
+
+  return () => undoFns.forEach((fn) => fn());
+}
+
 export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: string): Promise<string> {
   const widgetHost = document.getElementById(ignoreElementId);
   if (widgetHost) widgetHost.style.setProperty('display', 'none', 'important');
 
-  // Temporarily strip box-shadow (causes white-rectangle artifacts in html2canvas).
   const fix = document.createElement('style');
   fix.id = 'sf-cap-fix';
   fix.textContent = [
@@ -53,8 +119,6 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
   ].join('\n');
   document.head.appendChild(fix);
 
-  // Hide only pseudo-elements that use blur() — they cause solid-blob artifacts.
-  // Non-blur filters (color, hue-rotate, etc.) are left intact.
   const blurPseudoEls: Element[] = [];
   document.querySelectorAll<HTMLElement>('*').forEach((el) => {
     const bf = window.getComputedStyle(el, '::before').filter;
@@ -66,14 +130,8 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     }
   });
 
-  // Replace cross-origin <img> srcs with proxied data URLs directly in the
-  // live DOM. This is more reliable than html2canvas onclone because it
-  // ensures html2canvas never tries to fetch the original cross-origin URL.
-  // We restore originals in the finally block.
   const restorations: Array<{ img: HTMLImageElement; originalSrc: string }> = [];
 
-  // Force-load lazy images: flip loading="eager" and wait for decode so their
-  // pixel data is in memory before we proxy/rasterize them.
   const allImgs = Array.from(document.querySelectorAll<HTMLImageElement>('img[src]'));
   const lazyImgs = allImgs.filter((img) => img.loading === 'lazy');
   lazyImgs.forEach((img) => { img.loading = 'eager'; });
@@ -84,16 +142,21 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     })
   ));
 
+  // Convert unsupported CSS Color 4 functions so html2canvas doesn't throw
+  let restoreColors: (() => void) | undefined;
+  try {
+    restoreColors = await patchUnsupportedColors();
+  } catch { /* non-critical — proceed without patch */ }
+
   if (apiBaseUrl) {
     await Promise.all(
       allImgs.map(async (img) => {
-        const src = img.src; // always absolute URL
+        const src = img.src;
         if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
         if (!isCrossOrigin(src)) return;
         let dataUrl = await toDataUrl(src, apiBaseUrl);
         if (!dataUrl) return;
 
-        // html2canvas drops SVG images — rasterise to PNG first.
         if (dataUrl.startsWith('data:image/svg')) {
           const w = img.naturalWidth || img.width || 32;
           const h = img.naturalHeight || img.height || 32;
@@ -104,7 +167,6 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
         img.src = dataUrl;
       })
     );
-    // Pause so the browser paints the swapped data URLs before capture.
     await new Promise((r) => setTimeout(r, 200));
   } else {
     await new Promise((r) => setTimeout(r, 80));
@@ -129,10 +191,10 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
 
     return canvas.toDataURL('image/png');
   } finally {
-    // Restore original image srcs
     restorations.forEach(({ img, originalSrc }) => { img.src = originalSrc; });
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
     document.getElementById('sf-cap-fix')?.remove();
+    restoreColors?.();
     if (widgetHost) widgetHost.style.removeProperty('display');
   }
 }
