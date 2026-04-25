@@ -153,11 +153,9 @@ export class ScaleFeedbackWidget {
     this.showLoadingOverlay();
 
     try {
-      // Capture screenshot first
       this.screenshotDataUrl = await captureScreenshot(HOST_ID, this.config.apiBaseUrl);
-      // Compress screenshot (reduces upload size by ~60-80%)
-      const { compressScreenshot } = await import('../capture/compress');
-      this.screenshotDataUrl = await compressScreenshot(this.screenshotDataUrl);
+      // Compression is deferred to just before upload so the annotation
+      // canvas always displays the full-quality PNG.
     } catch (err) {
       console.warn('[ScaleFeedback] Screenshot capture failed, continuing without it.', err);
       this.screenshotDataUrl = '';
@@ -397,14 +395,15 @@ export class ScaleFeedbackWidget {
     // area.clientWidth / clientHeight return the real rendered dimensions.
     // Fallback subtracts the overlay padding (60px each side) + toolbar (52px).
     requestAnimationFrame(() => {
+      const dpr = window.devicePixelRatio || 1;
       const areaW = area.clientWidth  || (window.innerWidth  - 56);
       const areaH = area.clientHeight || (window.innerHeight - 108);
 
-      // Set the buffer size to match the container exactly.
-      // The CSS width/height:100% handles display — we must NOT also set
-      // inline styles or they fight the stylesheet.
-      canvasEl.width  = areaW;
-      canvasEl.height = areaH;
+      // Scale the buffer by DPR so it maps 1:1 to physical pixels on HiDPI
+      // displays (Retina etc.). CSS width/height:100% from the stylesheet
+      // controls the display size — no inline style override needed.
+      canvasEl.width  = areaW * dpr;
+      canvasEl.height = areaH * dpr;
 
       this.annotationCanvas = new AnnotationCanvas(canvasEl, this.screenshotDataUrl);
       this.annotationCanvas.setTool(this.currentTool);
@@ -518,11 +517,20 @@ export class ScaleFeedbackWidget {
 
     const metadata = collectMetadata();
 
+    // Compress the annotated screenshot just before upload
+    let screenshotToUpload = this.screenshotDataUrl;
+    if (screenshotToUpload) {
+      try {
+        const { compressScreenshot } = await import('../capture/compress');
+        screenshotToUpload = await compressScreenshot(screenshotToUpload);
+      } catch { /* upload original PNG if compression fails */ }
+    }
+
     try {
       await submitFeedback({
         apiBaseUrl: this.config.apiBaseUrl,
         projectApiKey: this.config.projectApiKey,
-        screenshot: this.screenshotDataUrl,
+        screenshot: screenshotToUpload,
         reporterName: name,
         reporterEmail: email,
         title,
