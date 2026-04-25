@@ -73,6 +73,23 @@ function patchCssText(css: string, resolve: (c: string) => string): string {
   return css.replace(/\b(?:lab|lch|oklab|oklch)\s*\([^)]*\)/gi, resolve);
 }
 
+// When a fetched stylesheet is inserted as a <style> tag, relative url(...)
+// references lose their original base URL and resolve against the page URL.
+// This rewrite makes every url() absolute using the stylesheet's own href
+// so font files, images, etc. still load correctly.
+function makeUrlsAbsolute(css: string, base: string): string {
+  return css.replace(/\burl\(\s*(['"]?)([^'")]+)\1\s*\)/gi, (match, quote, url) => {
+    const t = url.trim();
+    if (!t || t.startsWith('data:') || t.startsWith('#') ||
+        /^https?:\/\//i.test(t) || t.startsWith('//')) return match;
+    try {
+      return `url(${quote}${new URL(t, base).href}${quote})`;
+    } catch {
+      return match;
+    }
+  });
+}
+
 // Color properties html2canvas reads via getComputedStyle
 const COLOR_PROPS = [
   'color', 'background-color',
@@ -106,7 +123,9 @@ async function patchUnsupportedColors(): Promise<() => void> {
           const text = await res.text();
           if (!HAS_UNSUPPORTED_COLOR.test(text)) return;
           const style = document.createElement('style');
-          style.textContent = patchCssText(text, resolve);
+          // Patch colors AND make url() refs absolute so font/image paths
+          // don't break when the <link> is replaced by a <style> tag.
+          style.textContent = makeUrlsAbsolute(patchCssText(text, resolve), link.href);
           // Insert patched <style> then remove <link> to keep cascade order intact
           link.parentNode?.insertBefore(style, link);
           link.parentNode?.removeChild(link);
