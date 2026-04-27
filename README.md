@@ -4,6 +4,18 @@ A visual bug feedback tool — a [marker.io](https://marker.io) alternative buil
 
 ---
 
+## Features
+
+- **Widget** — Lightweight JS snippet embeds on any site; captures annotated screenshots, console logs, and network errors on submission
+- **AI Website Scanner** — Headless Chromium crawls a URL and uses GPT-4o vision to detect 8–15 issues per page across accessibility, SEO, UX, technical, and content categories with desktop + mobile screenshots
+- **Issue Navigation** — Prev / Next arrow buttons on the issue detail page for quick sequential review
+- **ClickUp Integration** — Push AI-scan issues directly to a ClickUp list; two-way status and comment sync via webhooks
+- **Role-based Access** — Owner / Admin / Member roles per organisation; guest invite links with expiry
+- **Realtime Updates** — Supabase Realtime pushes new feedback to the dashboard without a page refresh
+- **Comments & Activity Log** — Internal and public comment threads with `@mention` support; full audit trail
+
+---
+
 ## Table of Contents
 
 - [Project Structure](#project-structure)
@@ -14,6 +26,8 @@ A visual bug feedback tool — a [marker.io](https://marker.io) alternative buil
 - [Environment Variables](#environment-variables)
 - [Database Migrations](#database-migrations)
 - [Widget Integration](#widget-integration)
+- [AI Website Scanner](#ai-website-scanner)
+- [ClickUp Integration](#clickup-integration)
 - [Available Routes](#available-routes)
 
 ---
@@ -53,6 +67,8 @@ ScaleFeedback/
 | Database | Supabase (PostgreSQL) with Row Level Security |
 | Storage | Supabase Storage (screenshot uploads) |
 | Widget | Vite (IIFE bundle), html2canvas, Fabric.js |
+| AI Scanner | OpenAI GPT-4o vision + Puppeteer (local) / Cheerio (production) |
+| Integrations | ClickUp REST API + webhooks |
 | Email | Resend (optional) |
 | State | Zustand, TanStack Query |
 
@@ -211,6 +227,17 @@ SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_WIDGET_URL=http://localhost:5173
 
+# AI Website Scanner — get from platform.openai.com/api-keys
+OPENAI_API_KEY=sk-proj-<your-key>
+
+# ClickUp integration (optional) — get from ClickUp → Settings → Apps
+CLICKUP_CLIENT_ID=<your-client-id>
+CLICKUP_CLIENT_SECRET=<your-client-secret>
+
+# Google OAuth — for Supabase Auth (optional if using email auth only)
+SUPABASE_AUTH_GOOGLE_CLIENT_ID=<your-google-client-id>
+SUPABASE_AUTH_GOOGLE_SECRET=<your-google-secret>
+
 # Optional: Resend for email notifications
 RESEND_API_KEY=re_<your-key>
 ```
@@ -245,14 +272,59 @@ For production, replace `localhost:3000` with your deployed app URL. You can fin
 | `/auth/login` | Google OAuth login |
 | `/auth/signup` | Sign up page |
 | `/(dashboard)/projects` | Projects list |
-| `/(dashboard)/projects/[id]/feedback` | Feedback list for a project |
+| `/(dashboard)/projects/[id]` | Feedback list for a project |
+| `/(dashboard)/projects/[id]/[feedbackId]` | Issue detail with prev/next navigation |
+| `/(dashboard)/projects/[id]/analytics` | Project analytics |
 | `/(dashboard)/projects/[id]/settings` | Project settings + widget snippet |
-| `/api/feedback` | POST endpoint for widget submissions |
+| `/(dashboard)/notifications` | Notification centre |
+| `/guest/[projectId]` | Guest feedback view (shareable link) |
+| `/api/feedback` | POST — widget submission endpoint |
+| `/api/ai-scan` | POST — trigger AI website scan |
+| `/api/clickup/push` | POST — push issue to ClickUp |
+| `/api/clickup/webhook` | POST — receive ClickUp status/comment events |
 | `/api/auth/callback` | Supabase OAuth callback handler |
 
 ---
 
-## Scripts Reference
+## AI Website Scanner
+
+The scanner crawls a URL with Puppeteer (local) or Cheerio (production/Vercel), takes desktop (1440px) and mobile (375px) screenshots, then sends both to GPT-4o vision for analysis.
+
+**What it checks:**
+| Category | Examples |
+|----------|---------|
+| Accessibility | Missing alt text, unlabelled inputs, low contrast, missing lang attribute |
+| SEO | Title/meta description length, missing H1, no canonical tag, missing Open Graph / Twitter Card tags, thin content |
+| UX | CTA prominence, visual hierarchy, readability, mobile tap targets |
+| Technical | 4xx/5xx errors, console errors, broken resources |
+| Content | Placeholder text, broken images, outdated copyright |
+
+**Requirements:**
+- `OPENAI_API_KEY` must be set in `apps/web/.env.local`
+- Locally, Puppeteer is used automatically (installs Chromium via `puppeteer`)
+- On Vercel, the fetch-based crawler is used (no Chromium required)
+
+**Usage:** Open any project in the dashboard → click **Scan Website** → enter the URL → issues are created automatically.
+
+---
+
+## ClickUp Integration
+
+Connect a project to ClickUp to push AI-scan issues as tasks and keep statuses in sync.
+
+### Setup
+1. Dashboard → Project Settings → Integrations → Connect ClickUp
+2. Authorise via OAuth — select the workspace and list to push tasks into
+3. Set `CLICKUP_CLIENT_ID` and `CLICKUP_CLIENT_SECRET` in `.env.local`
+
+### How it works
+- **Push:** Owners/Admins can push any AI-scan issue to ClickUp with one click; the ClickUp task URL is stored and shown in the sidebar
+- **Status sync:** When a task status changes in ClickUp (via webhook or on page load), ScaleFeedback updates the issue status automatically
+- **Comment sync:** Comments added in ClickUp appear in the ScaleFeedback comment thread (prefixed with `[via ClickUp]`)
+
+---
+
+## Available Routes
 
 | Command | Description |
 |---------|-------------|
