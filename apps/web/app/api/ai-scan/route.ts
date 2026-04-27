@@ -4,6 +4,7 @@ import { crawlWebsite } from '@/lib/crawler';
 import { analyzePages, type ScanIssue } from '@/lib/ai-analyzer';
 import type { PageContent } from '@/lib/crawler';
 
+export const dynamic = 'force-dynamic';
 // Allow up to 2 min on Vercel Pro; locally there is no timeout
 export const maxDuration = 120;
 

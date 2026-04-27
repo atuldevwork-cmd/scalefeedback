@@ -11,7 +11,9 @@ export interface ScanIssue {
   pageUrl: string;
 }
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getClient() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 const SYSTEM_PROMPT = `You are a web quality auditor. You receive page metadata AND screenshots (desktop 1440px + mobile 375px) to identify real, actionable issues.
 
@@ -177,7 +179,7 @@ Return ONLY the JSON array. Do not truncate — include every issue found.`;
     messageContent.push({ type: 'text', text: analysisText });
 
     try {
-      const response = await client.chat.completions.create({
+      const response = await getClient().chat.completions.create({
         model: 'gpt-4o',
         max_tokens: 3_000,
         messages: [
