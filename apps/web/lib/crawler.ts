@@ -13,6 +13,12 @@ export interface PageContent {
   links: Array<{ href: string; text: string; isExternal: boolean }>;
   formIssues: string[];
   bodyText: string;
+  wordCount: number;
+  canonicalUrl: string;
+  ogTitle: string;
+  ogDescription: string;
+  ogImage: string;
+  twitterCard: string;
   consoleErrors: string[];
   screenshotBuffer?: Buffer;
   mobileScreenshotBuffer?: Buffer;
@@ -71,6 +77,8 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     }
   });
 
+  const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+
   return {
     url,
     statusCode,
@@ -83,7 +91,13 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     images,
     links,
     formIssues,
-    bodyText: $('body').text().replace(/\s+/g, ' ').trim().slice(0, MAX_BODY_CHARS),
+    bodyText: bodyText.slice(0, MAX_BODY_CHARS),
+    wordCount: bodyText.split(/\s+/).filter(Boolean).length,
+    canonicalUrl: $('link[rel="canonical"]').attr('href') ?? '',
+    ogTitle: $('meta[property="og:title"]').attr('content') ?? '',
+    ogDescription: $('meta[property="og:description"]').attr('content') ?? '',
+    ogImage: $('meta[property="og:image"]').attr('content') ?? '',
+    twitterCard: $('meta[name="twitter:card"]').attr('content') ?? '',
   };
 }
 

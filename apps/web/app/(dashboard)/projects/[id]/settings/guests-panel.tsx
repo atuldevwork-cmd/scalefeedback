@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { formatDate } from '@/lib/utils';
+import { FormattedDate } from '@/components/formatted-date';
 
 interface Guest {
   id: string;
@@ -251,7 +251,7 @@ export function GuestsPanel({ projectId }: { projectId: string }) {
                       <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700">Pending</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-400">{formatDate(g.expires_at)}</td>
+                  <td className="px-4 py-3 text-xs text-gray-400"><FormattedDate date={g.expires_at} /></td>
                   <td className="px-3 py-3 text-right">
                     <button
                       onClick={() => handleRemove(g.id)}

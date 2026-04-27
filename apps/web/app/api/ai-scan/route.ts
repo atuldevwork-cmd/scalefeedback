@@ -30,8 +30,8 @@ async function uploadScreenshot(
 
 export async function POST(request: NextRequest) {
   try {
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ error: 'ANTHROPIC_API_KEY is not configured' }, { status: 503 });
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'OPENAI_API_KEY is not configured' }, { status: 503 });
     }
 
     const supabase = await createClient();

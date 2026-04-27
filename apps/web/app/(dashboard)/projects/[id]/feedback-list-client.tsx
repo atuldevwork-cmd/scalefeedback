@@ -8,7 +8,7 @@ import { BulkActionsBar } from './bulk-actions';
 import { FeedbackStatusBadge } from '@/components/feedback-status-badge';
 import { FeedbackTypeBadge } from '@/components/feedback-type-badge';
 import { PriorityBadge } from '@/components/priority-badge';
-import { formatDate } from '@/lib/utils';
+import { FormattedDate } from '@/components/formatted-date';
 import type { Feedback } from '@scalefeedback/shared';
 
 function ClickUpMark() {
@@ -236,7 +236,7 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
                   </span>
                 )}
                 <FeedbackStatusBadge status={fb.status} />
-                <span className="text-xs text-gray-400">{formatDate(fb.created_at)}</span>
+                <FormattedDate date={fb.created_at} className="text-xs text-gray-400" />
               </div>
             </Link>
 

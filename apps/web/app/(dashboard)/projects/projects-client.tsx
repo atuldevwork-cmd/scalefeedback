@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatDate } from '@/lib/utils';
+import { FormattedDate } from '@/components/formatted-date';
 import { createClient } from '@/lib/supabase/client';
 import type { Project } from '@scalefeedback/shared';
 import { CreateProjectDialog } from './create-project-dialog';
@@ -62,7 +62,7 @@ function GridCard({ project, onRestore }: { project: Project; onRestore: (id: st
           <code className="text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg truncate flex-1">
             {project.api_key}
           </code>
-          <span className="text-[11px] text-gray-400 shrink-0">{formatDate(project.created_at)}</span>
+          <FormattedDate date={project.created_at} className="text-[11px] text-gray-400 shrink-0" />
         </div>
       </Link>
 
@@ -104,7 +104,7 @@ function ListRow({ project, onRestore }: { project: Project; onRestore: (id: str
 
         <StatusBadge isActive={project.is_active} />
 
-        <span className="text-xs text-gray-400 shrink-0 hidden sm:block">{formatDate(project.created_at)}</span>
+        <FormattedDate date={project.created_at} className="text-xs text-gray-400 shrink-0 hidden sm:block" />
 
         <span className="material-symbols-outlined text-gray-300 group-hover:text-[#ff724f] text-[18px] transition-colors shrink-0">
           chevron_right

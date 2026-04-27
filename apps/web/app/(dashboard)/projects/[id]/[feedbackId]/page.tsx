@@ -221,6 +221,8 @@ export default async function FeedbackDetailPage({ params }: Props) {
   let clickupTask: ClickUpTaskData | null = null;
   let userRole: string | null = null;
   let clickupConnected = false;
+  let prevId: string | null = null;
+  let nextId: string | null = null;
 
   if (isSupabaseConfigured()) {
     try {
@@ -237,6 +239,20 @@ export default async function FeedbackDetailPage({ params }: Props) {
         if (fb.screenshot_url) {
           screenshotPublicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/screenshots/${fb.screenshot_url}`;
         }
+        // Fetch sibling IDs for prev/next navigation
+        const { data: siblings } = await service
+          .from('feedback')
+          .select('id')
+          .eq('project_id', fb.project_id)
+          .order('created_at', { ascending: false });
+
+        if (siblings?.length) {
+          const siblingIds = siblings.map((s: { id: string }) => s.id);
+          const idx = siblingIds.indexOf(feedbackId);
+          prevId = idx > 0 ? siblingIds[idx - 1] : null;
+          nextId = idx !== -1 && idx < siblingIds.length - 1 ? siblingIds[idx + 1] : null;
+        }
+
         // Fetch role, ClickUp config, and org members in parallel
         if (proj?.organisation_id) {
           const [membershipResult, clickupResult] = await Promise.all([
@@ -401,6 +417,11 @@ export default async function FeedbackDetailPage({ params }: Props) {
     if (feedback) {
       const mp = MOCK_PROJECTS.find((p) => p.id === feedback!.project_id);
       project = mp ? { id: mp.id, name: mp.name } : null;
+      const mockSiblings = MOCK_FEEDBACK.filter((f) => f.project_id === feedback!.project_id)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const mockIdx = mockSiblings.findIndex((f) => f.id === feedbackId);
+      prevId = mockIdx > 0 ? mockSiblings[mockIdx - 1].id : null;
+      nextId = mockIdx !== -1 && mockIdx < mockSiblings.length - 1 ? mockSiblings[mockIdx + 1].id : null;
     }
   }
 
@@ -418,13 +439,54 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
   return (
     <div className="p-8">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-        <Link href="/projects" className="hover:text-foreground">Projects</Link>
-        <span>/</span>
-        <Link href={`/projects/${id}`} className="hover:text-foreground">{project.name}</Link>
-        <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-xs">{feedback.title ?? 'Feedback'}</span>
+      {/* Breadcrumb + Prev/Next nav */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Link href="/projects" className="hover:text-foreground">Projects</Link>
+          <span>/</span>
+          <Link href={`/projects/${id}`} className="hover:text-foreground">{project.name}</Link>
+          <span>/</span>
+          <span className="text-foreground font-medium truncate max-w-xs">{feedback.title ?? 'Feedback'}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          {prevId ? (
+            <Link
+              href={`/projects/${id}/${prevId}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-[#ff724f]/50 hover:text-[#ff724f] hover:bg-[#fff3f0] transition-all"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Prev
+            </Link>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-medium text-gray-300 cursor-not-allowed select-none">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Prev
+            </span>
+          )}
+          {nextId ? (
+            <Link
+              href={`/projects/${id}/${nextId}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-[#ff724f]/50 hover:text-[#ff724f] hover:bg-[#fff3f0] transition-all"
+            >
+              Next
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-medium text-gray-300 cursor-not-allowed select-none">
+              Next
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

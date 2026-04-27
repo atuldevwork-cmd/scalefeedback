@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { formatDate } from '@/lib/utils';
+import { FormattedDate } from '@/components/formatted-date';
 import { NotificationBell } from '@/components/notification-bell';
 import { GuestLogoutButton } from '@/components/guest-logout-button';
 
@@ -88,7 +88,7 @@ export function GuestNotificationsClient({ notifications, userEmail }: { notific
                       <p className="text-sm font-semibold text-[#300a46] leading-snug">
                         {n.title}
                       </p>
-                      <span className="text-[13px] text-gray-500 shrink-0 mt-0.5">{formatDate(n.created_at)}</span>
+                      <FormattedDate date={n.created_at} className="text-[13px] text-gray-500 shrink-0 mt-0.5" />
                     </div>
                     {n.body && (
                       <p className="text-xs text-gray-400 mt-1 leading-relaxed line-clamp-2">{n.body}</p>

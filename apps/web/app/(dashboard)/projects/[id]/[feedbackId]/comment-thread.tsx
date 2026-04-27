@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { isSupabaseConfigured } from '@/lib/mock-data';
-import { formatDate } from '@/lib/utils';
+import { FormattedDate } from '@/components/formatted-date';
 import { createClient } from '@/lib/supabase/client';
 
 const CLICKUP_PREFIX = /^\[via ClickUp · (.+?)\]\n/;
@@ -346,7 +346,7 @@ export function CommentThread({ feedbackId, initialComments, currentUserId, memb
                       )}
                     </div>
                   </div>
-                  <span className="text-[10px] text-gray-400 shrink-0">{formatDate(c.created_at)}</span>
+                  <FormattedDate date={c.created_at} className="text-[10px] text-gray-400 shrink-0" />
                 </div>
                 <CommentBody body={c.body} />
               </div>
