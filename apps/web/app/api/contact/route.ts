@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(req: NextRequest) {
   const { name, email, subject, topic, message } = await req.json() as {
@@ -17,7 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: 'ScaleFeedback Contact <hello@scalefeedback.io>',
       to: ['atul@scalestation.io'],
       replyTo: email,
