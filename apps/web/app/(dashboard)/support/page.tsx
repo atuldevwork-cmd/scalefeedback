@@ -135,6 +135,15 @@ export default function SupportInboxPage() {
     setChats((prev) => prev.map((c) => c.id === activeChat.id ? { ...c, status: 'resolved' as const } : c));
   };
 
+  const deleteChat = async () => {
+    if (!activeChat) return;
+    if (!confirm('Delete this chat and all its messages? This cannot be undone.')) return;
+    await fetch(`/api/support/chats/${activeChat.id}`, { method: 'DELETE' });
+    setChats((prev) => prev.filter((c) => c.id !== activeChat.id));
+    setActiveChat(null);
+    setMessages([]);
+  };
+
   const sendReply = async () => {
     if (!input.trim() || !activeChat || sending) return;
     const content = input.trim();
@@ -255,6 +264,14 @@ export default function SupportInboxPage() {
                   className="text-xs px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Resolve
+                </button>
+              )}
+              {activeChat.status === 'resolved' && (
+                <button
+                  onClick={deleteChat}
+                  className="text-xs px-3 py-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  Delete
                 </button>
               )}
             </div>

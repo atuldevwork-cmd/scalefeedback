@@ -56,3 +56,31 @@ export async function PATCH(
 
   return NextResponse.json({ data: chat });
 }
+
+// DELETE /api/support/chats/[id]  — agents only; deletes chat + messages
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+
+  const service = createServiceClient();
+
+  // Only support agents may delete chats
+  const { data: agent } = await service
+    .from('support_agents')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (!agent) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { id } = await params;
+
+  // Messages are deleted via ON DELETE CASCADE on support_messages.chat_id
+  const { error } = await service.from('support_chats').delete().eq('id', id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  return NextResponse.json({ data: { id } });
+}

@@ -82,7 +82,10 @@ export function SupportChatWidget() {
         { event: 'UPDATE', schema: 'public', table: 'support_chats', filter: `id=eq.${chat.id}` },
         (payload) => {
           const newStatus = payload.new.status as Chat['status'];
+          const prevStatus = payload.old?.status as Chat['status'] | undefined;
           setChat((prev) => prev ? { ...prev, status: newStatus } : null);
+          // Only react to actual status transitions, not updated_at-only updates
+          if (newStatus === prevStatus) return;
           if (newStatus === 'with_human') {
             setShowJoinBanner(true);
             setTimeout(() => setShowJoinBanner(false), 4000);

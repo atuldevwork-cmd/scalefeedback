@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -8,12 +8,13 @@ import { createClient } from '@/lib/supabase/client';
 import { NotificationBell } from './notification-bell';
 import { SupportInboxBadge } from './support-chat/inbox-badge';
 
-const navItems: { label: string; href: string; icon: string; badge?: React.ReactNode }[] = [
+const BASE_NAV: { label: string; href: string; icon: string; badge?: React.ReactNode }[] = [
   { label: 'Projects', href: '/projects', icon: 'folder_open' },
-  { label: 'Support Inbox', href: '/support', icon: 'support_agent', badge: <SupportInboxBadge /> },
   { label: 'Settings', href: '/settings', icon: 'settings' },
   { label: 'Docs', href: '/docs', icon: 'article' },
 ];
+
+const AGENT_NAV_ITEM = { label: 'Support Inbox', href: '/support', icon: 'support_agent', badge: <SupportInboxBadge /> };
 
 function ScaleStationLogo() {
   return (
@@ -50,6 +51,17 @@ function NotificationSidebarItem() {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [isAgent, setIsAgent] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.from('support_agents').select('user_id').maybeSingle()
+      .then(({ data }) => { if (data) setIsAgent(true); });
+  }, []);
+
+  const navItems = isAgent
+    ? [BASE_NAV[0], AGENT_NAV_ITEM, ...BASE_NAV.slice(1)]
+    : BASE_NAV;
 
   async function handleSignOut() {
     const supabase = createClient();
