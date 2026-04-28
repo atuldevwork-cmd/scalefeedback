@@ -178,8 +178,8 @@ export function SupportChatWidget() {
         >
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-[#300a46] text-white shrink-0">
-            <div className="w-9 h-9 rounded-full bg-[#ff724f] flex items-center justify-center text-xs font-bold shrink-0">
-              SF
+            <div className="w-9 h-9 rounded-full bg-[#ff724f] flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-white text-[20px]">smart_toy</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold leading-tight">Support Chat</p>
@@ -217,8 +217,11 @@ export function SupportChatWidget() {
                     className={cn('flex items-end gap-2', msg.role === 'user' ? 'justify-end' : 'justify-start')}
                   >
                     {msg.role !== 'user' && (
-                      <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center text-white text-[9px] font-bold shrink-0 mb-0.5">
-                        {msg.role === 'agent' ? 'T' : 'SF'}
+                      <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center shrink-0 mb-0.5">
+                        {msg.role === 'agent'
+                          ? <span className="material-symbols-outlined text-white text-[13px]">person</span>
+                          : <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
+                        }
                       </div>
                     )}
                     <div
@@ -237,8 +240,8 @@ export function SupportChatWidget() {
                 {/* Typing indicator — shows while waiting for bot/agent reply */}
                 {(botTyping || sending) && (
                   <div className="flex items-end gap-2 justify-start">
-                    <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center text-white text-[9px] font-bold shrink-0 mb-0.5">
-                      SF
+                    <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center shrink-0 mb-0.5">
+                      <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
                     </div>
                     <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
                       <span className="flex gap-1 items-center h-4">
