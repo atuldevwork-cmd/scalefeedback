@@ -27,6 +27,28 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Send agent greeting when they claim the chat (fire-and-forget)
+  if (body.status === 'with_human' && chat?.id) {
+    void (async () => {
+      try {
+        const { data: profile } = await service
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+        const agentName = profile?.full_name ?? user.email?.split('@')[0] ?? 'Team';
+        const userName = chat.user_name ? `, ${chat.user_name.split(' ')[0]}` : '';
+        await service.from('support_messages').insert({
+          chat_id: chat.id,
+          role: 'agent',
+          sender_id: user.id,
+          sender_name: agentName,
+          content: `Hi${userName}! This is ${agentName} from the team. How can I help you today?`,
+        });
+      } catch { /* never block on greeting failure */ }
+    })();
+  }
+
   // Notify all support agents when user requests human support (fire-and-forget)
   if (body.status === 'waiting_human' && chat?.user_id) {
     void (async () => {

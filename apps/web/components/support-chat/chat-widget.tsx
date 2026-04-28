@@ -8,12 +8,33 @@ interface Message {
   id: string;
   role: 'user' | 'bot' | 'agent';
   content: string;
+  sender_name?: string | null;
   created_at: string;
 }
 
 interface Chat {
   id: string;
   status: 'bot' | 'waiting_human' | 'with_human' | 'resolved';
+}
+
+function playNotificationSound() {
+  try {
+    const ctx = new AudioContext();
+    const times = [0, 0.18] as const;
+    const freqs = [880, 1100] as const;
+    times.forEach((delay, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freqs[i];
+      gain.gain.setValueAtTime(0.18, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.35);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.35);
+    });
+  } catch { /* AudioContext blocked before user gesture — silently ignore */ }
 }
 
 function renderMessage(text: string) {
@@ -62,7 +83,10 @@ export function SupportChatWidget() {
         : prev.filter((m) => !m.id.startsWith('opt-'));
       return [...base, msg];
     });
-    if (msg.role === 'bot' || msg.role === 'agent') setBotTyping(false);
+    if (msg.role === 'bot' || msg.role === 'agent') {
+      setBotTyping(false);
+      playNotificationSound();
+    }
   }, []);
 
   // Realtime: incoming messages + chat status updates
@@ -245,11 +269,18 @@ export function SupportChatWidget() {
                     className={cn('flex items-end gap-2', msg.role === 'user' ? 'justify-end' : 'justify-start')}
                   >
                     {msg.role !== 'user' && (
-                      <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center shrink-0 mb-0.5">
-                        {msg.role === 'agent'
-                          ? <span className="material-symbols-outlined text-white text-[13px]">person</span>
-                          : <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
-                        }
+                      <div className="flex flex-col items-center gap-0.5 shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center">
+                          {msg.role === 'agent'
+                            ? <span className="material-symbols-outlined text-white text-[13px]">person</span>
+                            : <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
+                          }
+                        </div>
+                        {msg.role === 'agent' && msg.sender_name && (
+                          <span className="text-[9px] text-gray-400 leading-tight text-center max-w-[40px] truncate">
+                            {msg.sender_name.split(' ')[0]}
+                          </span>
+                        )}
                       </div>
                     )}
                     <div

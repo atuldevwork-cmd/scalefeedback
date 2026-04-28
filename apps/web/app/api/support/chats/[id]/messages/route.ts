@@ -90,9 +90,19 @@ export async function POST(
   }
   const role = isOwner ? 'user' : 'agent';
 
+  let senderName: string | null = null;
+  if (role === 'agent') {
+    const { data: profile } = await service
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    senderName = profile?.full_name ?? user.email?.split('@')[0] ?? null;
+  }
+
   const { data: userMessage, error } = await service
     .from('support_messages')
-    .insert({ chat_id: id, role, sender_id: user.id, content: content.trim() })
+    .insert({ chat_id: id, role, sender_id: user.id, sender_name: senderName, content: content.trim() })
     .select()
     .single();
 

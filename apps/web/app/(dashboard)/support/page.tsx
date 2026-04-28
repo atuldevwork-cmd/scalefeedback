@@ -19,6 +19,7 @@ interface Message {
   id: string;
   role: 'user' | 'bot' | 'agent';
   content: string;
+  sender_name?: string | null;
   created_at: string;
 }
 
@@ -284,8 +285,13 @@ export default function SupportInboxPage() {
                   className={cn('flex items-end gap-2', msg.role === 'user' ? 'justify-start' : 'justify-end')}
                 >
                   {msg.role === 'user' && (
-                    <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-white text-[9px] font-bold shrink-0 mb-0.5">
-                      U
+                    <div className="flex flex-col items-center gap-0.5 shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-white text-[9px] font-bold">
+                        {(activeChat.user_name ?? activeChat.user_email ?? 'U').charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-[9px] text-gray-400 leading-tight max-w-[40px] truncate text-center">
+                        {activeChat.user_name?.split(' ')[0] ?? activeChat.user_email?.split('@')[0] ?? 'User'}
+                      </span>
                     </div>
                   )}
                   <div
@@ -304,13 +310,20 @@ export default function SupportInboxPage() {
                     {msg.content}
                   </div>
                   {msg.role !== 'user' && (
-                    <div
-                      className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 mb-0.5',
-                        msg.role === 'agent' ? 'bg-[#ff724f] text-white' : 'bg-[#300a46] text-white'
-                      )}
-                    >
-                      {msg.role === 'agent' ? 'T' : 'SF'}
+                    <div className="flex flex-col items-center gap-0.5 shrink-0">
+                      <div
+                        className={cn(
+                          'w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold',
+                          msg.role === 'agent' ? 'bg-[#ff724f] text-white' : 'bg-[#300a46] text-white'
+                        )}
+                      >
+                        {msg.role === 'agent'
+                          ? (msg.sender_name ?? 'T').charAt(0).toUpperCase()
+                          : 'AI'}
+                      </div>
+                      <span className="text-[9px] text-gray-400 leading-tight max-w-[40px] truncate text-center">
+                        {msg.role === 'agent' ? (msg.sender_name?.split(' ')[0] ?? 'Team') : 'Bot'}
+                      </span>
                     </div>
                   )}
                 </div>
