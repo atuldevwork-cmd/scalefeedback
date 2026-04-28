@@ -53,7 +53,15 @@ export function SupportChatWidget() {
   useEffect(() => { scrollToBottom(); }, [messages, botTyping, scrollToBottom]);
 
   const appendMessage = useCallback((msg: Message) => {
-    setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === msg.id)) return prev;
+      // Real message arrived — drop the in-flight optimistic placeholder immediately
+      // (don't wait for the OpenAI response to clean it up)
+      const base = msg.id.startsWith('opt-')
+        ? prev
+        : prev.filter((m) => !m.id.startsWith('opt-'));
+      return [...base, msg];
+    });
     if (msg.role === 'bot' || msg.role === 'agent') setBotTyping(false);
   }, []);
 
