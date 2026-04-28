@@ -35,6 +35,7 @@ export function SupportChatWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false); // ref so rapid Enter/click can't race past the guard
   const [botTyping, setBotTyping] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState(false);
@@ -113,9 +114,10 @@ export function SupportChatWidget() {
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || !chat || sending) return;
+    if (!content.trim() || !chat || sendingRef.current) return;
     const trimmed = content.trim();
     setInput('');
+    sendingRef.current = true;
     setSending(true);
 
     // Show user message instantly (optimistic)
@@ -151,6 +153,7 @@ export function SupportChatWidget() {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setBotTyping(false);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -208,7 +211,7 @@ export function SupportChatWidget() {
               </div>
             ) : (
               <>
-                {messages.map((msg) => (
+                {messages.filter((msg, i, arr) => arr.findIndex(m => m.id === msg.id) === i).map((msg) => (
                   <div
                     key={msg.id}
                     className={cn('flex items-end gap-2', msg.role === 'user' ? 'justify-end' : 'justify-start')}
