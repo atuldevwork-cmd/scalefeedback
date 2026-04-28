@@ -1,13 +1,16 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { NotificationBell } from './notification-bell';
+import { SupportInboxBadge } from './support-chat/inbox-badge';
 
-const navItems = [
+const navItems: { label: string; href: string; icon: string; badge?: React.ReactNode }[] = [
   { label: 'Projects', href: '/projects', icon: 'folder_open' },
+  { label: 'Support Inbox', href: '/support', icon: 'support_agent', badge: <SupportInboxBadge /> },
   { label: 'Settings', href: '/settings', icon: 'settings' },
   { label: 'Docs', href: '/docs', icon: 'article' },
 ];
@@ -89,9 +92,10 @@ export function Sidebar() {
                 {item.icon}
               </span>
               {item.label}
-              {active && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ff724f]" />
-              )}
+              {item.badge
+                ? item.badge
+                : active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ff724f]" />
+              }
             </Link>
           );
         })}
