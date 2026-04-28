@@ -69,6 +69,8 @@ export function SupportChatWidget() {
   useEffect(() => {
     if (!chat?.id) return;
     const supabase = createClient();
+    // Track last-seen status in closure so updated_at-only triggers don't fire side effects
+    let lastSeenStatus: Chat['status'] = chat.status;
 
     const channel = supabase
       .channel(`support-chat:${chat.id}`)
@@ -82,25 +84,25 @@ export function SupportChatWidget() {
         { event: 'UPDATE', schema: 'public', table: 'support_chats', filter: `id=eq.${chat.id}` },
         (payload) => {
           const newStatus = payload.new.status as Chat['status'];
-          const prevStatus = payload.old?.status as Chat['status'] | undefined;
+          if (newStatus !== lastSeenStatus) {
+            if (newStatus === 'with_human') {
+              setShowJoinBanner(true);
+              setTimeout(() => setShowJoinBanner(false), 4000);
+            }
+            if (newStatus === 'resolved') {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `sys-resolved-${Date.now()}`,
+                  role: 'bot',
+                  content: 'This conversation has been closed by our team. Thank you for reaching out! Feel free to start a new chat if you need further help.',
+                  created_at: new Date().toISOString(),
+                },
+              ]);
+            }
+            lastSeenStatus = newStatus;
+          }
           setChat((prev) => prev ? { ...prev, status: newStatus } : null);
-          // Only react to actual status transitions, not updated_at-only updates
-          if (newStatus === prevStatus) return;
-          if (newStatus === 'with_human') {
-            setShowJoinBanner(true);
-            setTimeout(() => setShowJoinBanner(false), 4000);
-          }
-          if (newStatus === 'resolved') {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `sys-resolved-${Date.now()}`,
-                role: 'bot',
-                content: 'This conversation has been closed by our team. Thank you for reaching out! Feel free to start a new chat if you need further help.',
-                created_at: new Date().toISOString(),
-              },
-            ]);
-          }
         }
       )
       .subscribe();
