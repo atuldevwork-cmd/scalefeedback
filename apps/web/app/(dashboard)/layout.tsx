@@ -1,7 +1,7 @@
 import { Sidebar } from '@/components/sidebar';
 import { NavProgress } from '@/components/ui/nav-progress';
 import { WidgetTokenSync } from '@/components/widget-token-sync';
-import { SupportChatWidget } from '@/components/support-chat/chat-widget';
+import { SupportChatWidgetWrapper } from '@/components/support-chat/widget-wrapper';
 
 // Auth is handled by middleware (sf_local_session cookie)
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <main className="flex-1 overflow-y-auto">
         {children}
       </main>
-      <SupportChatWidget />
+      <SupportChatWidgetWrapper />
     </div>
   );
 }

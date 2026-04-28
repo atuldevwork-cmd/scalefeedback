@@ -39,6 +39,7 @@ export function SupportChatWidget() {
   const [botTyping, setBotTyping] = useState(false);
   const [initializing, setInitializing] = useState(false);
   const [initError, setInitError] = useState(false);
+  const [showJoinBanner, setShowJoinBanner] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -72,9 +73,12 @@ export function SupportChatWidget() {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'support_chats', filter: `id=eq.${chat.id}` },
         (payload) => {
-          setChat((prev) =>
-            prev ? { ...prev, status: payload.new.status as Chat['status'] } : null
-          );
+          const newStatus = payload.new.status as Chat['status'];
+          setChat((prev) => prev ? { ...prev, status: newStatus } : null);
+          if (newStatus === 'with_human') {
+            setShowJoinBanner(true);
+            setTimeout(() => setShowJoinBanner(false), 4000);
+          }
         }
       )
       .subscribe();
@@ -266,8 +270,8 @@ export function SupportChatWidget() {
               Waiting for a team member to join…
             </div>
           )}
-          {chat?.status === 'with_human' && (
-            <div className="px-4 py-2 bg-green-50 border-t border-green-100 text-xs text-green-700 text-center shrink-0">
+          {showJoinBanner && (
+            <div className="px-4 py-2 bg-green-50 border-t border-green-100 text-xs text-green-700 text-center shrink-0 transition-opacity">
               A team member has joined this chat
             </div>
           )}
