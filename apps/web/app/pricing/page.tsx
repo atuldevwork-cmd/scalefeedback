@@ -306,9 +306,9 @@ export default function PricingPage() {
         <div className="mt-10 text-center">
           <p className="text-slate-500 text-sm">
             Still have questions?{' '}
-            <a href="mailto:hello@scalefeedback.io" className="text-[#ff724f] font-semibold hover:underline">
+            <Link href="/contact" className="text-[#ff724f] font-semibold hover:underline">
               Contact us
-            </a>
+            </Link>
           </p>
         </div>
       </section>
@@ -336,7 +336,7 @@ export default function PricingPage() {
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="hover:text-white transition-colors">About</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="mailto:hello@scalefeedback.io" className="hover:text-white transition-colors">Contact</a></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">Contact</Link></li>
             </ul>
           </div>
           <div>

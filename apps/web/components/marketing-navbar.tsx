@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 interface MarketingNavbarProps {
-  activePage?: 'home' | 'pricing';
+  activePage?: 'home' | 'pricing' | 'contact';
 }
 
 export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
@@ -33,6 +33,7 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
           <Link href="/#integrations" className={linkClass()}>Integrations</Link>
           <Link href="/#testimonials" className={linkClass()}>Customers</Link>
           <Link href="/pricing" className={linkClass('pricing')}>Pricing</Link>
+          <Link href="/contact" className={linkClass('contact')}>Contact</Link>
         </div>
 
         {/* Right side — desktop */}
@@ -62,6 +63,7 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
           <Link href="/#integrations" className="text-sm text-slate-600 hover:text-[#300a46] transition-colors py-1" onClick={() => setMobileOpen(false)}>Integrations</Link>
           <Link href="/#testimonials" className="text-sm text-slate-600 hover:text-[#300a46] transition-colors py-1" onClick={() => setMobileOpen(false)}>Customers</Link>
           <Link href="/pricing" className={`py-1 ${linkClass('pricing')}`} onClick={() => setMobileOpen(false)}>Pricing</Link>
+          <Link href="/contact" className={`py-1 ${linkClass('contact')}`} onClick={() => setMobileOpen(false)}>Contact</Link>
           <div className="border-t border-slate-100 pt-4 flex flex-col gap-3">
             <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-[#300a46] transition-colors" onClick={() => setMobileOpen(false)}>
               Login
