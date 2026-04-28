@@ -79,6 +79,17 @@ export function SupportChatWidget() {
             setShowJoinBanner(true);
             setTimeout(() => setShowJoinBanner(false), 4000);
           }
+          if (newStatus === 'resolved') {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `sys-resolved-${Date.now()}`,
+                role: 'bot',
+                content: 'This conversation has been closed by our team. Thank you for reaching out! Feel free to start a new chat if you need further help.',
+                created_at: new Date().toISOString(),
+              },
+            ]);
+          }
         }
       )
       .subscribe();
@@ -303,6 +314,9 @@ export function SupportChatWidget() {
                 Connect with team member →
               </button>
             )}
+            {chat?.status === 'resolved' ? (
+              <p className="text-xs text-gray-400 text-center py-1">This chat has been closed.</p>
+            ) : null}
             <div className="flex items-center gap-2">
               <input
                 ref={inputRef}
@@ -315,7 +329,7 @@ export function SupportChatWidget() {
                 placeholder={
                   chat?.status === 'waiting_human' ? 'Describe your issue while you wait…' : 'Type a message…'
                 }
-                disabled={sending || initializing}
+                disabled={sending || initializing || chat?.status === 'resolved'}
                 className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#300a46]/20 focus:border-[#300a46]/40 disabled:opacity-50"
               />
               <button

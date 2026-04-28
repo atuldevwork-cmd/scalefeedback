@@ -121,6 +121,7 @@ export default function SupportInboxPage() {
       body: JSON.stringify({ status: 'with_human' }),
     });
     setActiveChat((prev) => prev ? { ...prev, status: 'with_human' } : null);
+    setChats((prev) => prev.map((c) => c.id === activeChat.id ? { ...c, status: 'with_human' as const } : c));
   };
 
   const resolveChat = async () => {
@@ -131,6 +132,7 @@ export default function SupportInboxPage() {
       body: JSON.stringify({ status: 'resolved' }),
     });
     setActiveChat((prev) => prev ? { ...prev, status: 'resolved' } : null);
+    setChats((prev) => prev.map((c) => c.id === activeChat.id ? { ...c, status: 'resolved' as const } : c));
   };
 
   const sendReply = async () => {
