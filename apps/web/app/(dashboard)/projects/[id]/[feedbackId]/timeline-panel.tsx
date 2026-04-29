@@ -56,10 +56,11 @@ export function TimelinePanel({ createdAt, updatedAt }: Props) {
               <p className="text-xs font-medium text-foreground">{label}</p>
               <p
                 className="text-xs text-muted-foreground mt-0.5 cursor-default"
+                suppressHydrationWarning
                 title={formatLocal(iso)}
               >
                 {formatRelative(iso)}
-                <span className="ml-1 text-[11px] text-muted-foreground/60">
+                <span className="ml-1 text-[11px] text-muted-foreground/60" suppressHydrationWarning>
                   · {formatLocal(iso)}
                 </span>
               </p>

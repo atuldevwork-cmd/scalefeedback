@@ -11,6 +11,7 @@ import { ScreenshotLightbox } from '@/components/screenshot-lightbox';
 import { ClickUpTaskPanel } from './clickup-task-panel';
 import { ClickUpPushButton } from './clickup-push-button';
 import { TimelinePanel } from './timeline-panel';
+import { ReporterInviteButton } from './reporter-invite-button';
 import type { Feedback, Project } from '@scalefeedback/shared';
 
 type ClickUpTaskData = {
@@ -596,12 +597,31 @@ export default async function FeedbackDetailPage({ params }: Props) {
           {/* Reporter */}
           <div className="bg-card border border-border rounded-xl p-5">
             <h2 className="text-sm font-semibold text-foreground mb-3">Reporter</h2>
-            <div className="space-y-1 text-sm">
-              {feedback.reporter_name
-                ? <p className="font-medium text-foreground">{feedback.reporter_name}</p>
-                : <p className="text-muted-foreground italic">Anonymous</p>}
-              {feedback.reporter_email && <p className="text-muted-foreground">{feedback.reporter_email}</p>}
-            </div>
+            {feedback.reporter_name || feedback.reporter_email ? (
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-[#fff3f0] flex items-center justify-center text-sm font-bold text-[#ff724f] shrink-0">
+                  {(feedback.reporter_name || feedback.reporter_email || '?').charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">
+                    {feedback.reporter_name ?? feedback.reporter_email}
+                  </p>
+                  {feedback.reporter_email && feedback.reporter_name && (
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{feedback.reporter_email}</p>
+                  )}
+                </div>
+                {feedback.reporter_email &&
+                  !orgMembers.some((m) => m.email === feedback!.reporter_email) && (
+                  <ReporterInviteButton
+                    projectId={id}
+                    reporterEmail={feedback.reporter_email}
+                    reporterName={feedback.reporter_name ?? ''}
+                  />
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Anonymous</p>
+            )}
           </div>
 
           {/* Environment */}
