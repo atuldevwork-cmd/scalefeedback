@@ -296,8 +296,8 @@ export function SupportChatWidget() {
                   </div>
                 ))}
 
-                {/* Typing indicator — shows while waiting for bot/agent reply */}
-                {(botTyping || sending) && (
+                {/* Typing indicator — only show when bot is expected to reply */}
+                {(botTyping || (sending && chat?.status === 'bot')) && (
                   <div className="flex items-end gap-2 justify-start">
                     <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center shrink-0 mb-0.5">
                       <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
