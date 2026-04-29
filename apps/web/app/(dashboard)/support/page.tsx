@@ -6,33 +6,34 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
 function playIncomingRingtone() {
-  try {
-    const ctx = new AudioContext();
-    // Single beep: loud, sharp attack, quick decay — like a phone ring burst
-    const beep = (start: number) => {
-      [440, 480].forEach((freq) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'square'; // harsher, louder-sounding than sine
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, ctx.currentTime + start);
-        gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + start + 0.02);
-        gain.gain.setValueAtTime(0.55, ctx.currentTime + start + 0.18);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + 0.22);
-        osc.start(ctx.currentTime + start);
-        osc.stop(ctx.currentTime + start + 0.25);
-      });
-    };
-    // Double-ring cadence × 4 rounds: beep-beep … pause … beep-beep … pause …
-    // Each round: beep at 0, beep at 0.28, gap of 0.55 before next round
-    const round = 0.83; // 0.28 + 0.25 + 0.3 gap
+  const ctx = new AudioContext();
+
+  const beep = (start: number) => {
+    [440, 480].forEach((freq) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + start;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.6, t + 0.02);
+      gain.gain.setValueAtTime(0.6, t + 0.18);
+      gain.gain.linearRampToValueAtTime(0, t + 0.22);
+      osc.start(t);
+      osc.stop(t + 0.25);
+    });
+  };
+
+  // Chrome suspends AudioContext until .resume() is awaited
+  ctx.resume().then(() => {
+    const round = 0.83;
     for (let i = 0; i < 4; i++) {
       beep(i * round);
       beep(i * round + 0.28);
     }
-  } catch { /* AudioContext may be blocked before user gesture */ }
+  }).catch(() => {/* ignore */});
 }
 
 interface SupportChat {
@@ -211,6 +212,13 @@ export default function SupportInboxPage() {
       {/* Sidebar: chat list */}
       <div className="w-[320px] shrink-0 border-r border-gray-100 flex flex-col h-full">
         <div className="px-5 py-4 border-b border-gray-100">
+          {/* Temporary test button — remove after verifying sound */}
+          <button
+            onClick={playIncomingRingtone}
+            className="w-full mb-3 text-xs px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors"
+          >
+            🔔 Test ringtone
+          </button>
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-lg font-semibold text-[#300a46]">Support Inbox</h1>
             {waitingCount > 0 && (
