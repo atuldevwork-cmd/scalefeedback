@@ -8,25 +8,30 @@ import { formatDistanceToNow } from 'date-fns';
 function playIncomingRingtone() {
   try {
     const ctx = new AudioContext();
-    const ring = (start: number) => {
+    // Single beep: loud, sharp attack, quick decay — like a phone ring burst
+    const beep = (start: number) => {
       [440, 480].forEach((freq) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.type = 'sine';
+        osc.type = 'square'; // harsher, louder-sounding than sine
         osc.frequency.value = freq;
         gain.gain.setValueAtTime(0, ctx.currentTime + start);
-        gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime + start + 0.05);
-        gain.gain.setValueAtTime(0.28, ctx.currentTime + start + 0.35);
-        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + 0.42);
+        gain.gain.linearRampToValueAtTime(0.55, ctx.currentTime + start + 0.02);
+        gain.gain.setValueAtTime(0.55, ctx.currentTime + start + 0.18);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + 0.22);
         osc.start(ctx.currentTime + start);
-        osc.stop(ctx.currentTime + start + 0.5);
+        osc.stop(ctx.currentTime + start + 0.25);
       });
     };
-    ring(0);
-    ring(0.65);
-    ring(1.3);
+    // Double-ring cadence × 4 rounds: beep-beep … pause … beep-beep … pause …
+    // Each round: beep at 0, beep at 0.28, gap of 0.55 before next round
+    const round = 0.83; // 0.28 + 0.25 + 0.3 gap
+    for (let i = 0; i < 4; i++) {
+      beep(i * round);
+      beep(i * round + 0.28);
+    }
   } catch { /* AudioContext may be blocked before user gesture */ }
 }
 
