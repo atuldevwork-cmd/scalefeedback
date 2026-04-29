@@ -230,15 +230,15 @@ export function SupportChatWidget() {
         >
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-[#300a46] text-white shrink-0">
-            <div className="w-9 h-9 rounded-full bg-[#ff724f] flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-white text-[20px]">smart_toy</span>
-            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold leading-tight">Support Chat</p>
+              <p className="text-base font-bold leading-tight">Support Chat</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className={cn('w-1.5 h-1.5 rounded-full', statusDot)} />
                 <p className="text-xs text-white/70 truncate">{statusText}</p>
               </div>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-[#ff724f] flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-white text-[20px]">smart_toy</span>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-white/60 hover:text-white transition-colors">
               <span className="material-symbols-outlined text-[20px]">close</span>

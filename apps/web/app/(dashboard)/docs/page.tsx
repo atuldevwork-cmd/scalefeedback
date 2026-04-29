@@ -63,24 +63,25 @@ const sdkSnippet =
 `// Open the widget programmatically
 ScaleFeedback.open();
 
-// Close it
-ScaleFeedback.close();
+// Pre-identify the reporter (hides name/email fields in the form)
+ScaleFeedback.setUser({ name: 'Jane Smith', email: 'jane@acme.com' });
+// Clear the user (shows guest fields again)
+ScaleFeedback.setUser(null);
 
-// Optional: advanced config via window object
-// (set BEFORE the widget script loads)
+// Pre-identify via window config (set BEFORE the widget script loads)
 window.ScaleFeedbackConfig = {
-  reporterName: 'Jane Smith',   // prefill from your auth
+  user: { name: 'Jane Smith', email: 'jane@acme.com' },
+  // OR use individual fields:
+  reporterName: 'Jane Smith',
   reporterEmail: 'jane@acme.com',
-  color: '#ff724f',             // override accent color
-  position: 'left',             // 'right' (default) | 'left'
-  collectConsole: true,
-  collectNetwork: true,
 
   // Event hooks
   onOpen:   () => console.log('Widget opened'),
   onClose:  () => console.log('Widget closed'),
   onSubmit: (fb) => console.log('Submitted:', fb),
-};`;
+};
+
+// Keyboard shortcut: Cmd+I (Mac) / Ctrl+I (Windows) also opens the widget`;
 
 /* ── Reusable components ──────────────────────────────────────────────── */
 
@@ -181,10 +182,11 @@ export default function DocsPage() {
             </h2>
             <ol className="space-y-3 text-sm text-muted-foreground">
               {[
-                <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the <strong className="text-foreground">snippet</strong> from the Widget Settings tab.</>,
-                <>Paste the snippet below before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag of your site.</>,
-                <>Reload your site — a <strong className="text-[#ff724f]">Feedback</strong> tab appears on the edge of the screen.</>,
+                <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the snippet from <strong className="text-foreground">Settings → Widget Settings</strong>.</>,
+                <>Paste the snippet before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag of your site.</>,
+                <>Reload your site — a <strong className="text-[#ff724f]">Report issue</strong> button appears on your page.</>,
                 <>Submit a test report. It appears instantly in your ScaleFeedback dashboard.</>,
+                <>Use <code className="bg-muted px-1 rounded text-xs">Cmd+I</code> (Mac) or <code className="bg-muted px-1 rounded text-xs">Ctrl+I</code> (Windows) as a keyboard shortcut to open the widget anytime.</>,
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-[#ff724f]/10 text-[#ff724f] font-bold text-xs flex items-center justify-center mt-0.5">{i + 1}</span>
@@ -252,7 +254,7 @@ export default function DocsPage() {
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { method: 'ScaleFeedback.open()', desc: 'Opens the widget panel' },
-                { method: 'ScaleFeedback.close()', desc: 'Closes the widget panel' },
+                { method: 'ScaleFeedback.setUser(user)', desc: 'Pre-identify the reporter; pass null to clear' },
                 { method: 'onSubmit(fb)', desc: 'Fires after a report is submitted' },
               ].map(({ method, desc }) => (
                 <div key={method} className="bg-card border border-border rounded-xl p-4">
@@ -281,14 +283,14 @@ export default function DocsPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {[
-                    ['data-project *', 'HTML attribute', '—', 'Required. Your project API key set directly on the <script> tag.'],
-                    ['color', 'string', '#ff724f', 'Accent color for the widget button and UI.'],
-                    ['position', '"right" | "left"', '"right"', 'Side of screen the feedback tab appears on.'],
+                    ['data-project *', 'HTML attribute', '—', 'Required. Your project API key, set on the <script> tag.'],
+                    ['color', 'string', '#7C3AED', 'Accent color for the widget button and UI. Overridden by dashboard settings.'],
+                    ['position', '"bottom-right" | "bottom-left" | "middle-right" | "middle-left"', '"bottom-right"', 'Where the feedback button appears on screen. Overridden by dashboard settings.'],
+                    ['buttonText', 'string', '"Report issue"', 'Label on the feedback button (data-text attribute on script tag).'],
                     ['collectConsole', 'boolean', 'true', 'Capture browser console logs with each report.'],
-                    ['collectNetwork', 'boolean', 'false', 'Capture failed XHR / fetch requests.'],
-                    ['guestReporting', 'boolean', 'true', 'Show name & email fields for anonymous users.'],
-                    ['reporterName', 'string', '—', 'Prefill the reporter name (e.g. from your auth).'],
-                    ['reporterEmail', 'string', '—', 'Prefill the reporter email.'],
+                    ['collectNetwork', 'boolean', 'false', 'Capture failed XHR / fetch requests (4xx / 5xx only).'],
+                    ['guestReporting', 'boolean', 'true', 'Show name & email fields for anonymous users. Overridden by dashboard settings.'],
+                    ['user', '{ name, email }', '—', 'Pre-identify the reporter via window.ScaleFeedbackConfig.user or ScaleFeedback.setUser(). Hides name/email fields.'],
                     ['onOpen', '() => void', '—', 'Callback fired when the widget panel opens.'],
                     ['onClose', '() => void', '—', 'Callback fired when the widget panel closes.'],
                     ['onSubmit', '(fb: object) => void', '—', 'Callback fired after a successful submission.'],
@@ -314,8 +316,8 @@ export default function DocsPage() {
             <div className="space-y-3">
               {[
                 {
-                  q: 'The feedback tab is not showing',
-                  a: 'Ensure the script tag is placed before the closing </body> tag and that projectApiKey is a valid key from your dashboard. Check the browser console for errors.',
+                  q: 'The widget button is not showing',
+                  a: 'Ensure the script tag has a valid data-project attribute and is placed before the closing </body> tag. Check the browser console for [ScaleFeedback] errors.',
                 },
                 {
                   q: 'Screenshots are blank or incomplete',
@@ -331,7 +333,7 @@ export default function DocsPage() {
                 },
                 {
                   q: 'Submissions are not appearing in the dashboard',
-                  a: 'Verify the projectApiKey matches exactly. Check the Network tab for a POST to /api/feedback — any 4xx response means the key is wrong or the project is inactive.',
+                  a: 'Verify the data-project value matches your API key exactly. Check the Network tab for a POST to /api/feedback — any 4xx response means the key is wrong or the project is inactive.',
                 },
               ].map(({ q, a }) => (
                 <div key={q} className="border border-border rounded-xl p-5">

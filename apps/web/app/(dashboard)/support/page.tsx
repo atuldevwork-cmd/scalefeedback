@@ -5,6 +5,31 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 
+function playIncomingRingtone() {
+  try {
+    const ctx = new AudioContext();
+    const ring = (start: number) => {
+      [440, 480].forEach((freq) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, ctx.currentTime + start);
+        gain.gain.linearRampToValueAtTime(0.28, ctx.currentTime + start + 0.05);
+        gain.gain.setValueAtTime(0.28, ctx.currentTime + start + 0.35);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + start + 0.42);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + 0.5);
+      });
+    };
+    ring(0);
+    ring(0.65);
+    ring(1.3);
+  } catch { /* AudioContext may be blocked before user gesture */ }
+}
+
 interface SupportChat {
   id: string;
   user_name: string | null;
@@ -48,6 +73,8 @@ export default function SupportInboxPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<SupportChat['status'] | 'all'>('all');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const knownWaitingIds = useRef<Set<string>>(new Set());
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,11 +84,20 @@ export default function SupportInboxPage() {
     const res = await fetch('/api/support/chats?scope=inbox');
     if (res.status === 403) { window.location.href = '/projects'; return; }
     const { data } = await res.json() as { data: SupportChat[] };
-    setChats(
-      (data ?? []).sort((a, b) =>
-        STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
-      )
+    const sorted = (data ?? []).sort((a, b) =>
+      STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status)
     );
+    // Ring only when a genuinely new waiting_human chat arrives (not on first load)
+    if (initialLoadDone.current) {
+      sorted
+        .filter((c) => c.status === 'waiting_human' && !knownWaitingIds.current.has(c.id))
+        .forEach(() => playIncomingRingtone());
+    }
+    knownWaitingIds.current = new Set(
+      sorted.filter((c) => c.status === 'waiting_human').map((c) => c.id)
+    );
+    initialLoadDone.current = true;
+    setChats(sorted);
   }, []);
 
   useEffect(() => {
