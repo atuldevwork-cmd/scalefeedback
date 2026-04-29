@@ -212,13 +212,6 @@ export default function SupportInboxPage() {
       {/* Sidebar: chat list */}
       <div className="w-[320px] shrink-0 border-r border-gray-100 flex flex-col h-full">
         <div className="px-5 py-4 border-b border-gray-100">
-          {/* Temporary test button — remove after verifying sound */}
-          <button
-            onClick={playIncomingRingtone}
-            className="w-full mb-3 text-xs px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors"
-          >
-            🔔 Test ringtone
-          </button>
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-lg font-semibold text-[#300a46]">Support Inbox</h1>
             {waitingCount > 0 && (
