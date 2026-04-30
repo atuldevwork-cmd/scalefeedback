@@ -55,7 +55,8 @@ function ReplayPlayer({ events }: { events: unknown[] }) {
       }
 
       try {
-        const replayer = new Replayer(events as Parameters<typeof Replayer>[0], {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const replayer = new Replayer(events as any, {
           root: containerRef.current,
           skipInactive: true,
           showController: false,
