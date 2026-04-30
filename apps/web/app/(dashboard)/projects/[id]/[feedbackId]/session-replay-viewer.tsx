@@ -47,13 +47,15 @@ export function SessionReplayViewer({ events }: Props) {
       }
 
       try {
-        const replayer = new Replayer(events as Parameters<typeof Replayer>[0], {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const replayer = new Replayer(events as any, {
           root: containerRef.current,
           skipInactive: true,
           showController: false,
           useVirtualDom: false,
           mouseTail: false,
-        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
 
         replayerRef.current = replayer as unknown as { play: () => void; pause: () => void };
 

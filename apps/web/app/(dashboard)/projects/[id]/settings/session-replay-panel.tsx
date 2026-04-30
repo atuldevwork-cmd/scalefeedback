@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function SessionReplayPanel({ project }: Props) {
-  const cfg = (project.widget_config ?? {}) as Record<string, unknown>;
+  const cfg = (project.widget_config ?? {}) as unknown as Record<string, unknown>;
   const [enabled, setEnabled] = useState<boolean>(Boolean(cfg.sessionReplay));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);

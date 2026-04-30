@@ -29,6 +29,9 @@ export interface SubmitFeedbackPayload {
   console_logs: ConsoleLog[];
   network_logs: NetworkLog[];
 
+  // Priority
+  priority?: string;
+
   // Custom metadata
   custom_metadata?: Record<string, unknown>;
 

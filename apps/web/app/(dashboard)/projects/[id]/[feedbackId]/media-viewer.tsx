@@ -62,7 +62,8 @@ function ReplayPlayer({ events }: { events: unknown[] }) {
           showController: false,
           useVirtualDom: false,
           mouseTail: false,
-        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
         replayerRef.current = replayer as unknown as { play: () => void; pause: () => void };
 
         setTimeout(() => {
