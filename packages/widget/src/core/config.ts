@@ -97,6 +97,7 @@ export async function parseConfig(): Promise<WidgetConfig> {
         pages:           remote.pages           ?? 'all',
         secretParamType: remote.secretParamType ?? 'default',
         secretParam:     remote.secretParam     ?? '',
+        sessionReplay:   remote.sessionReplay   ?? false,
         user:            presetUser,
       };
     }

@@ -70,30 +70,41 @@ export async function POST(request: NextRequest) {
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/screenshots/${screenshotPath}`
       : undefined;
 
-    // Insert feedback record
-    const { data: feedback, error: insertError } = await supabase
+    const baseInsert = {
+      project_id: project.id,
+      reporter_name: body.reporter_name || null,
+      reporter_email: body.reporter_email || null,
+      title: body.title || null,
+      description: body.description || null,
+      type: body.type,
+      screenshot_url: screenshotPath,
+      page_url: body.page_url,
+      browser: body.browser,
+      os: body.os,
+      screen_size: body.screen_size,
+      viewport_size: body.viewport_size,
+      device_pixel_ratio: body.device_pixel_ratio,
+      user_agent: body.user_agent,
+      console_logs: body.console_logs ?? [],
+      network_logs: body.network_logs ?? [],
+      custom_metadata: body.custom_metadata ?? {},
+    };
+
+    // Insert feedback record (with session_events if provided, fall back without if column missing)
+    let { data: feedback, error: insertError } = await supabase
       .from('feedback')
-      .insert({
-        project_id: project.id,
-        reporter_name: body.reporter_name || null,
-        reporter_email: body.reporter_email || null,
-        title: body.title || null,
-        description: body.description || null,
-        type: body.type,
-        screenshot_url: screenshotPath,
-        page_url: body.page_url,
-        browser: body.browser,
-        os: body.os,
-        screen_size: body.screen_size,
-        viewport_size: body.viewport_size,
-        device_pixel_ratio: body.device_pixel_ratio,
-        user_agent: body.user_agent,
-        console_logs: body.console_logs ?? [],
-        network_logs: body.network_logs ?? [],
-        custom_metadata: body.custom_metadata ?? {},
-      })
+      .insert({ ...baseInsert, session_events: body.session_events ?? null })
       .select()
       .single();
+
+    // PGRST204 = column not found in schema cache (e.g. local DB without migration)
+    if (insertError && (insertError as { code?: string }).code === 'PGRST204') {
+      ({ data: feedback, error: insertError } = await supabase
+        .from('feedback')
+        .insert(baseInsert)
+        .select()
+        .single());
+    }
 
     if (insertError) {
       console.error('Feedback insert error:', insertError);
@@ -156,6 +167,7 @@ export async function POST(request: NextRequest) {
           reporterName: body.reporter_name,
           pageUrl: body.page_url,
           status: 'open',
+          priority: body.priority,
           dashboardUrl: `${process.env.NEXT_PUBLIC_APP_URL}/projects/${project.id}/${feedback.id}`,
           screenshotUrl: screenshotPublicUrl,
           browser: body.browser,

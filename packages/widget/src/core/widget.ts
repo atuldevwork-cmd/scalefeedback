@@ -1,3 +1,4 @@
+import { record } from 'rrweb';
 import type { WidgetConfig, FeedbackType, AnnotationTool } from '../types';
 import { captureScreenshot } from '../capture/screenshot';
 import { ConsoleCapture } from '../capture/console';
@@ -23,6 +24,8 @@ export class ScaleFeedbackWidget {
   private isOpen = false;
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
   private guestIdentityOverride = false; // true when user clicked "Change"
+  private replayEvents: unknown[] = [];
+  private stopRecording: (() => void) | null = null;
 
   constructor(config: WidgetConfig) {
     this.config = config;
@@ -41,6 +44,7 @@ export class ScaleFeedbackWidget {
     // Start interceptors if configured
     if (config.collectConsole) ConsoleCapture.start();
     if (config.collectNetwork) NetworkCapture.start();
+    if (config.sessionReplay) this.startReplayRecording();
 
     // Single persistent click handler — never removed, never { once: true }
     this.shadowRoot.addEventListener('click', (e) => this.handleClick(e));
@@ -55,6 +59,24 @@ export class ScaleFeedbackWidget {
 
     // Render FAB
     this.renderFAB();
+  }
+
+  private startReplayRecording() {
+    const BUFFER_MS = 30_000;
+    this.stopRecording = record({
+      emit: (event: unknown) => {
+        this.replayEvents.push(event);
+        // Rolling buffer: drop events older than 30 seconds
+        const cutoff = Date.now() - BUFFER_MS;
+        while (this.replayEvents.length > 0) {
+          const first = this.replayEvents[0] as { timestamp: number };
+          if (first.timestamp < cutoff) this.replayEvents.shift();
+          else break;
+        }
+      },
+      maskAllInputs: true, // privacy: mask typed values
+      blockClass: 'sf-no-record', // honour opt-out class
+    });
   }
 
   private renderFAB() {
@@ -538,6 +560,7 @@ export class ScaleFeedbackWidget {
         type: this.feedbackType,
         consoleLogs: ConsoleCapture.getLogs(),
         networkLogs: NetworkCapture.getLogs(),
+        sessionEvents: this.config.sessionReplay ? [...this.replayEvents] : undefined,
       });
 
       // Clear logs after successful submit
@@ -611,6 +634,9 @@ export class ScaleFeedbackWidget {
     this.isOpen = false;
     this.screenshotDataUrl = '';
     this.guestIdentityOverride = false;
+    this.replayEvents = [];
+    if (this.stopRecording) { this.stopRecording(); this.stopRecording = null; }
+    if (this.config.sessionReplay) this.startReplayRecording();
     // Reset FAB state
     const fab = this.shadowRoot.querySelector<HTMLButtonElement>('.sf-fab');
     if (fab) { fab.disabled = false; fab.style.opacity = ''; }

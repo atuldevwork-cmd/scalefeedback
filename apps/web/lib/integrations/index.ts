@@ -15,6 +15,7 @@ export interface FeedbackIntegrationData {
   reporterName?: string;
   pageUrl: string;
   status: string;
+  priority?: string;
   dashboardUrl: string;
   screenshotUrl?: string;
   // Session environment
@@ -56,10 +57,13 @@ async function fireOne(
           projectName: data.projectName,
           feedbackTitle: data.feedbackTitle,
           feedbackType: data.feedbackType,
+          description: data.description,
           reporterName: data.reporterName,
           pageUrl: data.pageUrl,
           dashboardUrl: data.dashboardUrl,
           status: data.status,
+          priority: data.priority,
+          screenshotUrl: data.screenshotUrl,
         });
         break;
 

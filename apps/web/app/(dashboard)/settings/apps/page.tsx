@@ -70,7 +70,7 @@ const APPS = [
     name: 'Slack',
     description: 'Send feedback notifications to Slack channels via Incoming Webhook.',
     category: 'Notifications',
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: 'github',

@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     {
       project_id: projectId,
       type: 'jira',
-      enabled: false,
+      enabled: true,
       config: {
         accessToken: tokenData.access_token,
         refreshToken: tokenData.refresh_token ?? '',

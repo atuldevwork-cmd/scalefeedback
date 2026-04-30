@@ -9,6 +9,7 @@ import { ArchiveProjectButton } from './archive-project-button';
 import { IntegrationsPanel } from './integrations-panel';
 import { GuestsPanel } from './guests-panel';
 import { ButtonPanel } from './button-panel';
+import { SessionReplayPanel } from './session-replay-panel';
 import type { Project } from '@scalefeedback/shared';
 
 interface Props {
@@ -77,7 +78,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
           <p className="text-sm text-muted-foreground mb-4">
             Paste this snippet before the closing <code className="bg-muted px-1 py-0.5 rounded text-xs">&lt;/body&gt;</code> tag on your website.
           </p>
-          <WidgetInstallSnippet apiKey={project.api_key} />
+          <WidgetInstallSnippet apiKey={project.api_key} projectName={project.name} />
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">
@@ -86,6 +87,14 @@ export default async function ProjectSettingsPage({ params }: Props) {
             Customize the feedback button appearance and targeting behavior.
           </p>
           <ButtonPanel project={project} />
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6">
+          <h2 className="font-semibold text-foreground mb-1">Session Replay</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Record user sessions so you can watch exactly what happened before a bug report was submitted.
+          </p>
+          <SessionReplayPanel project={project} />
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6">

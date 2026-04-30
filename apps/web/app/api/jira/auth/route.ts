@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const url = new URL('https://auth.atlassian.com/authorize');
   url.searchParams.set('audience', 'api.atlassian.com');
   url.searchParams.set('client_id', clientId);
-  url.searchParams.set('scope', 'read:jira-work write:jira-work offline_access');
+  url.searchParams.set('scope', 'read:jira-work write:jira-work');
   url.searchParams.set('redirect_uri', redirectUri);
   url.searchParams.set('state', state);
   url.searchParams.set('response_type', 'code');

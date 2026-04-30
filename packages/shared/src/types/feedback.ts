@@ -37,6 +37,9 @@ export interface Feedback {
   // Custom
   custom_metadata: Record<string, unknown>;
 
+  // Session replay (rrweb events, last 30s before submission)
+  session_events?: unknown[] | null;
+
   // External PM tool
   external_id?: string | null;
   external_url?: string | null;

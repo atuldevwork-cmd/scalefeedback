@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toast';
@@ -38,6 +38,13 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
   const [pushedMap, setPushedMap] = useState<Map<string, string>>(new Map()); // feedbackId → taskUrl
 
   const canPushClickUp = clickupConnected && (userRole === 'owner' || userRole === 'admin');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    function handleClick() { setOpenMenuId(null); }
+    if (openMenuId) document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [openMenuId]);
 
   async function pushToClickUp(feedbackId: string, e: React.MouseEvent) {
     e.preventDefault();
@@ -240,32 +247,97 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
               </div>
             </Link>
 
-            {/* Push to ClickUp — only for unpushed AI-scan issues, owners/admins, on hover */}
-            {canPushClickUp && fb.custom_metadata?.source === 'ai-scan' &&
-             !fb.external_id && !pushedMap.has(fb.id) && (
+            {/* ··· row menu */}
+            <div className="relative shrink-0">
               <button
-                onClick={(e) => pushToClickUp(fb.id, e)}
-                disabled={pushingIds.has(fb.id)}
-                title="Push to ClickUp"
-                className="hidden group-hover:flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg text-[10px] font-semibold border border-[#7B68EE]/30 text-[#7B68EE] hover:bg-[#7B68EE]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(openMenuId === fb.id ? null : fb.id); }}
+                title="More actions"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
               >
-                {pushingIds.has(fb.id) ? (
-                  <span className="w-3 h-3 border border-[#7B68EE] border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <ClickUpMark />
-                )}
-                {pushingIds.has(fb.id) ? 'Pushing…' : 'Push'}
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                </svg>
               </button>
-            )}
 
-            {/* Delete button — visible on row hover */}
-            <button
-              onClick={(e) => confirmDelete(fb.id, e)}
-              title="Delete"
-              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50"
-            >
-              <span className="material-symbols-outlined text-[18px]">delete</span>
-            </button>
+              {openMenuId === fb.id && (
+                <div
+                  onClick={(e) => e.stopPropagation()} 
+                  className="absolute right-0 top-full mt-1 z-50 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 text-[14px]"
+                >
+                  {/* More details */}
+                  <Link
+                    href={`/projects/${projectId}/${fb.id}`}
+                    onClick={() => setOpenMenuId(null)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    More details
+                  </Link>
+
+                  {/* Open ClickUp task */}
+                  {(fb.external_url || pushedMap.get(fb.id)) ? (
+                    <a
+                      href={fb.external_url ?? pushedMap.get(fb.id) ?? '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setOpenMenuId(null)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50"
+                    >
+                      <ClickUpMark />
+                      Open ClickUp task
+                    </a>
+                  ) : canPushClickUp ? (
+                    <button
+                      onClick={(e) => { setOpenMenuId(null); pushToClickUp(fb.id, e); }}
+                      disabled={pushingIds.has(fb.id)}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      {pushingIds.has(fb.id)
+                        ? <span className="w-3.5 h-3.5 border border-[#7B68EE] border-t-transparent rounded-full animate-spin" />
+                        : <ClickUpMark />}
+                      {pushingIds.has(fb.id) ? 'Pushing…' : 'Push to ClickUp'}
+                    </button>
+                  ) : (
+                    <span className="flex items-center gap-2.5 px-3 py-2 text-gray-300 cursor-not-allowed select-none">
+                      <ClickUpMark />
+                      Open ClickUp task
+                    </span>
+                  )}
+
+                  {/* Copy issue link */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(null);
+                      navigator.clipboard.writeText(`${window.location.origin}/projects/${projectId}/${fb.id}`);
+                      toast('Link copied');
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                    Copy issue link
+                  </button>
+
+                  <div className="my-1 border-t border-gray-100" />
+
+                  {/* Delete */}
+                  <button
+                    onClick={(e) => { setOpenMenuId(null); confirmDelete(fb.id, e); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-red-500 hover:bg-red-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Delete feedback
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           );
         })}

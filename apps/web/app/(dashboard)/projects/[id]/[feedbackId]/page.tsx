@@ -7,11 +7,12 @@ import { UpdateStatusSelect } from './update-status-select';
 import { UpdatePrioritySelect } from './update-priority-select';
 import { AssignSelect } from './assign-select';
 import { CommentThread } from './comment-thread';
-import { ScreenshotLightbox } from '@/components/screenshot-lightbox';
 import { ClickUpTaskPanel } from './clickup-task-panel';
 import { ClickUpPushButton } from './clickup-push-button';
 import { TimelinePanel } from './timeline-panel';
 import { ReporterInviteButton } from './reporter-invite-button';
+import { FeedbackActionsMenu } from './feedback-actions-menu';
+import { MediaViewer } from './media-viewer';
 import type { Feedback, Project } from '@scalefeedback/shared';
 
 type ClickUpTaskData = {
@@ -224,6 +225,8 @@ export default async function FeedbackDetailPage({ params }: Props) {
   let clickupConnected = false;
   let prevId: string | null = null;
   let nextId: string | null = null;
+  let currentIndex = 0;
+  let totalCount = 0;
 
   if (isSupabaseConfigured()) {
     try {
@@ -252,6 +255,8 @@ export default async function FeedbackDetailPage({ params }: Props) {
           const idx = siblingIds.indexOf(feedbackId);
           prevId = idx > 0 ? siblingIds[idx - 1] : null;
           nextId = idx !== -1 && idx < siblingIds.length - 1 ? siblingIds[idx + 1] : null;
+          currentIndex = idx + 1;
+          totalCount = siblingIds.length;
         }
 
         // Fetch role, ClickUp config, and org members in parallel
@@ -423,6 +428,8 @@ export default async function FeedbackDetailPage({ params }: Props) {
       const mockIdx = mockSiblings.findIndex((f) => f.id === feedbackId);
       prevId = mockIdx > 0 ? mockSiblings[mockIdx - 1].id : null;
       nextId = mockIdx !== -1 && mockIdx < mockSiblings.length - 1 ? mockSiblings[mockIdx + 1].id : null;
+      currentIndex = mockIdx + 1;
+      totalCount = mockSiblings.length;
     }
   }
 
@@ -437,57 +444,17 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
   const consoleLogs = Array.isArray(feedback.console_logs) ? feedback.console_logs : [];
   const networkLogs = Array.isArray(feedback.network_logs) ? feedback.network_logs : [];
+  const sessionEvents = Array.isArray(feedback.session_events) ? feedback.session_events : [];
 
   return (
     <div className="p-8">
-      {/* Breadcrumb + Prev/Next nav */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Link href="/projects" className="hover:text-foreground">Projects</Link>
-          <span>/</span>
-          <Link href={`/projects/${id}`} className="hover:text-foreground">{project.name}</Link>
-          <span>/</span>
-          <span className="text-foreground font-medium truncate max-w-xs">{feedback.title ?? 'Feedback'}</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {prevId ? (
-            <Link
-              href={`/projects/${id}/${prevId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-[#ff724f]/50 hover:text-[#ff724f] hover:bg-[#fff3f0] transition-all"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Prev
-            </Link>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-medium text-gray-300 cursor-not-allowed select-none">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Prev
-            </span>
-          )}
-          {nextId ? (
-            <Link
-              href={`/projects/${id}/${nextId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-600 hover:border-[#ff724f]/50 hover:text-[#ff724f] hover:bg-[#fff3f0] transition-all"
-            >
-              Next
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-100 text-sm font-medium text-gray-300 cursor-not-allowed select-none">
-              Next
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-          )}
-        </div>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+        <Link href="/projects" className="hover:text-foreground">Projects</Link>
+        <span>/</span>
+        <Link href={`/projects/${id}`} className="hover:text-foreground">{project.name}</Link>
+        <span>/</span>
+        <span className="text-foreground font-medium truncate max-w-xs">{feedback.title ?? 'Feedback'}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -497,6 +464,11 @@ export default async function FeedbackDetailPage({ params }: Props) {
             <div className="flex items-center gap-2 mb-2">
               <FeedbackTypeBadge type={feedback.type} />
               <FeedbackStatusBadge status={feedback.status} />
+              <FeedbackActionsMenu
+                feedbackId={feedbackId}
+                projectId={id}
+                clickupTaskUrl={clickupTask?.url ?? null}
+              />
             </div>
             <h1 className="text-xl font-bold text-foreground">{feedback.title ?? feedback.page_url}</h1>
             {feedback.description && (
@@ -504,22 +476,16 @@ export default async function FeedbackDetailPage({ params }: Props) {
             )}
           </div>
 
-          {/* Screenshot */}
-          <div>
-            <h2 className="text-sm font-semibold text-foreground mb-3">Screenshot</h2>
-            {screenshotPublicUrl ? (
-              <ScreenshotLightbox src={screenshotPublicUrl} alt="Feedback screenshot" />
-            ) : (
-              <div className="rounded-xl border-2 border-dashed border-border bg-muted flex items-center justify-center h-48">
-                <div className="text-center text-muted-foreground">
-                  <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <p className="text-sm">No screenshot captured</p>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Screenshot + Session Replay unified viewer */}
+          <MediaViewer
+            screenshotUrl={screenshotPublicUrl}
+            sessionEvents={sessionEvents}
+            projectId={id}
+            prevId={prevId}
+            nextId={nextId}
+            currentIndex={currentIndex}
+            totalCount={totalCount}
+          />
 
           {/* Console logs */}
           {consoleLogs.length > 0 && (

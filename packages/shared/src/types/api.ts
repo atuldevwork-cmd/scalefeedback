@@ -31,6 +31,9 @@ export interface SubmitFeedbackPayload {
 
   // Custom metadata
   custom_metadata?: Record<string, unknown>;
+
+  // Session replay (rrweb events, last 30s before submission)
+  session_events?: unknown[];
 }
 
 export interface ApiResponse<T = unknown> {

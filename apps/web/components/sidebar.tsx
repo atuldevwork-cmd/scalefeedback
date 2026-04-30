@@ -115,6 +115,13 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-gray-100 space-y-0.5">
+        <Link
+          href="/contact"
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] font-medium text-[#300a46]/75 hover:bg-gray-50 hover:text-[#300a46] transition-all"
+        >
+          <span className="material-symbols-outlined text-[20px] text-[#300a46]/40">contact_support</span>
+          <span>Contact Us</span>
+        </Link>
         <NotificationSidebarItem />
         <button
           onClick={handleSignOut}

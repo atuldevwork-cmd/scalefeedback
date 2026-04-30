@@ -13,6 +13,7 @@ export interface WidgetConfig {
   secretParam?: string;
   /** Pre-identify the reporter (e.g. from your own auth). When set, name/email fields are hidden. */
   user?: { name: string; email: string };
+  sessionReplay?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
   onSubmit?: (feedback: { type: string; title?: string; description?: string }) => void;

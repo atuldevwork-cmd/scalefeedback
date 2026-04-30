@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       { color: '#7C3AED', position: 'bottom-right', buttonText: 'Report issue',
         guestReporting: true, collectConsole: true, collectNetwork: false,
-        audience: 'everyone', pages: 'all' },
+        audience: 'everyone', pages: 'all', sessionReplay: false },
       { headers: CORS }
     );
   }
@@ -94,6 +94,7 @@ export async function GET(req: NextRequest) {
       pages:           cfg.pages           ?? 'all',
       secretParamType: cfg.secretParamType ?? 'default',
       secretParam:     cfg.secretParam     ?? '',
+      sessionReplay:   cfg.sessionReplay   ?? false,
       ...(loggedInUser ? { user: loggedInUser } : {}),
     },
     { headers: CORS }

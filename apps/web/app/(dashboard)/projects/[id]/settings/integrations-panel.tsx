@@ -202,6 +202,189 @@ function ConfigModal({ title, logo, subtitle, onClose, onSave, saving, canSave, 
   );
 }
 
+/* ─── Slack Config ───────────────────────────────────────────────────────────── */
+
+interface SlackConfigProps {
+  projectId: string;
+  config: Record<string, string>;
+}
+function SlackConfig({ projectId, config }: SlackConfigProps) {
+  const isConnected = Boolean(config.webhookUrl);
+
+  async function handleDisconnect() {
+    await fetch(`/api/integrations/${projectId}?type=slack`, { method: 'DELETE' });
+    window.location.reload();
+  }
+
+  if (!isConnected) {
+    return (
+      <div className="space-y-3">
+        <a
+          href={`/api/slack/auth?projectId=${projectId}`}
+          className="inline-flex items-center gap-2 bg-[#4A154B] hover:bg-[#3a1039] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+        >
+          <SlackLogo size={18} />
+          Add to Slack
+        </a>
+        <p className="text-xs text-gray-400">
+          You&apos;ll be redirected to Slack to choose a channel. ScaleFeedback will post a message whenever new feedback is submitted.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-green-800">Connected to Slack</p>
+            {(config.workspaceName || config.channel) && (
+              <p className="text-xs text-green-700 mt-0.5">
+                {config.workspaceName && <span>{config.workspaceName}</span>}
+                {config.workspaceName && config.channel && <span className="mx-1">·</span>}
+                {config.channel && <span>{config.channel}</span>}
+              </p>
+            )}
+          </div>
+        </div>
+        <button onClick={handleDisconnect} className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0">
+          Disconnect
+        </button>
+      </div>
+      <p className="text-xs text-gray-400">New feedback will be posted to the connected channel.</p>
+    </div>
+  );
+}
+
+/* ─── Jira Config ────────────────────────────────────────────────────────────── */
+
+interface JiraOption { id: string; name: string; key?: string }
+
+interface JiraConfigProps {
+  projectId: string;
+  config: Record<string, string>;
+  onSave: (updates: Record<string, string>) => Promise<void>;
+  saving: boolean;
+  saved: boolean;
+  autoOpen: boolean;
+}
+function JiraConfig({ projectId, config, onSave, saving, saved, autoOpen }: JiraConfigProps) {
+  const isConnected = Boolean(config.accessToken);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const [sites, setSites]       = useState<JiraOption[]>([]);
+  const [projects, setProjects] = useState<JiraOption[]>([]);
+  const [loadingSites, setLoadingSites]       = useState(false);
+  const [loadingProjects, setLoadingProjects] = useState(false);
+
+  const [selSiteId, setSelSiteId]           = useState('');
+  const [selSiteName, setSelSiteName]       = useState('');
+  const [selProjectKey, setSelProjectKey]   = useState('');
+  const [selProjectName, setSelProjectName] = useState('');
+
+  const fetchData = useCallback(async (type: string, extra?: Record<string, string>) => {
+    const qs = new URLSearchParams({ type, ...extra });
+    const res = await fetch(`/api/jira/${projectId}/data?${qs}`);
+    return (await res.json()).data ?? [];
+  }, [projectId]);
+
+  useEffect(() => { if (autoOpen && isConnected) openModal(); }, [autoOpen, isConnected]); // eslint-disable-line
+
+  function openModal() {
+    setSelSiteId(config.cloudId ?? '');       setSelSiteName(config.siteName ?? '');
+    setSelProjectKey(config.projectKey ?? ''); setSelProjectName(config.projectName ?? '');
+    setProjects([]);
+    setModalOpen(true);
+  }
+
+  useEffect(() => {
+    if (!modalOpen || !isConnected) return;
+    setLoadingSites(true);
+    fetchData('sites').then(setSites).finally(() => setLoadingSites(false));
+  }, [modalOpen, isConnected, fetchData]);
+
+  useEffect(() => {
+    if (!modalOpen || !selSiteId) { setProjects([]); return; }
+    setLoadingProjects(true); setProjects([]);
+    fetchData('projects', { cloudId: selSiteId }).then(setProjects).finally(() => setLoadingProjects(false));
+  }, [modalOpen, selSiteId, fetchData]);
+
+  if (!isConnected) {
+    return (
+      <div className="space-y-3">
+        <a
+          href={`/api/jira/auth?projectId=${projectId}`}
+          className="inline-flex items-center gap-2 bg-[#0052cc] hover:bg-[#0047b3] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
+        >
+          <JiraLogo size={18} /> Connect Jira
+        </a>
+        <p className="text-xs text-gray-400">You&apos;ll be redirected to Atlassian to authorize access.</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="space-y-2">
+        <ConnectedBadge projectId={projectId} provider="jira">Jira connected</ConnectedBadge>
+        {config.projectKey ? (
+          <ConfigSummary rows={[
+            ...(config.siteName  ? [{ label: 'Site',    value: config.siteName }] : []),
+            { label: 'Project', value: `${config.projectName} (${config.projectKey})` },
+          ]} onEdit={openModal} />
+        ) : (
+          <button onClick={openModal} className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-500 hover:border-[#0052cc] hover:text-[#0052cc] transition-colors text-left">
+            + Select Jira site &amp; project
+          </button>
+        )}
+        {saved && <p className="text-xs text-green-600 font-medium">✓ Saved</p>}
+      </div>
+
+      {modalOpen && (
+        <ConfigModal
+          title="Configure Jira"
+          logo={<JiraLogo size={20} />}
+          subtitle="Select where to create issues"
+          onClose={() => setModalOpen(false)}
+          onSave={async () => {
+            await onSave({ accessToken: config.accessToken, cloudId: selSiteId, siteName: selSiteName, projectKey: selProjectKey, projectName: selProjectName });
+            setModalOpen(false);
+          }}
+          saving={saving}
+          canSave={Boolean(selProjectKey)}
+        >
+          <div>
+            <label className={LABEL_CLASS}>Jira Site</label>
+            <select value={selSiteId} onChange={e => {
+              const s = sites.find(x => x.id === e.target.value);
+              setSelSiteId(s?.id ?? ''); setSelSiteName(s?.name ?? '');
+              setSelProjectKey(''); setSelProjectName('');
+            }} disabled={loadingSites} className={SELECT_CLASS}>
+              <option value="">{loadingSites ? 'Loading sites…' : 'Select site'}</option>
+              {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+
+          {selSiteId && (
+            <div>
+              <label className={LABEL_CLASS}>Project</label>
+              <select value={selProjectKey} onChange={e => {
+                const p = projects.find(x => x.id === e.target.value);
+                setSelProjectKey(p?.id ?? ''); setSelProjectName(p?.name ?? '');
+              }} disabled={loadingProjects} className={SELECT_CLASS}>
+                <option value="">{loadingProjects ? 'Loading projects…' : 'Select project'}</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.key})</option>)}
+              </select>
+            </div>
+          )}
+        </ConfigModal>
+      )}
+    </>
+  );
+}
+
 /* ─── ClickUp Config ─────────────────────────────────────────────────────────── */
 
 interface ClickUpOption { id: string; name: string; folder?: string }
@@ -445,7 +628,7 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
     }
   }
 
-  const COMING_SOON: IntegrationType[] = ['slack', 'github', 'jira', 'webhook'];
+  const COMING_SOON: IntegrationType[] = ['github', 'webhook'];
 
   return (
     <div className="space-y-3">
@@ -484,6 +667,18 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
 
             {!isComingSoon && integration.enabled && (
               <div className="px-4 pb-4 border-t border-gray-100 pt-4">
+                {type === 'slack' && (
+                  <SlackConfig projectId={projectId} config={integration.config} />
+                )}
+                {type === 'jira' && (
+                  <JiraConfig
+                    projectId={projectId} config={integration.config}
+                    onSave={c => saveWithConfig('jira', c)}
+                    saving={saving === 'jira'} saved={saved === 'jira'}
+                    autoOpen={searchParams.get('jira') === 'connected'}
+                  />
+                )}
+
                 {type === 'clickup' && (
                   <ClickUpConfig
                     projectId={projectId} config={integration.config}

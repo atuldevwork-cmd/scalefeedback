@@ -13,6 +13,7 @@ export interface SubmitOptions {
   consoleLogs: ConsoleLogEntry[];
   networkLogs: NetworkLogEntry[];
   customMetadata?: Record<string, unknown>;
+  sessionEvents?: unknown[];
 }
 
 export async function submitFeedback(opts: SubmitOptions): Promise<void> {
@@ -30,6 +31,7 @@ export async function submitFeedback(opts: SubmitOptions): Promise<void> {
       console_logs: opts.consoleLogs,
       network_logs: opts.networkLogs,
       custom_metadata: opts.customMetadata ?? {},
+      session_events: opts.sessionEvents ?? null,
       ...collectMetadata(),
     }),
   });

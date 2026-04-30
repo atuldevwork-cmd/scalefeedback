@@ -240,7 +240,7 @@ Thanks!`;
               </p>
             </div>
           </div>
-        <div className="divide-y divide-[#300a46]/10 border border-[#300a46]/15 rounded-xl overflow-hidden opacity-50 pointer-events-none select-none">
+        <div className="divide-y divide-[#300a46]/10 border border-[#300a46]/15 rounded-xl overflow-hidden pointer-events-none select-none">
           {/* Step 1 */}
           <div className="flex flex-col sm:flex-row items-start gap-6 p-6">
             <div className="shrink-0 sm:w-48">
@@ -300,13 +300,13 @@ Thanks!`;
               </p>
             </div>
           </div>
-          <div className="opacity-50 pointer-events-none select-none">
+          <div className="pointer-events-none select-none">
           <p className="text-sm text-muted-foreground mb-5">
             Native plugins for your favourite CMS — no code required.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {CMS_PLATFORMS.map(({ name, abbr }) => (
-              <div key={name} className="border border-[#300a46]/10 rounded-xl p-4 flex items-center gap-3 opacity-60 cursor-not-allowed">
+              <div key={name} className="border border-[#300a46]/10 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed">
                 <div className="w-9 h-9 rounded-lg bg-[#300a46]/8 flex items-center justify-center text-[10px] font-bold text-[#300a46]/50 shrink-0">
                   {abbr}
                 </div>
