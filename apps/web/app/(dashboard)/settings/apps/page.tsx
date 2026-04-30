@@ -84,7 +84,7 @@ const APPS = [
     name: 'Jira',
     description: 'Create Jira issues and sync feedback status with your Jira board.',
     category: 'Project Management',
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: 'clickup',
