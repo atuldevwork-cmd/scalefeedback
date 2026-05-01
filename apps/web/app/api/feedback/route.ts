@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { gunzipSync } from 'zlib';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendNewFeedbackEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
@@ -70,6 +71,22 @@ export async function POST(request: NextRequest) {
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/screenshots/${screenshotPath}`
       : undefined;
 
+    // Decompress gzip-compressed session events sent by the widget.
+    // The widget uses CompressionStream('gzip') + base64 to stay under Vercel's
+    // 4.5MB body limit (a 4MB HubSpot snapshot compresses to ~400KB).
+    let sessionEvents: unknown[] | null = (body as { session_events_gz?: string; session_events?: unknown[] }).session_events_gz
+      ? (() => {
+          try {
+            const gz = (body as { session_events_gz: string }).session_events_gz;
+            const buf = Buffer.from(gz, 'base64');
+            const decompressed = gunzipSync(buf);
+            return JSON.parse(decompressed.toString('utf-8')) as unknown[];
+          } catch {
+            return null;
+          }
+        })()
+      : (body.session_events ?? null);
+
     const baseInsert = {
       project_id: project.id,
       reporter_name: body.reporter_name || null,
@@ -93,7 +110,7 @@ export async function POST(request: NextRequest) {
     // Insert feedback record (with session_events if provided, fall back without if column missing)
     let { data: feedback, error: insertError } = await supabase
       .from('feedback')
-      .insert({ ...baseInsert, session_events: body.session_events ?? null })
+      .insert({ ...baseInsert, session_events: sessionEvents })
       .select()
       .single();
 

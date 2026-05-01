@@ -16,27 +16,36 @@ export interface SubmitOptions {
   sessionEvents?: unknown[];
 }
 
-// Trim session events to fit under Vercel's 4.5MB body limit.
-// Finds the last FullSnapshot (type 2) and keeps from there onward.
-function trimEvents(events: unknown[]): unknown[] | null {
-  const MAX_BYTES = 2_000_000; // 2MB budget for events alone
-  if (JSON.stringify(events).length <= MAX_BYTES) return events;
-
-  for (let i = events.length - 1; i >= 0; i--) {
-    if ((events[i] as { type: number }).type === 2) {
-      // Include preceding Meta event (type 4) if present
-      const start = i > 0 && (events[i - 1] as { type: number }).type === 4 ? i - 1 : i;
-      const trimmed = events.slice(start);
-      if (JSON.stringify(trimmed).length <= MAX_BYTES) return trimmed;
+// Gzip-compress session events using the native browser CompressionStream API.
+// JSON typically compresses 8-12x, turning a 4MB HubSpot snapshot into ~400KB.
+// Returns base64-encoded gzip, or null if the API is unavailable.
+async function compressEvents(events: unknown[]): Promise<string | null> {
+  if (typeof CompressionStream === 'undefined') return null;
+  try {
+    const json = JSON.stringify(events);
+    const bytes = new TextEncoder().encode(json);
+    const cs = new CompressionStream('gzip');
+    const writer = cs.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    const compressed = await new Response(cs.readable).arrayBuffer();
+    // Chunk-encode to avoid call-stack overflow on large arrays
+    const arr = new Uint8Array(compressed);
+    let binary = '';
+    for (let i = 0; i < arr.length; i += 8192) {
+      binary += String.fromCharCode(...arr.subarray(i, i + 8192));
     }
+    return btoa(binary);
+  } catch {
+    return null;
   }
-  return null; // no usable snapshot fits — drop events rather than 413
 }
 
 export async function submitFeedback(opts: SubmitOptions): Promise<void> {
-  const sessionEvents = opts.sessionEvents?.length
-    ? trimEvents(opts.sessionEvents)
-    : null;
+  let sessionEventsGz: string | null = null;
+  if (opts.sessionEvents?.length) {
+    sessionEventsGz = await compressEvents(opts.sessionEvents);
+  }
 
   const response = await fetch(`${opts.apiBaseUrl}/api/feedback`, {
     method: 'POST',
@@ -52,7 +61,9 @@ export async function submitFeedback(opts: SubmitOptions): Promise<void> {
       console_logs: opts.consoleLogs,
       network_logs: opts.networkLogs,
       custom_metadata: opts.customMetadata ?? {},
-      session_events: sessionEvents,
+      // Send gzip-compressed events; server decompresses before storing.
+      // Falls back to null if CompressionStream is unavailable.
+      session_events_gz: sessionEventsGz,
       ...collectMetadata(),
     }),
   });
