@@ -66,7 +66,10 @@ export class ScaleFeedbackWidget {
     this.stopRecording = record({
       emit: (event: unknown) => {
         this.replayEvents.push(event);
-        // Rolling buffer: drop events older than 30 seconds
+        // Rolling buffer: drop events older than 30 seconds.
+        // checkoutEveryNms ensures a fresh FullSnapshot is emitted every 30s
+        // so the buffer always contains one — without it the Replayer gets a
+        // black screen because the initial snapshot was already dropped.
         const cutoff = Date.now() - BUFFER_MS;
         while (this.replayEvents.length > 0) {
           const first = this.replayEvents[0] as { timestamp: number };
@@ -74,8 +77,9 @@ export class ScaleFeedbackWidget {
           else break;
         }
       },
-      maskAllInputs: true, // privacy: mask typed values
-      blockClass: 'sf-no-record', // honour opt-out class
+      checkoutEveryNms: BUFFER_MS, // periodic FullSnapshot every 30s
+      maskAllInputs: true,
+      blockClass: 'sf-no-record',
     });
   }
 

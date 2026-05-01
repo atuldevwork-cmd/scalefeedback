@@ -182,33 +182,61 @@ export default async function ProjectSettingsPage({ params }: Props) {
         )}
 
         {/* CTA Section */}
-        <div className="rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #ff724f 0%, #ff9a6c 100%)' }}>
-          <div className="px-8 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Need help getting started?</h2>
-              <p className="text-sm text-white/80 max-w-md">
-                Browse our docs, watch setup guides, or reach out to our support team — we&apos;re happy to help you get feedback flowing.
-              </p>
+        <div className="relative rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #ff5733 0%, #ff724f 50%, #ff9a6c 100%)' }}>
+          <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10 bg-white" />
+          <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full opacity-10 bg-white" />
+          <div className="absolute top-4 right-32 w-16 h-16 rounded-full opacity-10 bg-white" />
+
+          <div className="relative px-8 py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-7">
+              <div>
+                <div className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  Support team online
+                </div>
+                <h2 className="text-xl font-bold text-white mb-1.5">Need help getting started?</h2>
+                <p className="text-sm text-white/75 max-w-sm leading-relaxed">
+                  We&apos;re here to help. Browse docs, watch guides, or chat with our team.
+                </p>
+              </div>
+              <div className="flex flex-row items-center gap-2.5 shrink-0">
+                <Link
+                  href="/docs"
+                  className="inline-flex items-center justify-center gap-2 bg-white/15 hover:bg-white/25 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all border border-white/25"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  Read Docs
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-[#ff5733] text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:bg-white/90 shadow-lg shadow-black/10"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Contact Support
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <Link
-                href="/docs"
-                className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors border border-white/30"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                Documentation
-              </Link>
-              <Link
-                href="/contact"
-                className="inline-flex items-center gap-2 bg-white text-[#ff724f] text-sm font-bold px-4 py-2.5 rounded-xl transition-colors hover:bg-white/90"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                Contact Support
-              </Link>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />, title: 'Documentation', desc: 'Step-by-step setup guides' },
+                { icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></>, title: 'Video Tutorials', desc: 'Watch how everything works' },
+                { icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />, title: 'Quick Start', desc: 'Go live in under 5 minutes' },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3 border border-white/15">
+                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white shrink-0">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{title}</p>
+                    <p className="text-xs text-white/65">{desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
