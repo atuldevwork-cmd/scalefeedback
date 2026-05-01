@@ -177,6 +177,18 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
   const widgetHost = document.getElementById(ignoreElementId);
   if (widgetHost) widgetHost.style.setProperty('display', 'none', 'important');
 
+  // Hide all iframes before capture — Safari throws SecurityError on
+  // canvas.toDataURL() when ANY iframe (even ignored ones) has tainted
+  // the canvas context through CSS or dynamic injection. Physical hiding
+  // via visibility:hidden preserves layout; display:none is used as
+  // fallback on fixed/absolute iframes which don't affect layout.
+  type IframeEntry = { el: HTMLIFrameElement; vis: string; disp: string };
+  const hiddenIframes: IframeEntry[] = [];
+  document.querySelectorAll<HTMLIFrameElement>('iframe').forEach((el) => {
+    hiddenIframes.push({ el, vis: el.style.visibility, disp: el.style.display });
+    el.style.setProperty('visibility', 'hidden', 'important');
+  });
+
   const fix = document.createElement('style');
   fix.id = 'sf-cap-fix';
   fix.textContent = [
@@ -271,6 +283,11 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
     document.getElementById('sf-cap-fix')?.remove();
     restoreColors?.();
+    // Restore iframes
+    hiddenIframes.forEach(({ el, vis, disp }) => {
+      if (vis) el.style.visibility = vis; else el.style.removeProperty('visibility');
+      if (disp) el.style.display = disp; else el.style.removeProperty('display');
+    });
     if (widgetHost) widgetHost.style.removeProperty('display');
   }
 }
