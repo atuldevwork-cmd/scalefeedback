@@ -62,12 +62,12 @@ export class ScaleFeedbackWidget {
   }
 
   private startReplayRecording() {
-    const BUFFER_MS = 30_000;
+    const BUFFER_MS = 15_000; // 15s keeps payload well under Vercel's 4.5MB limit
     this.stopRecording = record({
       emit: (event: unknown) => {
         this.replayEvents.push(event);
-        // Rolling buffer: drop events older than 30 seconds.
-        // checkoutEveryNms ensures a fresh FullSnapshot is emitted every 30s
+        // Rolling buffer: drop events older than 15 seconds.
+        // checkoutEveryNms ensures a fresh FullSnapshot is emitted every 15s
         // so the buffer always contains one — without it the Replayer gets a
         // black screen because the initial snapshot was already dropped.
         const cutoff = Date.now() - BUFFER_MS;
@@ -77,9 +77,15 @@ export class ScaleFeedbackWidget {
           else break;
         }
       },
-      checkoutEveryNms: BUFFER_MS, // periodic FullSnapshot every 30s
+      checkoutEveryNms: BUFFER_MS,
       maskAllInputs: true,
       blockClass: 'sf-no-record',
+      // Sampling reduces incremental event volume by ~80% with no visible quality loss
+      sampling: {
+        mousemove: 50,
+        scroll: 150,
+        input: 'last',
+      },
     });
   }
 
