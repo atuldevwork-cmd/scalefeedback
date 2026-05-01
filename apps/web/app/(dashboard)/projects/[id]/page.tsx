@@ -72,7 +72,11 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
             userRole = membership.role;
             project = proj;
             const [feedbackResult, clickupResult] = await Promise.all([
-              service.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+              service.from('feedback').select(
+                'id,project_id,title,description,type,status,priority,reporter_name,reporter_email,page_url,browser,os,screen_size,viewport_size,device_pixel_ratio,screenshot_url,assigned_to,external_id,external_url,created_at,updated_at'
+                // session_events / console_logs / network_logs / custom_metadata intentionally
+                // omitted — they are large JSONB columns only needed in the detail view.
+              ).eq('project_id', id).order('created_at', { ascending: false }),
               service.from('integrations').select('id').eq('project_id', id).eq('type', 'clickup').eq('enabled', true).maybeSingle(),
             ]);
             allFeedback = (feedbackResult.data ?? []) as Feedback[];
