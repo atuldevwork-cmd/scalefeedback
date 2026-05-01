@@ -242,8 +242,8 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
   try {
     const canvas = await html2canvas(document.body, {
       useCORS: true,
-      allowTaint: true,
-      scale: window.devicePixelRatio,
+      allowTaint: false, // keep canvas untainted — Safari throws SecurityError on toDataURL() if tainted
+      scale: 1,
       logging: false,
       backgroundColor: null,
       windowWidth: document.documentElement.clientWidth,
@@ -252,8 +252,17 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       y: window.scrollY,
       width: window.innerWidth,
       height: window.innerHeight,
-      ignoreElements: (el) =>
-        el.id === ignoreElementId || el.id === 'sf-body-loading-overlay',
+      ignoreElements: (el) => {
+        if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
+        // Skip cross-origin iframes — they taint the canvas and cause SecurityError in Safari
+        if (el.tagName === 'IFRAME') {
+          try {
+            const src = (el as HTMLIFrameElement).src;
+            if (src && new URL(src).origin !== window.location.origin) return true;
+          } catch { return true; }
+        }
+        return false;
+      },
     });
 
     return canvas.toDataURL('image/png');

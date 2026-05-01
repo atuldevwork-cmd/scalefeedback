@@ -62,25 +62,32 @@ export class ScaleFeedbackWidget {
   }
 
   private startReplayRecording() {
-    const BUFFER_MS = 15_000; // 15s keeps payload well under Vercel's 4.5MB limit
+    const BUFFER_MS = 30_000;
     this.stopRecording = record({
       emit: (event: unknown) => {
         this.replayEvents.push(event);
-        // Rolling buffer: drop events older than 15 seconds.
-        // checkoutEveryNms ensures a fresh FullSnapshot is emitted every 15s
-        // so the buffer always contains one — without it the Replayer gets a
-        // black screen because the initial snapshot was already dropped.
-        const cutoff = Date.now() - BUFFER_MS;
-        while (this.replayEvents.length > 0) {
-          const first = this.replayEvents[0] as { timestamp: number };
-          if (first.timestamp < cutoff) this.replayEvents.shift();
+
+        // Protect the initial Meta (type 4) + FullSnapshot (type 2) pair so
+        // the Replayer always has a DOM baseline to start from. Only trim
+        // old incremental events that come after the initial snapshot.
+        // This avoids checkoutEveryNms which forces a full DOM re-snapshot
+        // every N ms — extremely CPU-heavy on complex pages.
+        let protectedUntil = 0;
+        for (let i = 0; i < this.replayEvents.length; i++) {
+          const t = (this.replayEvents[i] as { type: number }).type;
+          if (t === 4 || t === 2) protectedUntil = i + 1;
           else break;
         }
+
+        const cutoff = Date.now() - BUFFER_MS;
+        while (this.replayEvents.length > protectedUntil) {
+          const e = this.replayEvents[protectedUntil] as { timestamp: number };
+          if (e.timestamp >= cutoff) break;
+          this.replayEvents.splice(protectedUntil, 1);
+        }
       },
-      checkoutEveryNms: BUFFER_MS,
       maskAllInputs: true,
       blockClass: 'sf-no-record',
-      // Sampling reduces incremental event volume by ~80% with no visible quality loss
       sampling: {
         mousemove: 50,
         scroll: 150,
@@ -427,15 +434,15 @@ export class ScaleFeedbackWidget {
     // area.clientWidth / clientHeight return the real rendered dimensions.
     // Fallback subtracts the overlay padding (60px each side) + toolbar (52px).
     requestAnimationFrame(() => {
-      const dpr = window.devicePixelRatio || 1;
       const areaW = area.clientWidth  || (window.innerWidth  - 56);
       const areaH = area.clientHeight || (window.innerHeight - 108);
 
-      // Scale the buffer by DPR so it maps 1:1 to physical pixels on HiDPI
-      // displays (Retina etc.). CSS width/height:100% from the stylesheet
-      // controls the display size — no inline style override needed.
-      canvasEl.width  = areaW * dpr;
-      canvasEl.height = areaH * dpr;
+      // Use logical pixel dimensions — fabric.js sets an inline style matching
+      // the canvas width/height attributes, so setting areaW * dpr would make
+      // the canvas overflow the viewport (zoomed appearance). Screenshot is
+      // also captured at scale:1, so they match 1:1.
+      canvasEl.width  = areaW;
+      canvasEl.height = areaH;
 
       this.annotationCanvas = new AnnotationCanvas(canvasEl, this.screenshotDataUrl);
       this.annotationCanvas.setTool(this.currentTool);
