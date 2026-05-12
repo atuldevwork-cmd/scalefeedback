@@ -266,13 +266,12 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       height: window.innerHeight,
       ignoreElements: (el) => {
         if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
-        // Skip cross-origin iframes — they taint the canvas and cause SecurityError in Safari
-        if (el.tagName === 'IFRAME') {
-          try {
-            const src = (el as HTMLIFrameElement).src;
-            if (src && new URL(src).origin !== window.location.origin) return true;
-          } catch { return true; }
-        }
+        // Skip ALL iframes — even same-origin ones can embed cross-origin content
+        // (e.g. YouTube embeds, payment widgets) which taints the canvas in Safari
+        // and causes toDataURL() to throw SecurityError. All iframes are already
+        // hidden with visibility:hidden before this call, so skipping them here
+        // only removes blank space from the captured image.
+        if (el.tagName === 'IFRAME') return true;
         return false;
       },
     });
