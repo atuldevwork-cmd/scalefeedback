@@ -264,6 +264,14 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       y: window.scrollY,
       width: window.innerWidth,
       height: window.innerHeight,
+      // onclone physically removes elements from the cloned DOM before rendering.
+      // This is more reliable than ignoreElements on Safari, where position:fixed
+      // stacking contexts can still appear despite being returned as ignored.
+      onclone: (clonedDoc) => {
+        clonedDoc.getElementById(ignoreElementId)?.remove();
+        clonedDoc.getElementById('sf-body-loading-overlay')?.remove();
+        clonedDoc.querySelectorAll('iframe').forEach((el) => el.remove());
+      },
       ignoreElements: (el) => {
         if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
         // Skip ALL iframes — even same-origin ones can embed cross-origin content
