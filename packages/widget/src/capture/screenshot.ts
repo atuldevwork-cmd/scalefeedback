@@ -297,20 +297,23 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
           img.removeAttribute('srcset'); // srcset can still contain cross-origin URLs
         });
 
-        // Convert SVGs that use <mask> elements to <img> data URLs.
-        // html2canvas does not support SVG <mask> so masked icons render blank.
-        // Simple SVGs (no masks) are left as-is — they render fine natively.
+        // Convert inline SVGs with explicit dimensions to <img> data URLs.
+        // html2canvas doesn't reliably render inline SVGs: it lacks <mask>
+        // support and CSS fill/visibility overrides (e.g. header nav rules)
+        // can hide icons. XMLSerializer captures SVG attributes only —
+        // bypassing any CSS overrides — so the img renders correctly.
+        // SVGs without explicit width+height (layout/background SVGs) are skipped.
         clonedDoc.querySelectorAll<SVGSVGElement>('svg').forEach((svgEl) => {
-          if (!svgEl.querySelector('mask') && !svgEl.querySelector('[mask]')) return;
+          const w = svgEl.getAttribute('width');
+          const h = svgEl.getAttribute('height');
+          if (!w || !h) return;
           try {
-            const w = svgEl.getAttribute('width');
-            const h = svgEl.getAttribute('height');
             const svgStr = new XMLSerializer().serializeToString(svgEl);
             const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
             const img = clonedDoc.createElement('img');
             img.src = dataUrl;
-            if (w) img.setAttribute('width', w);
-            if (h) img.setAttribute('height', h);
+            img.setAttribute('width', w);
+            img.setAttribute('height', h);
             img.style.cssText = 'display:inline-block;vertical-align:middle;';
             svgEl.parentNode?.replaceChild(img, svgEl);
           } catch { /* skip SVGs that fail to serialize */ }
