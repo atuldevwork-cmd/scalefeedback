@@ -253,8 +253,11 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
 
   try {
     const canvas = await html2canvas(document.body, {
-      useCORS: true,
-      allowTaint: false, // keep canvas untainted — Safari throws SecurityError on toDataURL() if tainted
+      useCORS: false,   // do NOT use CORS — on Safari, CORS attempts for CDN images without
+      allowTaint: false, // ACAO headers taint the canvas even when allowTaint:false should skip them.
+                        // Cross-origin <img> srcs are already replaced with data URLs by the proxy
+                        // step above, so those images still appear; CSS background-images from
+                        // third-party CDNs will be absent but the canvas stays untainted.
       scale: 1,
       logging: false,
       backgroundColor: null,
