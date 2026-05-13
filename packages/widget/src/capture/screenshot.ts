@@ -197,6 +197,18 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
   ].join('\n');
   document.head.appendChild(fix);
 
+  // Strip ALL background-image / mask-image on the ORIGINAL document before
+  // html2canvas clones it. This is the only reliable way to stop Safari from
+  // tainting the canvas: cross-origin CDN backgrounds are stripped at the CSS
+  // level, so html2canvas never fetches them. The loading overlay covers the
+  // page during capture so the user never sees the flash of missing backgrounds.
+  const bgScrub = document.createElement('style');
+  bgScrub.id = 'sf-bg-scrub';
+  bgScrub.textContent =
+    '*, *::before, *::after { background-image: none !important; ' +
+    '-webkit-mask-image: none !important; mask-image: none !important; }';
+  document.head.appendChild(bgScrub);
+
   const blurPseudoEls: Element[] = [];
   document.querySelectorAll<HTMLElement>('*').forEach((el) => {
     const bf = window.getComputedStyle(el, '::before').filter;
@@ -267,49 +279,23 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       y: window.scrollY,
       width: window.innerWidth,
       height: window.innerHeight,
-      // onclone: sanitize the cloned DOM before html2canvas renders it.
-      // This is the only reliable way to prevent Safari canvas taint —
-      // allowTaint:false does not always intercept at the CSS resource level.
+      // onclone: remove elements that must not appear in the screenshot.
+      // Background-image taint is already handled by sf-bg-scrub injected above.
       onclone: (clonedDoc) => {
-        // Remove widget overlay and loading spinner
         clonedDoc.getElementById(ignoreElementId)?.remove();
         clonedDoc.getElementById('sf-body-loading-overlay')?.remove();
-
-        // Remove elements that commonly taint the canvas on Safari:
-        // iframes (cross-origin embeds), canvas (tracking/fingerprinting scripts),
-        // video, object, embed.
+        // Remove iframes, canvas (tracking/fingerprinting), video, object, embed
         clonedDoc.querySelectorAll('iframe, canvas, video, object, embed').forEach((el) => el.remove());
-
-        // Replace any cross-origin <img> srcs that the proxy step may have missed
-        // (e.g. images added after the proxy step, or srcs in srcset).
+        // Replace any remaining cross-origin img srcs (proxy step may have missed srcset etc.)
         const blank = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
         const pageOrigin = window.location.origin;
-        clonedDoc.querySelectorAll<HTMLImageElement>('img[src]').forEach((img) => {
+        clonedDoc.querySelectorAll<HTMLImageElement>('img').forEach((img) => {
           const src = img.getAttribute('src') ?? '';
-          if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
-          try { if (new URL(src).origin !== pageOrigin) img.setAttribute('src', blank); } catch {}
+          if (src && !src.startsWith('data:') && !src.startsWith('blob:')) {
+            try { if (new URL(src).origin !== pageOrigin) img.setAttribute('src', blank); } catch {}
+          }
+          img.removeAttribute('srcset'); // srcset can still contain cross-origin URLs
         });
-
-        // Strip cross-origin background-image from every element's computed style.
-        // Safari taints the canvas when html2canvas fetches a CSS background-image
-        // from a cross-origin CDN, even with allowTaint:false — overriding with
-        // an inline `none` prevents the fetch entirely.
-        const win = clonedDoc.defaultView;
-        if (win) {
-          clonedDoc.querySelectorAll<HTMLElement>('*').forEach((el) => {
-            try {
-              const bg = win.getComputedStyle(el).getPropertyValue('background-image');
-              if (!bg || bg === 'none' || !bg.includes('url(')) return;
-              const hasCrossOrigin = [...bg.matchAll(/url\(["']?([^"')]+)["']?\)/g)]
-                .some((m) => {
-                  const u = m[1].trim();
-                  if (!u || u.startsWith('data:')) return false;
-                  try { return new URL(u).origin !== pageOrigin; } catch { return false; }
-                });
-              if (hasCrossOrigin) el.style.setProperty('background-image', 'none', 'important');
-            } catch { /* skip non-element nodes */ }
-          });
-        }
       },
       ignoreElements: (el) => {
         if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
@@ -328,6 +314,7 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     restorations.forEach(({ img, originalSrc }) => { img.src = originalSrc; });
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
     document.getElementById('sf-cap-fix')?.remove();
+    document.getElementById('sf-bg-scrub')?.remove();
     restoreColors?.();
     // Restore iframes
     hiddenIframes.forEach(({ el, vis, disp }) => {
