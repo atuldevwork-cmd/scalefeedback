@@ -263,6 +263,36 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     await new Promise((r) => setTimeout(r, 80));
   }
 
+  // Convert inline SVGs to <img> data URLs on the ORIGINAL document BEFORE
+  // html2canvas clones it. html2canvas calls imagesReady() before onclone,
+  // so any <img> added inside onclone is never awaited and renders blank.
+  // Converting here ensures the cloned doc already has <img> elements that
+  // html2canvas can wait for. Restored in finally.
+  type SvgReplacement = { parent: Node; svg: SVGSVGElement; img: HTMLImageElement; nextSibling: Node | null };
+  const svgReplacements: SvgReplacement[] = [];
+  document.querySelectorAll<SVGSVGElement>('svg').forEach((svgEl) => {
+    const w = svgEl.getAttribute('width');
+    const h = svgEl.getAttribute('height');
+    if (!w || !h) return;
+    try {
+      const svgStr = new XMLSerializer().serializeToString(svgEl);
+      const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.setAttribute('width', w);
+      img.setAttribute('height', h);
+      img.style.cssText = 'display:inline-block;vertical-align:middle;';
+      const parent = svgEl.parentNode!;
+      const nextSibling = svgEl.nextSibling;
+      parent.replaceChild(img, svgEl);
+      svgReplacements.push({ parent, svg: svgEl, img, nextSibling });
+    } catch { /* skip */ }
+  });
+  // Data URLs load synchronously but wait anyway for Safari safety
+  await Promise.all(svgReplacements.map(({ img }) =>
+    img.complete ? Promise.resolve() : new Promise<void>((res) => { img.onload = img.onerror = () => res(); })
+  ));
+
   try {
     const canvas = await html2canvas(document.body, {
       useCORS: false,   // do NOT use CORS — on Safari, CORS attempts for CDN images without
@@ -297,27 +327,8 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
           img.removeAttribute('srcset'); // srcset can still contain cross-origin URLs
         });
 
-        // Convert inline SVGs with explicit dimensions to <img> data URLs.
-        // html2canvas doesn't reliably render inline SVGs: it lacks <mask>
-        // support and CSS fill/visibility overrides (e.g. header nav rules)
-        // can hide icons. XMLSerializer captures SVG attributes only —
-        // bypassing any CSS overrides — so the img renders correctly.
-        // SVGs without explicit width+height (layout/background SVGs) are skipped.
-        clonedDoc.querySelectorAll<SVGSVGElement>('svg').forEach((svgEl) => {
-          const w = svgEl.getAttribute('width');
-          const h = svgEl.getAttribute('height');
-          if (!w || !h) return;
-          try {
-            const svgStr = new XMLSerializer().serializeToString(svgEl);
-            const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-            const img = clonedDoc.createElement('img');
-            img.src = dataUrl;
-            img.setAttribute('width', w);
-            img.setAttribute('height', h);
-            img.style.cssText = 'display:inline-block;vertical-align:middle;';
-            svgEl.parentNode?.replaceChild(img, svgEl);
-          } catch { /* skip SVGs that fail to serialize */ }
-        });
+        // SVG→img conversion already done on the original document before this
+        // clone was made, so the cloned doc already has <img> elements here.
       },
       ignoreElements: (el) => {
         if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
@@ -338,6 +349,16 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     document.getElementById('sf-cap-fix')?.remove();
     document.getElementById('sf-bg-scrub')?.remove();
     restoreColors?.();
+    // Restore SVGs that were replaced by img data URLs before capture
+    svgReplacements.forEach(({ parent, svg, img, nextSibling }) => {
+      try {
+        if (img.parentNode === parent) {
+          if (nextSibling && nextSibling.parentNode === parent) parent.insertBefore(svg, nextSibling);
+          else parent.appendChild(svg);
+          parent.removeChild(img);
+        }
+      } catch { /* already detached */ }
+    });
     // Restore iframes
     hiddenIframes.forEach(({ el, vis, disp }) => {
       if (vis) el.style.visibility = vis; else el.style.removeProperty('visibility');
