@@ -278,9 +278,16 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       const cs = window.getComputedStyle(svgEl);
       // Skip SVGs that are explicitly hidden
       if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return;
-      // Skip SVGs inside a display:none ancestor — getBoundingClientRect returns 0×0
-      const rect = svgEl.getBoundingClientRect();
-      if (rect.width === 0 && rect.height === 0) return;
+      // For large decorative SVGs (> 100px), skip if not rendered in DOM tree.
+      // For small icon SVGs (≤ 100px), skip the rect check — fixed/sticky ancestors
+      // or overflow clipping can return a zero rect even for visible icons.
+      const wNum = parseFloat(w);
+      const hNum = parseFloat(h);
+      const isIcon = !isNaN(wNum) && !isNaN(hNum) && wNum <= 100 && hNum <= 100;
+      if (!isIcon) {
+        const rect = svgEl.getBoundingClientRect();
+        if (rect.width === 0 && rect.height === 0) return;
+      }
 
       const svgStr = new XMLSerializer().serializeToString(svgEl);
       const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
@@ -310,6 +317,9 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       img.style.setProperty('visibility', 'visible', 'important');
       img.style.setProperty('opacity', '1', 'important');
       img.style.setProperty('max-width', 'none', 'important');
+      // Explicit CSS dimensions prevent flex/grid from shrinking the icon to zero
+      if (!isNaN(wNum)) img.style.setProperty('width',  `${wNum}px`, 'important');
+      if (!isNaN(hNum)) img.style.setProperty('height', `${hNum}px`, 'important');
 
       const parent = svgEl.parentNode!;
       const nextSibling = svgEl.nextSibling;
