@@ -276,16 +276,20 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     if (!w || !h) return;
     try {
       const cs = window.getComputedStyle(svgEl);
-      // Skip hidden SVGs — they won't appear in the screenshot regardless
-      if (cs.display === 'none') return;
+      // Skip SVGs that are explicitly hidden
+      if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return;
+      // Skip SVGs inside a display:none ancestor — getBoundingClientRect returns 0×0
+      const rect = svgEl.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) return;
+
       const svgStr = new XMLSerializer().serializeToString(svgEl);
       const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
       const img = document.createElement('img');
       img.src = dataUrl;
       img.setAttribute('width', w);
       img.setAttribute('height', h);
-      // Preserve the SVG's layout position — absolutely/fixed-positioned SVGs
-      // must keep their coordinates or they shift into the wrong place in the doc flow.
+
+      // Preserve layout for absolutely/fixed-positioned SVGs so they don't shift.
       const pos = cs.position;
       if (pos === 'absolute' || pos === 'fixed' || pos === 'sticky') {
         img.style.position = pos;
@@ -295,10 +299,18 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
         if (cs.bottom !== 'auto')  img.style.bottom = cs.bottom;
         if (cs.transform !== 'none') img.style.transform = cs.transform;
         if (cs.zIndex) img.style.zIndex = cs.zIndex;
+        img.style.setProperty('display', 'block', 'important');
       } else {
-        img.style.display = 'inline-block';
-        img.style.verticalAlign = cs.verticalAlign || 'middle';
+        img.style.setProperty('display', 'inline-block', 'important');
+        img.style.setProperty('vertical-align', cs.verticalAlign || 'middle', 'important');
+        img.style.setProperty('flex-shrink', '0', 'important');
       }
+      // Force visible — site CSS may hide <img> in nav/header (e.g. `.header img { display:none }`)
+      // but SVGs are unaffected by such rules. Without !important the converted img stays hidden.
+      img.style.setProperty('visibility', 'visible', 'important');
+      img.style.setProperty('opacity', '1', 'important');
+      img.style.setProperty('max-width', 'none', 'important');
+
       const parent = svgEl.parentNode!;
       const nextSibling = svgEl.nextSibling;
       parent.replaceChild(img, svgEl);
