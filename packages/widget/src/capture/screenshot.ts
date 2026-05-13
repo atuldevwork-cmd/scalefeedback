@@ -267,13 +267,49 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
       y: window.scrollY,
       width: window.innerWidth,
       height: window.innerHeight,
-      // onclone physically removes elements from the cloned DOM before rendering.
-      // This is more reliable than ignoreElements on Safari, where position:fixed
-      // stacking contexts can still appear despite being returned as ignored.
+      // onclone: sanitize the cloned DOM before html2canvas renders it.
+      // This is the only reliable way to prevent Safari canvas taint —
+      // allowTaint:false does not always intercept at the CSS resource level.
       onclone: (clonedDoc) => {
+        // Remove widget overlay and loading spinner
         clonedDoc.getElementById(ignoreElementId)?.remove();
         clonedDoc.getElementById('sf-body-loading-overlay')?.remove();
-        clonedDoc.querySelectorAll('iframe').forEach((el) => el.remove());
+
+        // Remove elements that commonly taint the canvas on Safari:
+        // iframes (cross-origin embeds), canvas (tracking/fingerprinting scripts),
+        // video, object, embed.
+        clonedDoc.querySelectorAll('iframe, canvas, video, object, embed').forEach((el) => el.remove());
+
+        // Replace any cross-origin <img> srcs that the proxy step may have missed
+        // (e.g. images added after the proxy step, or srcs in srcset).
+        const blank = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+        const pageOrigin = window.location.origin;
+        clonedDoc.querySelectorAll<HTMLImageElement>('img[src]').forEach((img) => {
+          const src = img.getAttribute('src') ?? '';
+          if (!src || src.startsWith('data:') || src.startsWith('blob:')) return;
+          try { if (new URL(src).origin !== pageOrigin) img.setAttribute('src', blank); } catch {}
+        });
+
+        // Strip cross-origin background-image from every element's computed style.
+        // Safari taints the canvas when html2canvas fetches a CSS background-image
+        // from a cross-origin CDN, even with allowTaint:false — overriding with
+        // an inline `none` prevents the fetch entirely.
+        const win = clonedDoc.defaultView;
+        if (win) {
+          clonedDoc.querySelectorAll<HTMLElement>('*').forEach((el) => {
+            try {
+              const bg = win.getComputedStyle(el).getPropertyValue('background-image');
+              if (!bg || bg === 'none' || !bg.includes('url(')) return;
+              const hasCrossOrigin = [...bg.matchAll(/url\(["']?([^"')]+)["']?\)/g)]
+                .some((m) => {
+                  const u = m[1].trim();
+                  if (!u || u.startsWith('data:')) return false;
+                  try { return new URL(u).origin !== pageOrigin; } catch { return false; }
+                });
+              if (hasCrossOrigin) el.style.setProperty('background-image', 'none', 'important');
+            } catch { /* skip non-element nodes */ }
+          });
+        }
       },
       ignoreElements: (el) => {
         if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
