@@ -296,25 +296,6 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
           }
           img.removeAttribute('srcset'); // srcset can still contain cross-origin URLs
         });
-
-        // Convert small inline SVGs (icon-sized, ≤ 100 px) to <img> data URLs.
-        // html2canvas does not reliably render inline <svg> elements — replacing
-        // them with <img src="data:image/svg+xml,..."> makes them appear correctly.
-        clonedDoc.querySelectorAll<SVGSVGElement>('svg').forEach((svgEl) => {
-          try {
-            const w = parseFloat(svgEl.getAttribute('width') ?? '0');
-            const h = parseFloat(svgEl.getAttribute('height') ?? '0');
-            if (!w || !h || w > 100 || h > 100) return; // skip large/layout SVGs
-            const svgStr = new XMLSerializer().serializeToString(svgEl);
-            const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-            const img = clonedDoc.createElement('img');
-            img.src = dataUrl;
-            img.setAttribute('width', String(w));
-            img.setAttribute('height', String(h));
-            img.style.cssText = 'display:inline-block;vertical-align:middle;';
-            svgEl.parentNode?.replaceChild(img, svgEl);
-          } catch { /* skip SVGs that fail to serialize */ }
-        });
       },
       ignoreElements: (el) => {
         if (el.id === ignoreElementId || el.id === 'sf-body-loading-overlay') return true;
