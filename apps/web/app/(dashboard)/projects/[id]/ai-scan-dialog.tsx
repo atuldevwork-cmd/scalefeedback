@@ -164,7 +164,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                   <div className="text-center">
                     <p className="text-sm font-semibold text-[#300a46]">Scanning website…</p>
                     <p className="text-xs text-gray-400 mt-1">
-                      Taking screenshots, capturing console errors, and analysing with Claude AI.
+                      Taking screenshots, capturing console errors, and analysing with AI.
                       This may take 30–60 seconds.
                     </p>
                   </div>

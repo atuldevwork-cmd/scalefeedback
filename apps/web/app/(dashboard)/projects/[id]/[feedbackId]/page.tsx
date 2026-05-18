@@ -81,6 +81,7 @@ function AiScanPanel({ feedback }: { feedback: Feedback }) {
   if (feedback.custom_metadata?.source !== 'ai-scan') return null;
   const category = feedback.custom_metadata?.category as string | undefined;
   const view = feedback.custom_metadata?.view as string | undefined;
+  const section = feedback.custom_metadata?.section as string | undefined;
   const meta = category ? CATEGORY_META[category] : null;
 
   return (
@@ -98,6 +99,15 @@ function AiScanPanel({ feedback }: { feedback: Feedback }) {
                 <span>{meta.icon}</span>
                 {meta.label}
               </span>
+            </dd>
+          </div>
+        )}
+        {section && (
+          <div className="flex items-center gap-3">
+            <dt className="text-muted-foreground w-24 shrink-0">Section</dt>
+            <dd className="font-medium text-foreground flex items-center gap-1.5">
+              <span>📍</span>
+              <span>{section}</span>
             </dd>
           </div>
         )}

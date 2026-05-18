@@ -152,6 +152,7 @@ export async function POST(request: NextRequest) {
           source: 'ai-scan',
           scan_url: url,
           category: issue.category,
+          section: issue.section,
           screenshot_public_url: screenshotUrl,
           view: issue.view,
         },

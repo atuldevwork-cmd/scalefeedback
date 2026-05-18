@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+const MARKETING_HOST = process.env.NEXT_PUBLIC_MARKETING_HOST;
+const APP_HOST = process.env.NEXT_PUBLIC_APP_HOST;
+
 const PUBLIC_PATHS = ['/', '/pricing', '/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/auth/me', '/api/widget-config', '/api/widget-session', '/widget.js', '/demo.html', '/guest/join'];
 
 // API routes called cross-origin from customer websites
@@ -76,6 +79,12 @@ export async function updateSession(request: NextRequest) {
       // next may include its own query string (e.g. /guest/join?s=xxx) — use href directly
       const dest = new URL(next, request.nextUrl.origin);
       return NextResponse.redirect(dest);
+    }
+    // If on the marketing host, redirect to /projects on the app host so the user
+    // lands in the dashboard rather than back on the marketing site.
+    const hostname = (request.headers.get('host') || '').split(':')[0];
+    if (MARKETING_HOST && APP_HOST && hostname === MARKETING_HOST) {
+      return NextResponse.redirect(`https://${APP_HOST}/projects`);
     }
     const url = request.nextUrl.clone();
     url.pathname = '/projects';

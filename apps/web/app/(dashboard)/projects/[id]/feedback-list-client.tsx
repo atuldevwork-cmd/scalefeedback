@@ -194,43 +194,40 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <FeedbackTypeBadge type={fb.type} />
                   <PriorityBadge priority={fb.priority} />
-                  {fb.custom_metadata?.source === 'ai-scan' && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 to-[#ff724f]/10 text-violet-600 border border-violet-200/60 shrink-0">
-                      <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-                      AI
-                    </span>
-                  )}
-                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'ux' && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200 shrink-0">
-                      🎨 UI / UX
-                    </span>
-                  )}
-                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'accessibility' && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200 shrink-0">
-                      ♿ Accessibility
-                    </span>
-                  )}
-                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'seo' && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200 shrink-0">
-                      🔍 SEO
-                    </span>
-                  )}
-                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'technical' && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200 shrink-0">
-                      ⚙️ Technical
-                    </span>
-                  )}
-                  {fb.custom_metadata?.source === 'ai-scan' && fb.custom_metadata?.category === 'content' && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200 shrink-0">
-                      📝 Content
-                    </span>
-                  )}
+                  {fb.custom_metadata?.source === 'ai-scan' && (() => {
+                    const cat = fb.custom_metadata?.category as string | undefined;
+                    const CATS: Record<string, { label: string; icon: string; cls: string }> = {
+                      ux:            { label: 'UI / UX',       icon: '🎨', cls: 'bg-violet-100 text-violet-700 border-violet-200' },
+                      accessibility: { label: 'Accessibility',  icon: '♿', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
+                      seo:           { label: 'SEO',            icon: '🔍', cls: 'bg-green-100 text-green-700 border-green-200' },
+                      technical:     { label: 'Technical',      icon: '⚙️', cls: 'bg-red-100 text-red-700 border-red-200' },
+                      content:       { label: 'Content',        icon: '📝', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+                    };
+                    const meta = cat ? CATS[cat] : null;
+                    return (
+                      <>
+                        <span className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/10 to-[#ff724f]/10 text-violet-600 border border-violet-200/60 shrink-0">
+                          <span className="material-symbols-outlined text-[11px]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+                          AI Scan
+                        </span>
+                        {meta && (
+                          <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border shrink-0 ${meta.cls}`}>
+                            {meta.icon} {meta.label}
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
                   <span className="text-sm font-medium text-[#300a46] group-hover/link:text-[#ff724f] transition-colors truncate">
                     {fb.title ?? fb.page_url}
                   </span>
                 </div>
                 <p className="text-xs text-gray-400 truncate">
-                  {fb.page_url}{fb.browser ? ` · ${fb.browser}` : ''}{fb.os ? ` · ${fb.os}` : ''}
+                  {fb.page_url}
+                  {fb.custom_metadata?.source === 'ai-scan'
+                    ? null
+                    : fb.browser ? ` · ${fb.browser}` : ''}
+                  {fb.os ? ` · ${fb.os}` : ''}
                 </p>
               </div>
 

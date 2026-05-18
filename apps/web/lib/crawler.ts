@@ -1,4 +1,33 @@
 import { load } from 'cheerio';
+import { readFileSync } from 'fs';
+import { createRequire } from 'module';
+
+const _require = createRequire(import.meta.url);
+
+let _axeSource: string | undefined;
+function getAxeSource(): string {
+  if (_axeSource !== undefined) return _axeSource;
+  try {
+    _axeSource = readFileSync(_require.resolve('axe-core'), 'utf8');
+  } catch {
+    _axeSource = '';
+    console.warn('[crawler] Could not load axe-core source — accessibility audit disabled');
+  }
+  return _axeSource;
+}
+
+export interface AxeViolation {
+  id: string;
+  impact: 'critical' | 'serious' | 'moderate' | 'minor' | null;
+  description: string;
+  help: string;
+  helpUrl: string;
+  nodes: Array<{
+    html: string;
+    target: string[];
+    failureSummary: string;
+  }>;
+}
 
 export interface PageContent {
   url: string;
@@ -19,7 +48,9 @@ export interface PageContent {
   ogDescription: string;
   ogImage: string;
   twitterCard: string;
+  hasFavicon: boolean;
   consoleErrors: string[];
+  axeViolations: AxeViolation[];
   screenshotBuffer?: Buffer;
   mobileScreenshotBuffer?: Buffer;
 }
@@ -43,7 +74,7 @@ function isSpecificPage(url: string): boolean {
   return path.length > 0;
 }
 
-function parseHtmlContent(url: string, html: string, statusCode: number): Omit<PageContent, 'consoleErrors' | 'screenshotBuffer' | 'mobileScreenshotBuffer'> {
+function parseHtmlContent(url: string, html: string, statusCode: number): Omit<PageContent, 'consoleErrors' | 'axeViolations' | 'screenshotBuffer' | 'mobileScreenshotBuffer'> {
   const $ = load(html);
   $('script, style, noscript').remove();
 
@@ -98,6 +129,7 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     ogDescription: $('meta[property="og:description"]').attr('content') ?? '',
     ogImage: $('meta[property="og:image"]').attr('content') ?? '',
     twitterCard: $('meta[name="twitter:card"]').attr('content') ?? '',
+    hasFavicon: $('link[rel~="icon"], link[rel="shortcut icon"]').length > 0,
   };
 }
 
@@ -120,7 +152,7 @@ async function fetchPage(url: string): Promise<PageContent> {
     clearTimeout(timer);
   }
   const parsed = parseHtmlContent(url, html, statusCode);
-  return { ...parsed, consoleErrors: [] };
+  return { ...parsed, consoleErrors: [], axeViolations: [] };
 }
 
 async function fetchSitemapUrls(sitemapUrl: string): Promise<string[]> {
@@ -203,13 +235,20 @@ async function crawlWithFetch(url: string, maxPages: number): Promise<CrawlResul
   return { pages, failedUrls };
 }
 
-// ─── Puppeteer-based crawler (local dev only) ────────────────────────────────
+// ─── Puppeteer-based crawler ─────────────────────────────────────────────────
 
-async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlResult> {
-  const puppeteer = await import('puppeteer');
+async function crawlWithPuppeteer(
+  url: string,
+  maxPages: number,
+  launchOptions?: { executablePath?: string; args?: string[]; headless?: boolean }
+): Promise<CrawlResult> {
+  const puppeteer = await (launchOptions?.executablePath
+    ? import('puppeteer-core') as Promise<typeof import('puppeteer')>
+    : import('puppeteer'));
   const browser = await puppeteer.default.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    headless: launchOptions?.headless ?? true,
+    executablePath: launchOptions?.executablePath,
+    args: launchOptions?.args ?? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
   });
 
   type PuppeteerBrowser = typeof browser;
@@ -247,10 +286,29 @@ async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlR
       mobileScreenshotBuffer = Buffer.isBuffer(mobileRaw) ? mobileRaw : Buffer.from(mobileRaw as Uint8Array);
     } catch { /* ignore */ }
 
+    // Reset to desktop viewport before running axe
+    await page.setViewport({ width: 1440, height: 900 }).catch(() => {});
+
+    let axeViolations: AxeViolation[] = [];
+    const axeSrc = getAxeSource();
+    if (axeSrc) {
+      try {
+        await page.evaluate(axeSrc);
+        const axeResult = await page.evaluate(async () => {
+          // @ts-ignore — axe is injected into page context
+          const r = await window.axe.run({ reporter: 'v2' });
+          return r.violations;
+        });
+        axeViolations = (axeResult ?? []) as AxeViolation[];
+      } catch (e) {
+        console.warn(`[crawler] axe-core run failed for ${pageUrl}:`, e);
+      }
+    }
+
     const html = await page.content();
     await page.close();
     const parsed = parseHtmlContent(pageUrl, html, statusCode);
-    return { ...parsed, consoleErrors, screenshotBuffer, mobileScreenshotBuffer };
+    return { ...parsed, consoleErrors, axeViolations, screenshotBuffer, mobileScreenshotBuffer };
   }
 
   async function parseSitemapUrls(sitemapUrl: string): Promise<string[]> {
@@ -327,8 +385,19 @@ async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlR
 
 export async function crawlWebsite(url: string, maxPages = 10): Promise<CrawlResult> {
   if (process.env.VERCEL) {
-    console.log('[crawler] Using fetch-based crawler (production)');
-    return crawlWithFetch(url, maxPages);
+    console.log('[crawler] Using Puppeteer + @sparticuz/chromium (production)');
+    try {
+      const chromium = await import('@sparticuz/chromium');
+      const executablePath = await chromium.default.executablePath();
+      return await crawlWithPuppeteer(url, maxPages, {
+        executablePath,
+        args: chromium.default.args,
+        headless: true,
+      });
+    } catch (err) {
+      console.warn('[crawler] Chromium launch failed, falling back to fetch:', err);
+      return crawlWithFetch(url, maxPages);
+    }
   }
   console.log('[crawler] Using Puppeteer crawler (local dev)');
   return crawlWithPuppeteer(url, maxPages);
