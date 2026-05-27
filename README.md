@@ -1,4 +1,4 @@
-# ScaleFeedback
+# ScaleFeedback 🚀
 
 A visual bug feedback tool — a [marker.io](https://marker.io) alternative built for the ScaleStation agency. Users embed a lightweight JavaScript widget on any website to capture annotated screenshots and submit feedback directly to a dashboard.
 
