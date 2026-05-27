@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MarketingNavbar } from '@/components/marketing-navbar';
+import { MarketingFooter } from '@/components/marketing-footer';
 
 const INTEGRATIONS = ['Jira', 'GitHub', 'ClickUp', 'Slack', 'Linear', 'Trello', 'Asana', 'Notion'];
 
@@ -290,72 +291,106 @@ export default function HomePage() {
 
 
       {/* ── Security ───────────────────────────────────────────── */}
-      <section className="bg-orange-50 py-14 border-y border-orange-100">
-        <div className="max-w-4xl mx-auto px-6">
-          <p className="text-center text-xs font-semibold text-[#ff724f] uppercase tracking-widest mb-8">Security & Compliance</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="relative bg-[#1a0530] py-24 overflow-hidden">
+        {/* ambient glows */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-[#ff724f] opacity-10 blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-purple-500 opacity-10 blur-[120px] pointer-events-none" />
+
+        <div className="relative max-w-5xl mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-semibold uppercase tracking-widest mb-6">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              Security & Compliance
+            </div>
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 leading-tight">
+              Enterprise-grade security,<br className="hidden md:block" /> built in from day one
+            </h2>
+            <p className="text-purple-300 text-lg max-w-xl mx-auto leading-relaxed">
+              Your data is protected by industry-leading practices. We take compliance seriously so you don&apos;t have to.
+            </p>
+          </div>
+
+          {/* Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
             {[
-              { icon: 'verified_user', label: 'GDPR Compliant', desc: 'Fully compliant with EU data regulations' },
-              { icon: 'security', label: 'SOC 2 Type II', desc: 'Independently audited security controls' },
-              { icon: 'lock', label: 'Data Privacy First', desc: 'Your data is never sold or shared' },
-              { icon: 'key', label: 'SSO Supported', desc: 'Works with Google, Okta, and more' },
+              {
+                badge: 'EU Ready',
+                label: 'GDPR Compliant',
+                desc: 'Fully compliant with EU data regulations',
+                icon: (
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                  </svg>
+                ),
+              },
+              {
+                badge: 'Audited',
+                label: 'SOC 2 Type II',
+                desc: 'Independently audited security controls',
+                icon: (
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V19.5a2.25 2.25 0 002.25 2.25h.75" />
+                  </svg>
+                ),
+              },
+              {
+                badge: 'Zero Share',
+                label: 'Data Privacy First',
+                desc: 'Your data is never sold or shared',
+                icon: (
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                ),
+              },
+              {
+                badge: 'SAML 2.0',
+                label: 'SSO Supported',
+                desc: 'Works with Google, Okta, and more',
+                icon: (
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                  </svg>
+                ),
+              },
             ].map(item => (
-              <div key={item.label} className="bg-white border border-orange-100 rounded-2xl p-5 flex flex-col items-center text-center gap-3 shadow-sm">
-                <div className="w-12 h-12 rounded-xl bg-[#300a46] flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-white" style={{ fontSize: 24 }}>{item.icon}</span>
+              <div key={item.label} className="group bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col items-center text-center gap-3 hover:bg-white/[0.08] hover:border-[#ff724f]/30 transition-all duration-200">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff724f] to-[#d95f3a] flex items-center justify-center shadow-lg shadow-orange-900/30 shrink-0">
+                  {item.icon}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#300a46]">{item.label}</p>
-                  <p className="text-xs text-slate-400 mt-1 leading-snug">{item.desc}</p>
+                  <span className="inline-block text-[10px] font-bold text-[#ff724f] uppercase tracking-widest bg-orange-500/10 border border-orange-500/20 rounded-full px-2 py-0.5 mb-2">{item.badge}</span>
+                  <p className="text-sm font-semibold text-white">{item.label}</p>
+                  <p className="text-xs text-purple-400 mt-1 leading-snug">{item.desc}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Trust strip */}
+          <div className="border-t border-white/10 pt-8 flex flex-wrap justify-center gap-x-8 gap-y-3">
+            {[
+              '256-bit AES encryption',
+              '99.9% uptime SLA',
+              'EU & US data residency',
+              'Daily automated backups',
+              'Penetration tested',
+            ].map(item => (
+              <div key={item} className="flex items-center gap-2 text-purple-400 text-sm">
+                <svg className="w-4 h-4 text-[#ff724f] shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                {item}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer className="bg-[#300a46] text-purple-300 py-12">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-xs">SF</div>
-              <span className="font-bold text-white text-sm">ScaleFeedback</span>
-            </div>
-            <p className="text-xs leading-relaxed">For a web free of bugs. Built by ScaleStation.</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-purple-200 uppercase tracking-widest mb-3">Product</p>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#integrations" className="hover:text-white transition-colors">Integrations</a></li>
-              <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-purple-200 uppercase tracking-widest mb-3">Company</p>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="mailto:hello@scalefeedback.io" className="hover:text-white transition-colors">Contact</a></li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-purple-200 uppercase tracking-widest mb-3">Account</p>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/login" className="hover:text-white transition-colors">Login</Link></li>
-              <li><Link href="/signup" className="hover:text-[#ff724f] transition-colors">Start free trial</Link></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto px-6 pt-6 border-t border-purple-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <p>© {new Date().getFullYear()} ScaleFeedback. All rights reserved.</p>
-          <div className="flex gap-4">
-            <a href="#" className="hover:text-purple-300 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-purple-300 transition-colors">Terms of Service</a>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
 
     </div>
   );

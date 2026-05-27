@@ -19,22 +19,27 @@ interface ScanResult {
 
 export function AiScanDialog({ projectId, projectDomain }: Props) {
   const [open, setOpen] = useState(false);
-  const [url, setUrl] = useState('');
-  const [maxPages, setMaxPages] = useState(10);
+  const [urls, setUrls] = useState<string[]>(['']);
+  const [errorMsgs, setErrorMsgs] = useState<string[]>(['']);
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [result, setResult] = useState<ScanResult | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [globalError, setGlobalError] = useState('');
   const [, startTransition] = useTransition();
   const router = useRouter();
   const toast = useToast();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
 
   function openDialog() {
     setScanState('idle');
     setResult(null);
-    setErrorMsg('');
+    setGlobalError('');
+    const initial = projectDomain
+      ? [projectDomain.startsWith('http') ? projectDomain : `https://${projectDomain}`]
+      : [''];
+    setUrls(initial);
+    setErrorMsgs(initial.map(() => ''));
     setOpen(true);
-    setTimeout(() => inputRef.current?.focus(), 50);
+    setTimeout(() => firstInputRef.current?.focus(), 50);
   }
 
   function closeDialog() {
@@ -42,71 +47,89 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
     setOpen(false);
   }
 
-  function startScan() {
-    if (!url.trim()) {
-      setErrorMsg('Please enter a URL');
-      return;
-    }
+  function addUrl() {
+    setUrls(prev => [...prev, '']);
+    setErrorMsgs(prev => [...prev, '']);
+  }
 
-    let parsedUrl: URL;
+  function removeUrl(index: number) {
+    setUrls(prev => prev.filter((_, i) => i !== index));
+    setErrorMsgs(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function updateUrl(index: number, value: string) {
+    setUrls(prev => prev.map((u, i) => (i === index ? value : u)));
+    setErrorMsgs(prev => prev.map((e, i) => (i === index ? '' : e)));
+  }
+
+  function parseUrl(raw: string): string | null {
     try {
-      parsedUrl = new URL(url.trim().startsWith('http') ? url.trim() : `https://${url.trim()}`);
+      const parsed = new URL(raw.trim().startsWith('http') ? raw.trim() : `https://${raw.trim()}`);
+      if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+      return parsed.href;
     } catch {
-      setErrorMsg('Invalid URL — include https:// or a valid domain');
-      return;
+      return null;
     }
+  }
 
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      setErrorMsg('URL must use http or https');
-      return;
-    }
+  function startScan() {
+    const newErrors = urls.map(u => {
+      if (!u.trim()) return 'Please enter a URL';
+      if (!parseUrl(u)) return 'Invalid URL — include https:// or a valid domain';
+      return '';
+    });
+
+    setErrorMsgs(newErrors);
+    if (newErrors.some(e => e)) return;
 
     setScanState('scanning');
-    setErrorMsg('');
+    setGlobalError('');
 
     startTransition(async () => {
       try {
-        const resp = await fetch('/api/ai-scan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId, url: parsedUrl.href, maxPages }),
-        });
+        let totalPages = 0;
+        let totalIssues = 0;
 
-        const data = await resp.json() as {
-          pagesScanned?: number;
-          issuesCreated?: number;
-          message?: string;
-          error?: string;
-        };
+        for (const raw of urls) {
+          const href = parseUrl(raw)!;
+          const resp = await fetch('/api/ai-scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId, url: href, maxPages: 1 }),
+          });
 
-        if (!resp.ok) {
-          setScanState('error');
-          setErrorMsg(data.error ?? 'Something went wrong. Please try again.');
-          return;
+          const data = await resp.json() as {
+            pagesScanned?: number;
+            issuesCreated?: number;
+            message?: string;
+            error?: string;
+          };
+
+          if (resp.ok) {
+            totalPages += data.pagesScanned ?? 0;
+            totalIssues += data.issuesCreated ?? 0;
+          }
         }
 
-        setResult({
-          pagesScanned: data.pagesScanned ?? 0,
-          issuesCreated: data.issuesCreated ?? 0,
-          message: data.message,
-        });
+        setResult({ pagesScanned: totalPages, issuesCreated: totalIssues });
         setScanState('done');
 
-        if ((data.issuesCreated ?? 0) > 0) {
-          toast(`${data.issuesCreated} issue${data.issuesCreated === 1 ? '' : 's'} added from AI scan`);
+        if (totalIssues > 0) {
+          toast(`${totalIssues} issue${totalIssues === 1 ? '' : 's'} added from AI scan`);
           router.refresh();
         }
       } catch {
         setScanState('error');
-        setErrorMsg('Network error — check your connection and try again.');
+        setGlobalError('Network error — check your connection and try again.');
       }
     });
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' && scanState === 'idle') startScan();
     if (e.key === 'Escape') closeDialog();
   }
+
+  const hasValidUrl = urls.some(u => u.trim().length > 0);
 
   return (
     <>
@@ -150,6 +173,8 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
 
             {/* Body */}
             <div className="px-6 py-5">
+
+              {/* ── Scanning ── */}
               {scanState === 'scanning' && (
                 <div className="flex flex-col items-center gap-4 py-6">
                   <div className="relative">
@@ -162,15 +187,16 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     </span>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-[#300a46]">Scanning website…</p>
+                    <p className="text-sm font-semibold text-[#300a46]">Scanning {urls.length} page{urls.length !== 1 ? 's' : ''}…</p>
                     <p className="text-xs text-gray-400 mt-1">
                       Taking screenshots, capturing console errors, and analysing with AI.
-                      This may take 30–60 seconds.
+                      This may take 30–60 seconds per page.
                     </p>
                   </div>
                 </div>
               )}
 
+              {/* ── Done ── */}
               {scanState === 'done' && result && (
                 <div className="flex flex-col items-center gap-4 py-4">
                   <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center">
@@ -209,6 +235,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                 </div>
               )}
 
+              {/* ── Error ── */}
               {scanState === 'error' && (
                 <div className="flex flex-col items-center gap-4 py-4">
                   <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
@@ -221,10 +248,10 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                   </div>
                   <div className="text-center">
                     <p className="text-sm font-semibold text-[#300a46]">Scan failed</p>
-                    <p className="text-xs text-red-500 mt-1">{errorMsg}</p>
+                    <p className="text-xs text-red-500 mt-1">{globalError}</p>
                   </div>
                   <button
-                    onClick={() => { setScanState('idle'); setErrorMsg(''); }}
+                    onClick={() => { setScanState('idle'); setGlobalError(''); }}
                     className="w-full bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e85e3a] transition-colors"
                   >
                     Try Again
@@ -232,54 +259,70 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                 </div>
               )}
 
+              {/* ── Idle ── */}
               {scanState === 'idle' && (
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-gray-500">
-                    Enter a specific page URL to scan just that page, a root domain to auto-discover pages,
-                    or a{' '}
-                    <code className="bg-gray-100 px-1 py-0.5 rounded text-xs">sitemap.xml</code> link.
+                    Enter one or more page URLs to scan. Each page will be checked for
+                    UX, SEO, CRO, accessibility, and technical issues.
                   </p>
 
+                  {/* URL repeater */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#300a46]">Website URL</label>
-                    <input
-                      ref={inputRef}
-                      type="url"
-                      value={url}
-                      onChange={(e) => { setUrl(e.target.value); setErrorMsg(''); }}
-                      placeholder="https://example.com or https://example.com/sitemap.xml"
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-sm text-[#300a46] placeholder:text-gray-300 outline-none transition-all ${
-                        errorMsg
-                          ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100'
-                          : 'border-gray-200 focus:border-[#ff724f] focus:ring-2 focus:ring-[#ff724f]/10'
-                      }`}
-                    />
-                    {errorMsg && (
-                      <p className="text-xs text-red-500 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px]">error</span>
-                        {errorMsg}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#300a46]">Pages to scan</label>
-                    <div className="flex gap-2">
-                      {[1, 5, 10, 20, 30].map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          onClick={() => setMaxPages(n)}
-                          className={`flex-1 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                            maxPages === n
-                              ? 'bg-[#ff724f] text-white border-[#ff724f]'
-                              : 'bg-white text-gray-500 border-gray-200 hover:border-[#ff724f]/50 hover:text-[#ff724f]'
-                          }`}
-                        >
-                          {n}
-                        </button>
+                    <label className="text-xs font-semibold text-[#300a46]">Page URLs</label>
+                    <div className="flex flex-col gap-2">
+                      {urls.map((u, i) => (
+                        <div key={i} className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              ref={i === 0 ? firstInputRef : undefined}
+                              type="url"
+                              value={u}
+                              onChange={(e) => updateUrl(i, e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addUrl();
+                                }
+                              }}
+                              placeholder="https://example.com/page"
+                              className={`flex-1 border rounded-xl px-3.5 py-2.5 text-sm text-[#300a46] placeholder:text-gray-300 outline-none transition-all ${
+                                errorMsgs[i]
+                                  ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                                  : 'border-gray-200 focus:border-[#ff724f] focus:ring-2 focus:ring-[#ff724f]/10'
+                              }`}
+                            />
+                            {urls.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeUrl(i)}
+                                className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">close</span>
+                              </button>
+                            )}
+                          </div>
+                          {errorMsgs[i] && (
+                            <p className="text-xs text-red-500 flex items-center gap-1 pl-1">
+                              <span className="material-symbols-outlined text-[13px]">error</span>
+                              {errorMsgs[i]}
+                            </p>
+                          )}
+                        </div>
                       ))}
                     </div>
+
+                    {/* Add URL button */}
+                    <button
+                      type="button"
+                      onClick={addUrl}
+                      className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-[#ff724f] hover:text-[#e85e3a] transition-colors self-start"
+                    >
+                      <span className="w-5 h-5 rounded-full border border-[#ff724f] flex items-center justify-center">
+                        <span className="material-symbols-outlined text-[14px]">add</span>
+                      </span>
+                      Add another URL
+                    </button>
                   </div>
 
                   <div className="bg-[#fff8f6] border border-[#ff724f]/20 rounded-xl p-3 flex gap-2.5">
@@ -290,8 +333,8 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                       info
                     </span>
                     <p className="text-xs text-gray-500 leading-relaxed">
-                      The scanner checks for accessibility, SEO, UX, and technical issues.
                       Issues are added directly to this project&apos;s feedback list.
+                      Press <kbd className="bg-gray-100 border border-gray-200 rounded px-1 py-0.5 font-mono text-[10px]">Enter</kbd> in any field to add a new row.
                     </p>
                   </div>
 
@@ -304,7 +347,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     </button>
                     <button
                       onClick={startScan}
-                      disabled={!url.trim()}
+                      disabled={!hasValidUrl}
                       className="flex-1 bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e85e3a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                     >
                       <span className="material-symbols-outlined text-[16px]">travel_explore</span>

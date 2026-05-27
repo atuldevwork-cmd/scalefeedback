@@ -198,6 +198,7 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
                     const cat = fb.custom_metadata?.category as string | undefined;
                     const CATS: Record<string, { label: string; icon: string; cls: string }> = {
                       ux:            { label: 'UI / UX',       icon: '🎨', cls: 'bg-violet-100 text-violet-700 border-violet-200' },
+                      cro:           { label: 'CRO',           icon: '📈', cls: 'bg-orange-100 text-orange-700 border-orange-200' },
                       accessibility: { label: 'Accessibility',  icon: '♿', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
                       seo:           { label: 'SEO',            icon: '🔍', cls: 'bg-green-100 text-green-700 border-green-200' },
                       technical:     { label: 'Technical',      icon: '⚙️', cls: 'bg-red-100 text-red-700 border-red-200' },

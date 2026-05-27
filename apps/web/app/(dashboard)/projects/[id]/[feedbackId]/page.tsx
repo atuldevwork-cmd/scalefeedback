@@ -73,6 +73,7 @@ const CATEGORY_META: Record<string, { label: string; color: string; icon: string
   accessibility: { label: 'Accessibility', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: '♿' },
   seo:           { label: 'SEO',           color: 'bg-green-100 text-green-700 border-green-200', icon: '🔍' },
   ux:            { label: 'UI / UX',       color: 'bg-violet-100 text-violet-700 border-violet-200', icon: '🎨' },
+  cro:           { label: 'CRO',           color: 'bg-orange-100 text-orange-700 border-orange-200', icon: '📈' },
   content:       { label: 'Content',       color: 'bg-amber-100 text-amber-700 border-amber-200', icon: '📝' },
   technical:     { label: 'Technical',     color: 'bg-red-100 text-red-700 border-red-200', icon: '⚙️' },
 };

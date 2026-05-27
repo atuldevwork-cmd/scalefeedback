@@ -38,9 +38,11 @@ export interface PageContent {
   hasViewportMeta: boolean;
   h1s: string[];
   h2s: string[];
+  h3s: string[];
   images: Array<{ src: string; alt: string }>;
   links: Array<{ href: string; text: string; isExternal: boolean }>;
   formIssues: string[];
+  formFieldCount: number;
   bodyText: string;
   wordCount: number;
   canonicalUrl: string;
@@ -53,6 +55,17 @@ export interface PageContent {
   axeViolations: AxeViolation[];
   screenshotBuffer?: Buffer;
   mobileScreenshotBuffer?: Buffer;
+  // Richer signals for deep analysis
+  buttons: Array<{ text: string; type: string }>;
+  navItems: string[];
+  footerText: string;
+  iframes: Array<{ src: string }>;
+  hasSchemaMarkup: boolean;
+  thirdPartyScripts: string[];
+  copyrightYear: string;
+  hasPricingKeywords: boolean;
+  hasSocialProof: boolean;
+  hasTrustSignals: boolean;
 }
 
 export interface CrawlResult {
@@ -76,15 +89,15 @@ function isSpecificPage(url: string): boolean {
 
 function parseHtmlContent(url: string, html: string, statusCode: number): Omit<PageContent, 'consoleErrors' | 'axeViolations' | 'screenshotBuffer' | 'mobileScreenshotBuffer'> {
   const $ = load(html);
-  $('script, style, noscript').remove();
-
   const baseOrigin = new URL(url).origin;
 
+  // ── Images ──
   const images: PageContent['images'] = [];
   $('img').each((_, el) => {
     images.push({ src: $(el).attr('src') ?? '', alt: $(el).attr('alt') ?? '' });
   });
 
+  // ── Links ──
   const links: PageContent['links'] = [];
   $('a[href]').each((_, el) => {
     const href = $(el).attr('href') ?? '';
@@ -95,8 +108,25 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     } catch { /* skip */ }
   });
 
+  // ── Buttons ──
+  const buttons: PageContent['buttons'] = [];
+  $('button, input[type="submit"], input[type="button"], a.btn, a.button, [class*="btn"], [class*="button"]').each((_, el) => {
+    const text = ($(el).text().trim() || $(el).attr('value') || $(el).attr('aria-label') || '').trim();
+    if (text) buttons.push({ text, type: el.tagName?.toLowerCase() ?? 'button' });
+  });
+
+  // ── Nav items ──
+  const navItems: string[] = [];
+  $('nav a, header a').each((_, el) => {
+    const text = $(el).text().trim();
+    if (text && text.length < 60) navItems.push(text);
+  });
+
+  // ── Form issues + field count ──
   const formIssues: string[] = [];
+  let formFieldCount = 0;
   $('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="image"]):not([type="reset"])').each((_, el) => {
+    formFieldCount++;
     const id = $(el).attr('id');
     const name = $(el).attr('name') ?? '';
     const type = $(el).attr('type') ?? 'text';
@@ -108,7 +138,46 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     }
   });
 
+  // ── Footer text ──
+  const footerText = $('footer').text().replace(/\s+/g, ' ').trim().slice(0, 500);
+
+  // ── Copyright year ──
+  const copyrightMatch = (footerText + $('body').text()).match(/©\s*(?:copyright\s*)?\w*\s*(20\d{2})/i);
+  const copyrightYear = copyrightMatch ? copyrightMatch[1] : '';
+
+  // ── Iframes (YouTube, Vimeo, embeds) ──
+  const iframes: PageContent['iframes'] = [];
+  $('iframe').each((_, el) => {
+    const src = $(el).attr('src') ?? $(el).attr('data-src') ?? '';
+    if (src) iframes.push({ src });
+  });
+
+  // ── Schema markup ──
+  const hasSchemaMarkup = $('script[type="application/ld+json"]').length > 0;
+
+  // ── Third-party scripts ──
+  const thirdPartyDomains = new Set<string>();
+  $('script[src]').each((_, el) => {
+    const src = $(el).attr('src') ?? '';
+    try {
+      const domain = new URL(src).hostname;
+      if (domain && domain !== new URL(url).hostname) thirdPartyDomains.add(domain);
+    } catch { /* skip */ }
+  });
+  const thirdPartyScripts = [...thirdPartyDomains];
+
+  // ── Body text (before stripping scripts) ──
+  $('script, style, noscript').remove();
   const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+
+  // ── Pricing / social proof / trust signals ──
+  const bodyLower = bodyText.toLowerCase();
+  const hasPricingKeywords = /\$|price|pricing|fee|cost|aud|usd|per month|per year|plan|subscribe/i.test(bodyLower);
+  const hasSocialProof = /testimonial|review|rated|customers?|clients?|trusted by|case stud|stars?|\d+\s*(users?|members?|companies)/i.test(bodyLower);
+  const hasTrustSignals = /money.back|guarantee|no credit card|free trial|cancel any|secure|certified|accredited|since \d{4}/i.test(bodyLower);
+
+  // ── Headings ──
+  const h3s = $('h3').map((_, el) => $(el).text().trim()).get();
 
   return {
     url,
@@ -119,9 +188,11 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     hasViewportMeta: $('meta[name="viewport"]').length > 0,
     h1s: $('h1').map((_, el) => $(el).text().trim()).get(),
     h2s: $('h2').map((_, el) => $(el).text().trim()).get(),
+    h3s,
     images,
     links,
     formIssues,
+    formFieldCount,
     bodyText: bodyText.slice(0, MAX_BODY_CHARS),
     wordCount: bodyText.split(/\s+/).filter(Boolean).length,
     canonicalUrl: $('link[rel="canonical"]').attr('href') ?? '',
@@ -130,6 +201,16 @@ function parseHtmlContent(url: string, html: string, statusCode: number): Omit<P
     ogImage: $('meta[property="og:image"]').attr('content') ?? '',
     twitterCard: $('meta[name="twitter:card"]').attr('content') ?? '',
     hasFavicon: $('link[rel~="icon"], link[rel="shortcut icon"]').length > 0,
+    buttons,
+    navItems,
+    footerText,
+    iframes,
+    hasSchemaMarkup,
+    thirdPartyScripts,
+    copyrightYear,
+    hasPricingKeywords,
+    hasSocialProof,
+    hasTrustSignals,
   };
 }
 
