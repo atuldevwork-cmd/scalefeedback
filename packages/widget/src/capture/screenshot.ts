@@ -204,10 +204,26 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
   // page during capture so the user never sees the flash of missing backgrounds.
   const bgScrub = document.createElement('style');
   bgScrub.id = 'sf-bg-scrub';
+  // Only strip mask-image via CSS. background-image is handled selectively
+  // below — url()-based ones (cross-origin risk) are stripped, but CSS
+  // gradients (linear-gradient etc.) make no network requests and are kept
+  // so they render correctly in the screenshot.
   bgScrub.textContent =
-    '*, *::before, *::after { background-image: none !important; ' +
-    '-webkit-mask-image: none !important; mask-image: none !important; }';
+    '*, *::before, *::after { -webkit-mask-image: none !important; mask-image: none !important; }';
   document.head.appendChild(bgScrub);
+
+  // Strip only url()-based background-images; preserve gradient backgrounds.
+  const bgRestorations: Array<{ el: HTMLElement; orig: string; pri: string }> = [];
+  document.querySelectorAll<HTMLElement>('*').forEach((el) => {
+    const bgImage = getComputedStyle(el).backgroundImage;
+    if (!bgImage || bgImage === 'none' || !/\burl\s*\(/i.test(bgImage)) return;
+    bgRestorations.push({
+      el,
+      orig: el.style.getPropertyValue('background-image'),
+      pri:  el.style.getPropertyPriority('background-image'),
+    });
+    el.style.setProperty('background-image', 'none', 'important');
+  });
 
   const blurPseudoEls: Element[] = [];
   document.querySelectorAll<HTMLElement>('*').forEach((el) => {
@@ -387,6 +403,10 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
     document.getElementById('sf-cap-fix')?.remove();
     document.getElementById('sf-bg-scrub')?.remove();
+    bgRestorations.forEach(({ el, orig, pri }) => {
+      if (orig) el.style.setProperty('background-image', orig, pri);
+      else el.style.removeProperty('background-image');
+    });
     restoreColors?.();
     // Restore SVGs that were replaced by img data URLs before capture
     svgReplacements.forEach(({ parent, svg, img, nextSibling }) => {

@@ -16,17 +16,21 @@ export class AnnotationCanvas {
       selection: true,
     });
 
-    // COVER scaling: one uniform scale so the screenshot fills the entire
-    // canvas without distortion or gray bars (may crop a few px at bottom).
+    // CONTAIN scaling: fit the full screenshot inside the canvas without
+    // cropping. Any unused space shows the canvas background colour.
+    // Centered so screenshot sits in the middle of the canvas.
     if (screenshotDataUrl) {
       fabric.Image.fromURL(screenshotDataUrl, (img) => {
-        const scale = Math.max(
-          this.canvas.width!  / (img.width  || 1),
-          this.canvas.height! / (img.height || 1),
-        );
+        // Scale screenshot to fill canvas width exactly — no side gaps.
+        // Any unused vertical space shows the canvas background at the bottom.
+        const scale = this.canvas.width! / (img.width || 1);
         this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
           scaleX: scale,
           scaleY: scale,
+          left: 0,
+          top: 0,
+          originX: 'left',
+          originY: 'top',
         });
       });
     }
