@@ -10,8 +10,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['var(--font-poppins)', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['var(--font-poppins)', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['var(--font-dm-sans)', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -51,8 +51,8 @@ const config: Config = {
           primary: '#ff724f',
           'primary-light': '#fff3f0',
           'primary-hover': '#e8603a',
-          secondary: '#300a46',
-          'secondary-light': '#f6f0fc',
+          secondary: '#111111',
+          'secondary-light': '#F9F9F9',
         },
       },
       borderRadius: {

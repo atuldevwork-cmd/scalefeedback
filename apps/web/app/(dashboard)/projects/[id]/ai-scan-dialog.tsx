@@ -136,7 +136,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
       {/* Trigger button */}
       <button
         onClick={openDialog}
-        className="flex items-center gap-1.5 bg-[#ff724f] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#e85e3a] transition-all shadow-sm"
+        className="flex items-center gap-1.5 bg-[#ff724f] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#e8603a] transition-all shadow-sm"
       >
         <span className="material-symbols-outlined text-[16px]">travel_explore</span>
         Scan Website
@@ -157,7 +157,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                   <span className="material-symbols-outlined text-[#ff724f] text-[18px]">travel_explore</span>
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-[#300a46]">AI Website Scanner</h2>
+                  <h2 className="text-base font-bold text-[#111111]">AI Website Scanner</h2>
                   <p className="text-xs text-gray-400">Crawl pages and auto-generate issues</p>
                 </div>
               </div>
@@ -187,7 +187,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     </span>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-[#300a46]">Scanning {urls.length} page{urls.length !== 1 ? 's' : ''}…</p>
+                    <p className="text-sm font-semibold text-[#111111]">Scanning {urls.length} page{urls.length !== 1 ? 's' : ''}…</p>
                     <p className="text-xs text-gray-400 mt-1">
                       Taking screenshots, capturing console errors, and analysing with AI.
                       This may take 30–60 seconds per page.
@@ -208,7 +208,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     </span>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-[#300a46]">Scan complete</p>
+                    <p className="text-sm font-semibold text-[#111111]">Scan complete</p>
                     {result.message ? (
                       <p className="text-xs text-gray-500 mt-1">{result.message}</p>
                     ) : (
@@ -227,7 +227,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     </button>
                     <button
                       onClick={() => { setScanState('idle'); setResult(null); }}
-                      className="flex-1 bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e85e3a] transition-colors"
+                      className="flex-1 bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e8603a] transition-colors"
                     >
                       Scan Again
                     </button>
@@ -247,12 +247,12 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     </span>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-[#300a46]">Scan failed</p>
+                    <p className="text-sm font-semibold text-[#111111]">Scan failed</p>
                     <p className="text-xs text-red-500 mt-1">{globalError}</p>
                   </div>
                   <button
                     onClick={() => { setScanState('idle'); setGlobalError(''); }}
-                    className="w-full bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e85e3a] transition-colors"
+                    className="w-full bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e8603a] transition-colors"
                   >
                     Try Again
                   </button>
@@ -269,7 +269,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
 
                   {/* URL repeater */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#300a46]">Page URLs</label>
+                    <label className="text-xs font-semibold text-[#111111]">Page URLs</label>
                     <div className="flex flex-col gap-2">
                       {urls.map((u, i) => (
                         <div key={i} className="flex flex-col gap-1">
@@ -286,7 +286,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                                 }
                               }}
                               placeholder="https://example.com/page"
-                              className={`flex-1 border rounded-xl px-3.5 py-2.5 text-sm text-[#300a46] placeholder:text-gray-300 outline-none transition-all ${
+                              className={`flex-1 border rounded-xl px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-gray-300 outline-none transition-all ${
                                 errorMsgs[i]
                                   ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100'
                                   : 'border-gray-200 focus:border-[#ff724f] focus:ring-2 focus:ring-[#ff724f]/10'
@@ -316,7 +316,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     <button
                       type="button"
                       onClick={addUrl}
-                      className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-[#ff724f] hover:text-[#e85e3a] transition-colors self-start"
+                      className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-[#ff724f] hover:text-[#ff724f] transition-colors self-start"
                     >
                       <span className="w-5 h-5 rounded-full border border-[#ff724f] flex items-center justify-center">
                         <span className="material-symbols-outlined text-[14px]">add</span>
@@ -348,7 +348,7 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
                     <button
                       onClick={startScan}
                       disabled={!hasValidUrl}
-                      className="flex-1 bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e85e3a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                      className="flex-1 bg-[#ff724f] text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-[#e8603a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                     >
                       <span className="material-symbols-outlined text-[16px]">travel_explore</span>
                       Start Scan

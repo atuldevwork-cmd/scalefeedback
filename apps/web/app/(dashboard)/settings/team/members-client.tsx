@@ -76,14 +76,14 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#300a46]/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/30 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border border-gray-100 mx-4">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-9 h-9 bg-[#fff3f0] rounded-xl flex items-center justify-center">
             <span className="material-symbols-outlined text-[#ff724f] text-[18px]">person_add</span>
           </div>
           <div>
-            <h2 className="text-base font-bold text-[#300a46]">Invite team member</h2>
+            <h2 className="text-base font-bold text-[#111111]">Invite team member</h2>
             <p className="text-xs text-gray-500">They&apos;ll receive an email with a link to join.</p>
           </div>
           <button onClick={onClose} className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
@@ -98,7 +98,7 @@ function InviteModal({ onClose, onInvited }: { onClose: () => void; onInvited: (
                 <span className="material-symbols-outlined text-green-600 text-[20px]">check_circle</span>
               </div>
               <div>
-                <p className="font-semibold text-[#300a46] text-sm">Invitation created!</p>
+                <p className="font-semibold text-[#111111] text-sm">Invitation created!</p>
                 <p className="text-xs text-gray-500 mt-0.5">An invite email was sent to <strong>{email}</strong>.</p>
               </div>
             </div>
@@ -185,14 +185,14 @@ function ChangeRoleModal({ member, onClose, onChanged }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#300a46]/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/30 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 mx-4">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
             <span className="material-symbols-outlined text-blue-600 text-[18px]">manage_accounts</span>
           </div>
           <div>
-            <h2 className="text-base font-bold text-[#300a46]">Change role</h2>
+            <h2 className="text-base font-bold text-[#111111]">Change role</h2>
             <p className="text-xs text-gray-500">{member.name || member.email}</p>
           </div>
           <button onClick={onClose} className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
@@ -233,12 +233,12 @@ function RemoveConfirmModal({ member, onConfirm, onClose, removing }: {
   removing: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#300a46]/30 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111111]/30 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 mx-4">
         <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <span className="material-symbols-outlined text-red-500 text-[24px]">person_remove</span>
         </div>
-        <h2 className="text-base font-bold text-[#300a46] text-center mb-2">Remove member?</h2>
+        <h2 className="text-base font-bold text-[#111111] text-center mb-2">Remove member?</h2>
         <p className="text-sm text-gray-500 text-center mb-1">
           <strong className="text-gray-700">{member.name || member.email}</strong> will lose access to this workspace immediately.
         </p>
@@ -377,7 +377,7 @@ export function MembersClient({
   return (
     <div className="p-8 max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-[#300a46]">Members</h1>
+        <h1 className="text-xl font-bold text-[#111111]">Members</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           {members.length} active member{members.length !== 1 ? 's' : ''}
           {pendingInvitations.length > 0 && ` · ${pendingInvitations.length} pending`}
@@ -390,7 +390,7 @@ export function MembersClient({
           <div className="flex items-start gap-3 mb-3">
             <span className="material-symbols-outlined text-[#ff724f] text-[20px] mt-0.5">link</span>
             <div>
-              <p className="text-sm font-semibold text-[#300a46]">Secret invite link</p>
+              <p className="text-sm font-semibold text-[#111111]">Secret invite link</p>
               <p className="text-xs text-gray-500 mt-0.5">Share this link — anyone who opens it can sign up and join your workspace.</p>
             </div>
           </div>
@@ -453,7 +453,7 @@ export function MembersClient({
                         <Avatar name={m.name} email={m.email} />
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-[#300a46] truncate">{m.name || m.email}</span>
+                            <span className="text-sm font-semibold text-[#111111] truncate">{m.name || m.email}</span>
                             {isYou && (
                               <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#ff724f] text-white shrink-0">
                                 you

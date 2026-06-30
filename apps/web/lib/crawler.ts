@@ -76,7 +76,7 @@ export interface CrawlResult {
 const PAGE_TIMEOUT_MS = 20_000;
 const MAX_BODY_CHARS = 3_000;
 
-const BOT_UA = 'Mozilla/5.0 (compatible; ScaleFeedbackBot/1.0; +https://scalefeedback.com)';
+const BOT_UA = 'Mozilla/5.0 (compatible; PinmarksBot/1.0; +https://scalefeedback.com)';
 
 function isSitemapUrl(url: string) {
   return /sitemap.*\.xml/i.test(url);

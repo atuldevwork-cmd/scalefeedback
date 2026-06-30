@@ -110,7 +110,7 @@ export default function ProfilePage() {
 
   return (
     <div className="p-8 max-w-2xl">
-      <h1 className="text-2xl font-bold text-[#300a46] mb-1">Profile</h1>
+      <h1 className="text-2xl font-bold text-[#111111] mb-1">Profile</h1>
       <p className="text-sm text-gray-500 mb-8">Manage your personal information.</p>
 
       <div className="space-y-6">
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                 className="w-16 h-16 rounded-full object-cover border border-gray-200 shrink-0"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-[#fff3f0] flex items-center justify-center text-2xl font-bold text-[#300a46] shrink-0">
+              <div className="w-16 h-16 rounded-full bg-[#fff3f0] flex items-center justify-center text-2xl font-bold text-[#111111] shrink-0">
                 {loading ? '…' : (name || email || '?').charAt(0).toUpperCase()}
               </div>
             )}
@@ -142,7 +142,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading || loading}
-                className="text-sm font-medium text-[#ff724f] hover:text-[#e8603a] border border-[#ff724f]/30 px-4 py-2 rounded-lg hover:bg-[#fff3f0] transition-colors disabled:opacity-60"
+                className="text-sm font-medium text-[#ff724f] hover:text-[#ff724f] border border-[#ff724f]/30 px-4 py-2 rounded-lg hover:bg-[#fff3f0] transition-colors disabled:opacity-60"
               >
                 {uploading ? 'Uploading…' : 'Upload photo'}
               </button>

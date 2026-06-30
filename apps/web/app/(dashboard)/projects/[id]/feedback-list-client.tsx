@@ -219,7 +219,7 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
                       </>
                     );
                   })()}
-                  <span className="text-sm font-medium text-[#300a46] group-hover/link:text-[#ff724f] transition-colors truncate">
+                  <span className="text-sm font-medium text-[#111111] group-hover/link:text-[#ff724f] transition-colors truncate">
                     {fb.title ?? fb.page_url}
                   </span>
                 </div>
@@ -354,7 +354,7 @@ export function FeedbackListClient({ feedback, projectId, screenshotBaseUrl, use
               <span className="material-symbols-outlined text-red-500 text-[24px]">delete</span>
             </div>
             <div className="text-center">
-              <p className="font-semibold text-[#300a46] text-lg">Delete feedback?</p>
+              <p className="font-semibold text-[#111111] text-lg">Delete feedback?</p>
               <p className="text-sm text-gray-500 mt-1">This action cannot be undone.</p>
             </div>
             <div className="flex gap-3 w-full mt-2">

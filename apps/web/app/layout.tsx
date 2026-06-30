@@ -1,17 +1,24 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { DM_Sans, Inter } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/toast';
 import './globals.css';
 
-const poppins = Poppins({
+const dmSans = DM_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-poppins',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-inter',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'ScaleFeedback — Visual Bug Reporting for Teams',
+  title: 'Pinmarks — Visual Bug Reporting for Teams',
   description: 'Capture, annotate, and manage feedback from your web apps with screenshots and technical metadata.',
 };
 
@@ -21,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={poppins.variable}>
+    <html lang="en" className={`${dmSans.variable} ${inter.variable}`}>
       <body>
         <ToastProvider>{children}</ToastProvider>
       </body>

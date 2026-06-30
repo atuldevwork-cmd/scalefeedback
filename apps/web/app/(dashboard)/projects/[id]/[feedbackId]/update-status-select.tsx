@@ -43,7 +43,7 @@ export function UpdateStatusSelect({ feedbackId, currentStatus }: Props) {
 
   return (
     <Select value={status} onValueChange={(v) => handleChange(v as FeedbackStatus)} disabled={loading}>
-      <SelectTrigger className="w-full h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#300a46] hover:border-[#ff724f]/40 hover:bg-gray-50 focus:ring-2 focus:ring-[#ff724f]/20 focus:border-[#ff724f]/50 disabled:opacity-60 transition-colors">
+      <SelectTrigger className="w-full h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#111111] hover:border-[#ff724f]/40 hover:bg-gray-50 focus:ring-2 focus:ring-[#ff724f]/20 focus:border-[#ff724f]/50 disabled:opacity-60 transition-colors">
         <div className="flex items-center gap-2">
           {current && <span className={`w-2 h-2 rounded-full shrink-0 ${current.dot}`} />}
           <SelectValue />
@@ -54,7 +54,7 @@ export function UpdateStatusSelect({ feedbackId, currentStatus }: Props) {
           <SelectItem
             key={s.value}
             value={s.value}
-            className="rounded-lg px-3 py-2 text-sm text-[#300a46] cursor-pointer focus:bg-[#fff3f0] focus:text-[#ff724f] data-[state=checked]:text-[#ff724f] data-[state=checked]:font-semibold"
+            className="rounded-lg px-3 py-2 text-sm text-[#111111] cursor-pointer focus:bg-[#fff3f0] focus:text-[#ff724f] data-[state=checked]:text-[#ff724f] data-[state=checked]:font-semibold"
           >
             <div className="flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />

@@ -213,7 +213,7 @@ export function SupportChatWidget() {
   const statusText =
     chat?.status === 'waiting_human' ? 'Connecting to team member...' :
     chat?.status === 'with_human'    ? 'Team member is here' :
-    'ScaleFeedback Support';
+    'Pinmarks Support';
 
   const statusDot =
     chat?.status === 'with_human'    ? 'bg-green-400' :
@@ -229,7 +229,7 @@ export function SupportChatWidget() {
           style={{ height: '520px' }}
         >
           {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-[#300a46] text-white shrink-0">
+          <div className="flex items-center gap-3 px-4 py-3 bg-[#111111] text-white shrink-0">
             <div className="flex-1 min-w-0">
               <p className="text-base font-bold leading-tight">Support Chat</p>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -256,7 +256,7 @@ export function SupportChatWidget() {
                 <p className="text-sm text-gray-500 text-center px-4">Couldn't connect. Please try again.</p>
                 <button
                   onClick={initChat}
-                  className="text-xs px-3 py-1.5 bg-[#300a46] text-white rounded-lg hover:bg-[#4a1566] transition-colors"
+                  className="text-xs px-3 py-1.5 bg-[#111111] text-white rounded-lg hover:bg-[#333333] transition-colors"
                 >
                   Retry
                 </button>
@@ -270,7 +270,7 @@ export function SupportChatWidget() {
                   >
                     {msg.role !== 'user' && (
                       <div className="flex flex-col items-center gap-0.5 shrink-0">
-                        <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center">
+                        <div className="w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center">
                           {msg.role === 'agent'
                             ? <span className="material-symbols-outlined text-white text-[13px]">person</span>
                             : <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
@@ -287,7 +287,7 @@ export function SupportChatWidget() {
                       className={cn(
                         'max-w-[78%] px-3 py-2 text-sm leading-relaxed rounded-2xl',
                         msg.role === 'user'
-                          ? 'bg-[#300a46] text-white rounded-br-sm'
+                          ? 'bg-[#111111] text-white rounded-br-sm'
                           : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
                       )}
                     >
@@ -299,7 +299,7 @@ export function SupportChatWidget() {
                 {/* Typing indicator — only show when bot is expected to reply */}
                 {(botTyping || (sending && chat?.status === 'bot')) && (
                   <div className="flex items-end gap-2 justify-start">
-                    <div className="w-6 h-6 rounded-full bg-[#300a46] flex items-center justify-center shrink-0 mb-0.5">
+                    <div className="w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center shrink-0 mb-0.5">
                       <span className="material-symbols-outlined text-white text-[13px]">smart_toy</span>
                     </div>
                     <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-3 py-2 shadow-sm">
@@ -353,7 +353,7 @@ export function SupportChatWidget() {
                     },
                   ]);
                 }}
-                className="w-full mb-2 text-[11px] text-[#300a46]/50 hover:text-[#ff724f] transition-colors text-center"
+                className="w-full mb-2 text-[11px] text-[#111111]/50 hover:text-[#ff724f] transition-colors text-center"
               >
                 Connect with team member →
               </button>
@@ -374,12 +374,12 @@ export function SupportChatWidget() {
                   chat?.status === 'waiting_human' ? 'Describe your issue while you wait…' : 'Type a message…'
                 }
                 disabled={sending || initializing || chat?.status === 'resolved'}
-                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#300a46]/20 focus:border-[#300a46]/40 disabled:opacity-50"
+                className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#111111]/20 focus:border-[#111111]/40 disabled:opacity-50"
               />
               <button
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || sending || initializing}
-                className="w-9 h-9 shrink-0 rounded-xl bg-[#300a46] text-white flex items-center justify-center hover:bg-[#4a1566] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-9 h-9 shrink-0 rounded-xl bg-[#111111] text-white flex items-center justify-center hover:bg-[#333333] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined text-[17px]">send</span>
               </button>

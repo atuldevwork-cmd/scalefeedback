@@ -213,7 +213,7 @@ export default function SupportInboxPage() {
       <div className="w-[320px] shrink-0 border-r border-gray-100 flex flex-col h-full">
         <div className="px-5 py-4 border-b border-gray-100">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-semibold text-[#300a46]">Support Inbox</h1>
+            <h1 className="text-lg font-semibold text-[#111111]">Support Inbox</h1>
             {waitingCount > 0 && (
               <span className="text-[11px] font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                 {waitingCount} waiting
@@ -228,7 +228,7 @@ export default function SupportInboxPage() {
                 className={cn(
                   'text-[11px] px-2.5 py-1 rounded-full border transition-colors',
                   filter === s
-                    ? 'bg-[#300a46] text-white border-[#300a46]'
+                    ? 'bg-[#111111] text-white border-[#111111]'
                     : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
                 )}
               >
@@ -254,7 +254,7 @@ export default function SupportInboxPage() {
                 )}
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="text-sm font-medium text-[#300a46] truncate">
+                  <p className="text-sm font-medium text-[#111111] truncate">
                     {chat.user_name ?? chat.user_email ?? 'Anonymous'}
                   </p>
                   <span className={cn('text-[10px] px-1.5 py-0.5 rounded-full shrink-0 font-medium', STATUS_COLORS[chat.status])}>
@@ -285,7 +285,7 @@ export default function SupportInboxPage() {
             {/* Chat header */}
             <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3 shrink-0">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[#300a46] truncate">
+                <p className="text-sm font-semibold text-[#111111] truncate">
                   {activeChat.user_name ?? activeChat.user_email ?? 'Anonymous'}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{activeChat.user_email}</p>
@@ -296,7 +296,7 @@ export default function SupportInboxPage() {
               {activeChat.status === 'waiting_human' && (
                 <button
                   onClick={claimChat}
-                  className="text-xs px-3 py-1.5 bg-[#300a46] text-white rounded-lg hover:bg-[#4a1566] transition-colors"
+                  className="text-xs px-3 py-1.5 bg-[#111111] text-white rounded-lg hover:bg-[#333333] transition-colors"
                 >
                   Claim chat
                 </button>
@@ -342,12 +342,12 @@ export default function SupportInboxPage() {
                       msg.role === 'user'
                         ? 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm shadow-sm'
                         : msg.role === 'bot'
-                        ? 'bg-[#300a46]/10 text-[#300a46] rounded-br-sm'
+                        ? 'bg-[#111111]/10 text-[#111111] rounded-br-sm'
                         : 'bg-[#ff724f] text-white rounded-br-sm'
                     )}
                   >
                     {msg.role === 'bot' && (
-                      <span className="text-[10px] font-semibold text-[#300a46]/60 block mb-0.5">Bot</span>
+                      <span className="text-[10px] font-semibold text-[#111111]/60 block mb-0.5">Bot</span>
                     )}
                     {msg.content}
                   </div>
@@ -356,7 +356,7 @@ export default function SupportInboxPage() {
                       <div
                         className={cn(
                           'w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold',
-                          msg.role === 'agent' ? 'bg-[#ff724f] text-white' : 'bg-[#300a46] text-white'
+                          msg.role === 'agent' ? 'bg-[#ff724f] text-white' : 'bg-[#111111] text-white'
                         )}
                       >
                         {msg.role === 'agent'
@@ -388,12 +388,12 @@ export default function SupportInboxPage() {
                     }}
                     placeholder="Reply as team member…"
                     disabled={sending}
-                    className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#300a46]/20 focus:border-[#300a46]/40 disabled:opacity-50"
+                    className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#111111]/20 focus:border-[#111111]/40 disabled:opacity-50"
                   />
                   <button
                     onClick={sendReply}
                     disabled={!input.trim() || sending}
-                    className="px-4 py-2 bg-[#ff724f] text-white text-sm rounded-xl font-medium hover:bg-[#e86040] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-4 py-2 bg-[#ff724f] text-white text-sm rounded-xl font-medium hover:bg-[#e8603a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Send
                   </button>

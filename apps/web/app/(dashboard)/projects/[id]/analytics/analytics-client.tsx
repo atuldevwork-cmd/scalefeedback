@@ -66,7 +66,7 @@ export function AnalyticsClient({ feedback }: Props) {
     <div className="space-y-8">
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total feedback" value={total} color="text-[#300a46]" />
+        <StatCard label="Total feedback" value={total} color="text-[#111111]" />
         <StatCard label="Open" value={open} sub="needs attention" color="text-blue-600" />
         <StatCard label="Resolved" value={resolved} sub={`${total > 0 ? Math.round((resolved / total) * 100) : 0}% resolution rate`} color="text-green-600" />
         <StatCard label="Avg resolution" value={avgHours != null ? `${avgHours}h` : '—'} sub="time to resolve" color="text-orange-600" />

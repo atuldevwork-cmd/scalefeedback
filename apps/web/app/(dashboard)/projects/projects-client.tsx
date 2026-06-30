@@ -51,7 +51,7 @@ function GridCard({ project, onRestore }: { project: Project; onRestore: (id: st
           <StatusBadge isActive={project.is_active} />
         </div>
 
-        <h3 className="font-semibold text-[#300a46] text-sm group-hover:text-[#ff724f] transition-colors font-heading">
+        <h3 className="font-semibold text-[#111111] text-sm group-hover:text-[#ff724f] transition-colors font-heading">
           {project.name}
         </h3>
         {project.domain && (
@@ -90,7 +90,7 @@ function ListRow({ project, onRestore }: { project: Project; onRestore: (id: str
         <ProjectAvatar project={project} />
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-[#300a46] group-hover:text-[#ff724f] transition-colors truncate font-heading">
+          <p className="text-sm font-semibold text-[#111111] group-hover:text-[#ff724f] transition-colors truncate font-heading">
             {project.name}
           </p>
           {project.domain && (
@@ -164,7 +164,7 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[#300a46] font-heading">Projects</h1>
+          <h1 className="text-xl font-bold text-[#111111] font-heading">Projects</h1>
           <p className="text-gray-500 text-sm mt-0.5">
             Each project maps to one website with the widget installed.
           </p>
@@ -185,7 +185,7 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
               onClick={() => setTab(value)}
               className={`relative flex items-center gap-2 px-4 py-3.5 text-sm font-semibold transition-colors ${
                 tab === value
-                  ? 'text-[#300a46]'
+                  ? 'text-[#111111]'
                   : 'text-gray-400 hover:text-gray-600'
               }`}
             >
@@ -267,7 +267,7 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
               {search ? 'search_off' : tab === 'archived' ? 'inventory_2' : 'folder_open'}
             </span>
           </div>
-          <h3 className="font-semibold text-[#300a46] text-base mb-1.5 font-heading">
+          <h3 className="font-semibold text-[#111111] text-base mb-1.5 font-heading">
             {search
               ? 'No projects match your search'
               : tab === 'archived'

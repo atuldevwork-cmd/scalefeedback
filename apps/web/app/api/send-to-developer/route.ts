@@ -18,17 +18,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const { data, error } = await getResend().emails.send({
-      from: 'ScaleFeedback <hello@scalefeedback.io>',
+      from: 'Pinmarks <hello@pinmarks.io>',
       to: [to.trim()],
       subject: subject || 'Can you install this widget on our website?',
       html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
-        <div style="background:#300a46;border-radius:12px 12px 0 0;padding:20px 24px">
-          <p style="color:white;font-size:18px;font-weight:600;margin:0">ScaleFeedback Widget Installation</p>
+        <div style="background:#111111;border-radius:12px 12px 0 0;padding:20px 24px">
+          <p style="color:white;font-size:18px;font-weight:600;margin:0">Pinmarks Widget Installation</p>
         </div>
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:24px">
           <pre style="font-family:inherit;white-space:pre-wrap;font-size:14px;line-height:1.6;color:#374151;margin:0">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
         </div>
-        <p style="font-size:12px;color:#9ca3af;margin-top:16px;text-align:center">Sent via ScaleFeedback</p>
+        <p style="font-size:12px;color:#9ca3af;margin-top:16px;text-align:center">Sent via Pinmarks</p>
       </div>`,
     });
 

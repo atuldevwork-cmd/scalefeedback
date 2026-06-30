@@ -39,7 +39,7 @@ export function UpdatePrioritySelect({ feedbackId, currentPriority }: { feedback
 
   return (
     <Select value={priority} onValueChange={(v) => handleChange(v as FeedbackPriority)} disabled={loading}>
-      <SelectTrigger className="w-full h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#300a46] hover:border-[#ff724f]/40 hover:bg-gray-50 focus:ring-2 focus:ring-[#ff724f]/20 focus:border-[#ff724f]/50 disabled:opacity-60 transition-colors">
+      <SelectTrigger className="w-full h-9 rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#111111] hover:border-[#ff724f]/40 hover:bg-gray-50 focus:ring-2 focus:ring-[#ff724f]/20 focus:border-[#ff724f]/50 disabled:opacity-60 transition-colors">
         <div className={`flex items-center gap-2 font-medium ${current?.text ?? ''}`}>
           {current && <span className={`w-2 h-2 rounded-full shrink-0 ${current.dot}`} />}
           <SelectValue />

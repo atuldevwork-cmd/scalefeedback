@@ -190,7 +190,7 @@ export function GuestCommentForm({ feedbackId, members = [] }: { feedbackId: str
                   {m.name[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#300a46]">{m.name}</p>
+                  <p className="text-sm font-medium text-[#111111]">{m.name}</p>
                   <p className="text-[10px] text-gray-400">{m.email}</p>
                 </div>
               </button>

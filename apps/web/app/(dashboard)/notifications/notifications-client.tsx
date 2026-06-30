@@ -37,7 +37,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold text-[#300a46] mb-1">Notifications</h1>
+      <h1 className="text-2xl font-bold text-[#111111] mb-1">Notifications</h1>
       <p className="text-sm text-gray-400 mb-6">All your recent activity in one place.</p>
 
       {notifications.length === 0 ? (
@@ -60,7 +60,7 @@ export function NotificationsClient({ notifications }: { notifications: Notifica
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4">
-                  <p className="text-sm font-semibold text-[#300a46] leading-snug">
+                  <p className="text-sm font-semibold text-[#111111] leading-snug">
                     {n.title}
                   </p>
                   <FormattedDate date={n.created_at} className="text-[13px] text-gray-500 shrink-0 mt-0.5" />

@@ -84,7 +84,7 @@ export default async function AuditLogsPage() {
   if (!membership || !['owner', 'admin'].includes(membership.role)) {
     return (
       <div className="p-8 max-w-2xl">
-        <h1 className="text-xl font-bold text-[#300a46] mb-1">Audit Logs</h1>
+        <h1 className="text-xl font-bold text-[#111111] mb-1">Audit Logs</h1>
         <div className="mt-6 flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm px-4 py-3 rounded-xl">
           <span className="material-symbols-outlined text-[16px]">lock</span>
           Only workspace owners and admins can view audit logs.

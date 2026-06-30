@@ -36,7 +36,7 @@ export async function DELETE(
     }
   }
 
-  // Delete from ScaleFeedback
+  // Delete from Pinmarks
   const { error } = await service.from('feedback').delete().eq('id', feedbackId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

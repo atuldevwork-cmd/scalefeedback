@@ -136,18 +136,18 @@ export async function DELETE(
     try {
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: 'ScaleFeedback <onboarding@resend.dev>',
+        from: 'Pinmarks <onboarding@resend.dev>',
         to: targetEmail,
-        subject: `You've been removed from ${org?.name ?? 'a ScaleFeedback workspace'}`,
+        subject: `You've been removed from ${org?.name ?? 'a Pinmarks workspace'}`,
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
-            <div style="background: #300a46; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-              <p style="color: #ff724f; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 4px;">ScaleStation</p>
+            <div style="background: #111111; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+              <p style="color: #ff724f; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin: 0 0 4px;">Pinmarks</p>
               <p style="color: rgba(255,255,255,0.6); font-size: 11px; margin: 0;">Feedback</p>
             </div>
-            <h2 style="color: #300a46; font-size: 20px; font-weight: 700; margin: 0 0 8px;">Workspace access removed</h2>
+            <h2 style="color: #111111; font-size: 20px; font-weight: 700; margin: 0 0 8px;">Workspace access removed</h2>
             <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
-              You've been removed from the workspace <strong style="color: #300a46;">${org?.name ?? 'ScaleFeedback'}</strong>.
+              You've been removed from the workspace <strong style="color: #111111;">${org?.name ?? 'Pinmarks'}</strong>.
               You no longer have access to its projects and feedback.
             </p>
             <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
@@ -155,7 +155,7 @@ export async function DELETE(
             </p>
             <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 24px 0;" />
             <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-              ScaleFeedback by ScaleStation
+              Pinmarks by Pinmarks
             </p>
           </div>
         `,

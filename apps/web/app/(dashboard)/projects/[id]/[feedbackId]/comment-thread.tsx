@@ -284,7 +284,7 @@ export function CommentThread({ feedbackId, initialComments, currentUserId, memb
 
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-semibold text-[#300a46]">
+      <h2 className="text-sm font-semibold text-[#111111]">
         Comments {comments.length > 0 ? `(${comments.length})` : ''}
       </h2>
 
@@ -325,7 +325,7 @@ export function CommentThread({ feedbackId, initialComments, currentUserId, memb
                       </div>
                     )}
                     <div>
-                      <p className="text-xs font-semibold text-[#300a46]">
+                      <p className="text-xs font-semibold text-[#111111]">
                         {isClickUp ? 'ClickUp' : c.userName}
                         {isMine && !isClickUp && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
                         {c.is_internal && (
@@ -391,7 +391,7 @@ export function CommentThread({ feedbackId, initialComments, currentUserId, memb
                     {m.name[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#300a46]">{m.name}</p>
+                    <p className="text-sm font-medium text-[#111111]">{m.name}</p>
                     <p className="text-[10px] text-gray-400">{m.email}</p>
                   </div>
                 </button>

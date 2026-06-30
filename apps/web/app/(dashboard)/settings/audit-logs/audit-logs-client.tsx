@@ -164,7 +164,7 @@ export function AuditLogsClient({ logs, total }: { logs: AuditLogEntry[]; total:
     <div className="p-8 max-w-5xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-[#300a46]">Audit Logs</h1>
+        <h1 className="text-xl font-bold text-[#111111]">Audit Logs</h1>
         <p className="text-sm text-gray-500 mt-0.5">
           A detailed trail of workspace activity — who did what and when.
         </p>
@@ -184,7 +184,7 @@ export function AuditLogsClient({ logs, total }: { logs: AuditLogEntry[]; total:
           },
         ].map((s) => (
           <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-            <p className="text-2xl font-bold text-[#300a46]">{s.value}</p>
+            <p className="text-2xl font-bold text-[#111111]">{s.value}</p>
             <p className="text-xs text-gray-400 mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -200,7 +200,7 @@ export function AuditLogsClient({ logs, total }: { logs: AuditLogEntry[]; total:
               onClick={() => { setActionGroup(g.value); setPage(0); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 actionGroup === g.value
-                  ? 'bg-white text-[#300a46] shadow-sm'
+                  ? 'bg-white text-[#111111] shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -232,7 +232,7 @@ export function AuditLogsClient({ logs, total }: { logs: AuditLogEntry[]; total:
               {search ? 'search_off' : 'history'}
             </span>
           </div>
-          <h3 className="font-semibold text-[#300a46] text-base mb-1">
+          <h3 className="font-semibold text-[#111111] text-base mb-1">
             {search ? 'No matching events' : 'No audit events yet'}
           </h3>
           <p className="text-gray-500 text-sm max-w-xs mx-auto">

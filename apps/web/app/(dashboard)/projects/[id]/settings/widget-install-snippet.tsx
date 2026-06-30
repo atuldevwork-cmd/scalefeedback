@@ -37,11 +37,11 @@ function StepNumber({ n }: { n: number }) {
 function SnippetCodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="border border-[#300a46]/15 rounded-lg overflow-hidden">
-      <div className="flex justify-end px-3 py-2 bg-[#300a46]/5 border-b border-[#300a46]/10">
+    <div className="border border-[#111111]/15 rounded-lg overflow-hidden">
+      <div className="flex justify-end px-3 py-2 bg-[#111111]/5 border-b border-[#111111]/10">
         <button
           onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-          className="flex items-center gap-1.5 text-xs font-medium bg-[#ff724f] hover:bg-[#e86040] text-white px-3 py-1.5 rounded-md transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium bg-[#ff724f] hover:bg-[#e8603a] text-white px-3 py-1.5 rounded-md transition-colors"
         >
           <span className="material-symbols-outlined text-[14px]">{copied ? 'check' : 'content_copy'}</span>
           {copied ? 'Copied!' : 'Copy code'}
@@ -55,12 +55,12 @@ function SnippetCodeBlock({ code }: { code: string }) {
 function LightCodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="border border-[#300a46]/15 rounded-lg overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#300a46]/5 border-b border-[#300a46]/10">
-        <span className="text-xs text-[#300a46]/40 font-mono">code</span>
+    <div className="border border-[#111111]/15 rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#111111]/5 border-b border-[#111111]/10">
+        <span className="text-xs text-[#111111]/40 font-mono">code</span>
         <button
           onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-          className="flex items-center gap-1 text-xs font-medium text-[#ff724f] hover:text-[#e86040] transition-colors"
+          className="flex items-center gap-1 text-xs font-medium text-[#ff724f] hover:text-[#ff724f] transition-colors"
         >
           <span className="material-symbols-outlined text-[14px]">{copied ? 'check' : 'content_copy'}</span>
           {copied ? 'Copied!' : 'Copy code'}
@@ -89,7 +89,7 @@ export function WidgetInstallSnippet({ apiKey, projectName }: Props) {
   const defaultSubject = 'Can you install this widget on our website?';
   const defaultMessage = `Hi,
 
-Can you please help me install the ScaleFeedback widget on our website${projectName ? ` for the "${projectName}" project` : ''}?
+Can you please help me install the Pinmarks widget on our website${projectName ? ` for the "${projectName}" project` : ''}?
 
 This will help us collect visual bug reports and feedback from users.
 
@@ -155,13 +155,13 @@ Thanks!`;
 
       {/* ── Code snippet ── */}
       {tab === 'snippet' && (
-        <div className="divide-y divide-[#300a46]/10 border border-[#300a46]/15 rounded-xl overflow-hidden">
+        <div className="divide-y divide-[#111111]/10 border border-[#111111]/15 rounded-xl overflow-hidden">
           {/* Step 1 */}
           <div className="flex flex-col sm:flex-row items-start gap-6 p-6">
             <div className="shrink-0 sm:w-52">
               <div className="flex items-center gap-2 mb-2">
                 <StepNumber n={1} />
-                <p className="font-semibold text-sm text-[#300a46]">Install snippet</p>
+                <p className="font-semibold text-sm text-[#111111]">Install snippet</p>
               </div>
               <p className="text-xs text-muted-foreground pl-8 leading-relaxed">
                 Insert this code in the <code className="bg-[#ff724f]/10 text-[#ff724f] px-1 rounded text-[11px]">&lt;head&gt;</code> tag of each page where you want the widget to appear.
@@ -177,7 +177,7 @@ Thanks!`;
             <div className="shrink-0 sm:w-52">
               <div className="flex items-center gap-2 mb-2">
                 <StepNumber n={2} />
-                <p className="font-semibold text-sm text-[#300a46]">Verify installation</p>
+                <p className="font-semibold text-sm text-[#111111]">Verify installation</p>
               </div>
             </div>
             <div className="flex-1 w-full space-y-3">
@@ -216,7 +216,7 @@ Thanks!`;
                       finally { setVerifying(false); }
                     }}
                     disabled={!verifyUrl.trim() || verifying}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[#300a46] text-white rounded-lg hover:bg-[#4a1566] transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[#111111] text-white rounded-lg hover:bg-[#333333] transition-colors disabled:opacity-50"
                   >
                     <span className="material-symbols-outlined text-[16px]">open_in_new</span>
                     {verifying ? 'Checking…' : 'Verify'}
@@ -240,13 +240,13 @@ Thanks!`;
               </p>
             </div>
           </div>
-        <div className="divide-y divide-[#300a46]/10 border border-[#300a46]/15 rounded-xl overflow-hidden pointer-events-none select-none">
+        <div className="divide-y divide-[#111111]/10 border border-[#111111]/15 rounded-xl overflow-hidden pointer-events-none select-none">
           {/* Step 1 */}
           <div className="flex flex-col sm:flex-row items-start gap-6 p-6">
             <div className="shrink-0 sm:w-48">
               <div className="flex items-center gap-2 mb-2">
                 <StepNumber n={1} />
-                <p className="font-semibold text-sm text-[#300a46]">Install the package</p>
+                <p className="font-semibold text-sm text-[#111111]">Install the package</p>
               </div>
             </div>
             <div className="flex-1 w-full">
@@ -259,7 +259,7 @@ Thanks!`;
             <div className="shrink-0 sm:w-48">
               <div className="flex items-center gap-2 mb-2">
                 <StepNumber n={2} />
-                <p className="font-semibold text-sm text-[#300a46]">Setup the SDK in your code</p>
+                <p className="font-semibold text-sm text-[#111111]">Setup the SDK in your code</p>
               </div>
             </div>
             <div className="flex-1 w-full">
@@ -268,7 +268,7 @@ Thanks!`;
           </div>
 
           {/* Resource links */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#300a46]/10 bg-[#300a46]/3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#111111]/10 bg-[#111111]/3">
             {[
               { icon: 'package_2', label: 'npm Package',      sub: 'View in npm',        href: 'https://www.npmjs.com/package/@scalefeedback/widget' },
               { icon: 'code',      label: 'GitHub repository', sub: 'View in GitHub',     href: 'https://github.com/atuldevwork-cmd/scalefeedback'    },
@@ -276,9 +276,9 @@ Thanks!`;
             ].map(({ icon, label, sub, href }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-3 p-5 hover:bg-[#ff724f]/5 transition-colors group">
-                <span className="material-symbols-outlined text-[22px] text-[#300a46]/40 group-hover:text-[#ff724f] transition-colors">{icon}</span>
+                <span className="material-symbols-outlined text-[22px] text-[#111111]/40 group-hover:text-[#ff724f] transition-colors">{icon}</span>
                 <div>
-                  <p className="text-sm font-medium text-[#300a46]">{label}</p>
+                  <p className="text-sm font-medium text-[#111111]">{label}</p>
                   <p className="text-xs text-muted-foreground group-hover:text-[#ff724f] transition-colors">{sub}</p>
                 </div>
               </a>
@@ -306,12 +306,12 @@ Thanks!`;
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {CMS_PLATFORMS.map(({ name, abbr }) => (
-              <div key={name} className="border border-[#300a46]/10 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed">
-                <div className="w-9 h-9 rounded-lg bg-[#300a46]/8 flex items-center justify-center text-[10px] font-bold text-[#300a46]/50 shrink-0">
+              <div key={name} className="border border-[#111111]/10 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed">
+                <div className="w-9 h-9 rounded-lg bg-[#111111]/8 flex items-center justify-center text-[10px] font-bold text-[#111111]/50 shrink-0">
                   {abbr}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#300a46] leading-tight">{name}</p>
+                  <p className="text-sm font-medium text-[#111111] leading-tight">{name}</p>
                   <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#ff724f]/10 text-[#ff724f] font-medium">
                     Coming soon
                   </span>
@@ -331,7 +331,7 @@ Thanks!`;
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
             {/* Modal header with brand gradient */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#300a46]">
+            <div className="flex items-center justify-between px-6 py-4 bg-[#111111]">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-[#ff724f] text-[22px]">forward_to_inbox</span>
                 <h3 className="text-base font-semibold text-white">Email your developer</h3>
@@ -343,7 +343,7 @@ Thanks!`;
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#300a46] mb-1.5">Email</label>
+                <label className="block text-sm font-medium text-[#111111] mb-1.5">Email</label>
                 <input
                   type="email"
                   value={devEmail}
@@ -354,7 +354,7 @@ Thanks!`;
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#300a46] mb-1.5">Subject</label>
+                <label className="block text-sm font-medium text-[#111111] mb-1.5">Subject</label>
                 <input
                   type="text"
                   value={subject}
@@ -363,7 +363,7 @@ Thanks!`;
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#300a46] mb-1.5">Message</label>
+                <label className="block text-sm font-medium text-[#111111] mb-1.5">Message</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -377,7 +377,7 @@ Thanks!`;
               <button
                 onClick={handleSend}
                 disabled={!devEmail.trim() || sent}
-                className="px-5 py-2 bg-[#ff724f] hover:bg-[#e86040] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2 bg-[#ff724f] hover:bg-[#e8603a] text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {sent
                   ? <><span className="material-symbols-outlined text-[16px]">check_circle</span> Opening…</>

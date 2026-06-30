@@ -103,7 +103,7 @@ export function GuestsPanel({ projectId }: { projectId: string }) {
         <div className="flex items-start gap-3 mb-3">
           <span className="material-symbols-outlined text-[#ff724f] text-[20px] mt-0.5">link</span>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#300a46]">Secret invite link</p>
+            <p className="text-sm font-semibold text-[#111111]">Secret invite link</p>
             <p className="text-xs text-gray-500 mt-0.5">Anyone with this link can sign in and get read-only access to this project.</p>
           </div>
           <button

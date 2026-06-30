@@ -41,11 +41,11 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-poppins), system-ui, -apple-system, sans-serif;
-    font-weight: 600;
+    font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
+    font-weight: 700;
     letter-spacing: -0.02em;
   }
 }

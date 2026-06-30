@@ -37,7 +37,7 @@ export function GuestStatusSelect({ feedbackId, currentStatus }: { feedbackId: s
   return (
     <div className="flex items-center gap-2">
       <Select value={status} onValueChange={handleChange} disabled={saving}>
-        <SelectTrigger className="h-8 rounded-xl border border-gray-200 bg-white px-2.5 text-xs text-[#300a46] hover:border-[#ff724f]/40 hover:bg-gray-50 focus:ring-2 focus:ring-[#ff724f]/20 disabled:opacity-50 transition-colors min-w-[120px]">
+        <SelectTrigger className="h-8 rounded-xl border border-gray-200 bg-white px-2.5 text-xs text-[#111111] hover:border-[#ff724f]/40 hover:bg-gray-50 focus:ring-2 focus:ring-[#ff724f]/20 disabled:opacity-50 transition-colors min-w-[120px]">
           <div className="flex items-center gap-1.5">
             <span className={`w-2 h-2 rounded-full shrink-0 ${current.dot}`} />
             <span className={`font-semibold text-xs px-1.5 py-0.5 rounded-full ${current.badge}`}>

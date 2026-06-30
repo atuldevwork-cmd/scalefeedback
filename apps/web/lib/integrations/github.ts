@@ -20,7 +20,7 @@ export async function createGithubIssue(p: GithubPayload): Promise<void> {
     '',
     p.description ? `**Description:**\n${p.description}` : '',
     '',
-    `[View in ScaleFeedback Dashboard](${p.dashboardUrl})`,
+    `[View in Pinmarks Dashboard](${p.dashboardUrl})`,
   ].join('\n');
 
   await fetch(`https://api.github.com/repos/${p.owner}/${p.repo}/issues`, {

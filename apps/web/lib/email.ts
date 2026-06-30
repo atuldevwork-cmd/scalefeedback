@@ -29,7 +29,7 @@ export async function sendNewFeedbackEmail(params: NewFeedbackEmailParams) {
   const { to, projectName, feedbackTitle, feedbackType, reporterName, pageUrl, dashboardUrl } = params;
 
   await getResend().emails.send({
-    from: 'ScaleFeedback <onboarding@resend.dev>',
+    from: 'Pinmarks <onboarding@resend.dev>',
     to,
     subject: `New ${feedbackType} on ${projectName}`,
     html: `
@@ -38,7 +38,7 @@ export async function sendNewFeedbackEmail(params: NewFeedbackEmailParams) {
           <div style="width:36px;height:36px;background:#7C3AED;border-radius:8px;display:flex;align-items:center;justify-content:center;">
             <span style="color:#fff;font-weight:700;font-size:14px;">SF</span>
           </div>
-          <span style="font-weight:700;font-size:18px;color:#300A46;">ScaleFeedback</span>
+          <span style="font-weight:700;font-size:18px;color:#111111;">Pinmarks</span>
         </div>
 
         <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">New ${feedbackType} received</h2>
@@ -54,7 +54,7 @@ export async function sendNewFeedbackEmail(params: NewFeedbackEmailParams) {
           View Feedback
         </a>
 
-        <p style="margin-top:32px;color:#9CA3AF;font-size:12px;">ScaleFeedback — Visual feedback for your clients.</p>
+        <p style="margin-top:32px;color:#9CA3AF;font-size:12px;">Pinmarks — Visual feedback for your clients.</p>
       </div>
     `,
   });
@@ -77,7 +77,7 @@ export async function sendGuestCommentEmail(params: GuestCommentEmailParams) {
   const from = guestName ? `${guestName} (${guestEmail})` : guestEmail;
 
   await getResend().emails.send({
-    from: 'ScaleFeedback <onboarding@resend.dev>',
+    from: 'Pinmarks <onboarding@resend.dev>',
     to,
     subject: `Guest comment on "${feedbackTitle}" — ${projectName}`,
     html: `
@@ -86,7 +86,7 @@ export async function sendGuestCommentEmail(params: GuestCommentEmailParams) {
           <div style="width:36px;height:36px;background:#ff724f;border-radius:8px;display:flex;align-items:center;justify-content:center;">
             <span style="color:#fff;font-weight:700;font-size:14px;">SF</span>
           </div>
-          <span style="font-weight:700;font-size:18px;color:#300A46;">ScaleFeedback</span>
+          <span style="font-weight:700;font-size:18px;color:#111111;">Pinmarks</span>
         </div>
 
         <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">New comment from a guest</h2>
@@ -96,14 +96,14 @@ export async function sendGuestCommentEmail(params: GuestCommentEmailParams) {
         <p style="color:#9CA3AF;font-size:13px;margin-bottom:24px;">Feedback: ${feedbackTitle}</p>
 
         <div style="background:#fff3f0;border-left:4px solid #ff724f;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
-          <p style="margin:0;font-size:15px;line-height:1.6;color:#300A46;">${commentBody}</p>
+          <p style="margin:0;font-size:15px;line-height:1.6;color:#111111;">${commentBody}</p>
         </div>
 
-        <a href="${dashboardUrl}" style="display:inline-block;background:#ff724f;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
+        <a href="${dashboardUrl}" style="display:inline-block;background:#ff724f;color:#111111;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">
           View in Dashboard
         </a>
 
-        <p style="margin-top:32px;color:#9CA3AF;font-size:12px;">ScaleFeedback — Visual feedback for your clients.</p>
+        <p style="margin-top:32px;color:#9CA3AF;font-size:12px;">Pinmarks — Visual feedback for your clients.</p>
       </div>
     `,
   });
@@ -116,7 +116,7 @@ export async function sendStatusChangeEmail(params: StatusChangeEmailParams) {
   const label = newStatus.replace('_', ' ');
 
   await getResend().emails.send({
-    from: 'ScaleFeedback <onboarding@resend.dev>',
+    from: 'Pinmarks <onboarding@resend.dev>',
     to,
     subject: `Feedback status updated to "${label}" on ${projectName}`,
     html: `
@@ -125,7 +125,7 @@ export async function sendStatusChangeEmail(params: StatusChangeEmailParams) {
           <div style="width:36px;height:36px;background:#7C3AED;border-radius:8px;display:flex;align-items:center;justify-content:center;">
             <span style="color:#fff;font-weight:700;font-size:14px;">SF</span>
           </div>
-          <span style="font-weight:700;font-size:18px;color:#300A46;">ScaleFeedback</span>
+          <span style="font-weight:700;font-size:18px;color:#111111;">Pinmarks</span>
         </div>
 
         <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">Status updated</h2>
@@ -142,7 +142,7 @@ export async function sendStatusChangeEmail(params: StatusChangeEmailParams) {
           View Feedback
         </a>
 
-        <p style="margin-top:32px;color:#9CA3AF;font-size:12px;">ScaleFeedback — Visual feedback for your clients.</p>
+        <p style="margin-top:32px;color:#9CA3AF;font-size:12px;">Pinmarks — Visual feedback for your clients.</p>
       </div>
     `,
   });

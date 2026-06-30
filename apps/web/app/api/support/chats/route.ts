@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     chat_id: chat.id,
     role: 'bot',
     sender_id: null,
-    content: "Hi! 👋 I'm the ScaleFeedback support assistant. How can I help you today? I can help with the widget setup, integrations, managing feedback, and more.",
+    content: "Hi! 👋 I'm the Pinmarks support assistant. How can I help you today? I can help with the widget setup, integrations, managing feedback, and more.",
   });
 
   return NextResponse.json({ data: chat }, { status: 201 });

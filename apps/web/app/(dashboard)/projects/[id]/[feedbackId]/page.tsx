@@ -333,7 +333,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
               if (cuRes.ok) {
                 clickupTask = await cuRes.json();
 
-                // Sync ClickUp comments → ScaleFeedback (fallback for when webhooks can't reach the server)
+                // Sync ClickUp comments → Pinmarks (fallback for when webhooks can't reach the server)
                 const cuCommentsRes = await fetch(
                   `https://api.clickup.com/api/v2/task/${fb.external_id}/comment`,
                   { headers: { Authorization: token }, cache: 'no-store' }
@@ -343,7 +343,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
                     comments: { id: string; comment_text: string; user: { username: string }; date: string }[]
                   };
                   const service2 = createServiceClient();
-                  // Get existing ScaleFeedback comments to deduplicate
+                  // Get existing Pinmarks comments to deduplicate
                   const { data: existingComments } = await service2
                     .from('comments')
                     .select('body')
@@ -352,7 +352,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
 
                   for (const cc of cuComments ?? []) {
                     const text = cc.comment_text ?? '';
-                    if (!text.trim() || text.includes('ScaleFeedback ·') || text.includes('(via ScaleFeedback)')) continue;
+                    if (!text.trim() || text.includes('Pinmarks ·') || text.includes('(via Pinmarks)')) continue;
                     const body = `[via ClickUp · ${cc.user?.username ?? 'ClickUp'}]\n${text}`;
                     // Also check for old markdown format to avoid re-inserting legacy entries
                   const legacyBody = `**[${cc.user?.username ?? 'ClickUp'} via ClickUp]** ${text}`;
@@ -366,7 +366,7 @@ export default async function FeedbackDetailPage({ params }: Props) {
                   }
                 }
 
-                // Sync ClickUp status → ScaleFeedback (fallback for when webhooks can't reach the server)
+                // Sync ClickUp status → Pinmarks (fallback for when webhooks can't reach the server)
                 if (clickupTask?.status) {
                   const { mapClickUpStatus } = await import('@/lib/integrations/clickup');
                   const syncedStatus = mapClickUpStatus(

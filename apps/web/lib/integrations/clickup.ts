@@ -92,7 +92,7 @@ export async function createClickUpTask(
     p.description ?? '',
     ...sessionLines,
     '',
-    `[View in ScaleFeedback Dashboard](${p.dashboardUrl})`,
+    `[View in Pinmarks Dashboard](${p.dashboardUrl})`,
   ]
     .join('\n')
     .trim();
@@ -146,7 +146,7 @@ export async function createClickUpTask(
   return { taskId: task.id, taskUrl: task.url };
 }
 
-/** Map a ClickUp status string/type to a ScaleFeedback status enum value. */
+/** Map a ClickUp status string/type to a Pinmarks status enum value. */
 export function mapClickUpStatus(
   statusName: string,
   statusType: string

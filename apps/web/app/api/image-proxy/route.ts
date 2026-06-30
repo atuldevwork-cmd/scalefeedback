@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const resp = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 ScaleFeedback-ImageProxy/1.0' },
+      headers: { 'User-Agent': 'Mozilla/5.0 Pinmarks-ImageProxy/1.0' },
     });
     if (!resp.ok) return new NextResponse('Upstream error', { status: resp.status });
 

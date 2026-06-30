@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 // This endpoint returns a minimal HTML page loaded as a hidden iframe on any
-// external website that embeds the ScaleFeedback widget.
+// external website that embeds the Pinmarks widget.
 //
 // THREE-LAYER approach to get the auth token:
 //
 // 1. SameSite=None cookie (sf-wt): Set by the middleware when the user is logged
-//    in on ScaleFeedback. Because it's SameSite=None; Secure, browsers send it
+//    in on Pinmarks. Because it's SameSite=None; Secure, browsers send it
 //    even in cross-origin iframe requests — this is the only mechanism that
 //    bypasses Chrome's Storage Partitioning for third-party iframes.
 //

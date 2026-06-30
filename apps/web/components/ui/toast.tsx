@@ -55,9 +55,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               'transition-all duration-300',
               t.exiting ? 'sf-toast-out' : 'sf-toast-in',
               t.type === 'success'
-                ? 'bg-[#300a46] text-white border-[#300a46]'
+                ? 'bg-[#111111] text-white border-[#111111]'
                 : t.type === 'error'
-                ? 'bg-white text-[#300a46] border-red-200'
+                ? 'bg-white text-[#111111] border-red-200'
                 : 'bg-gray-900 text-white border-gray-900',
             ].join(' ')}
           >

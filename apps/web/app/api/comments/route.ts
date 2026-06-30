@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
           for (const cc of cuComments ?? []) {
             const text = cc.comment_text ?? '';
             if (!text.trim()) continue;
-            if (text.includes('ScaleFeedback ·') || text.includes('(via ScaleFeedback)')) continue;
+            if (text.includes('Pinmarks ·') || text.includes('(via Pinmarks)')) continue;
             const body = `[via ClickUp · ${cc.user?.username ?? 'ClickUp'}]\n${text}`;
             if (existingBodies.has(body)) continue;
             await service.from('comments').insert({
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
           const { data: usersResp } = await service.auth.admin.listUsers();
           const commenter = usersResp?.users.find((u) => u.id === user.id);
           const commenterName = commenter?.user_metadata?.full_name ?? commenter?.user_metadata?.name ?? commenter?.email ?? 'Someone';
-          const commentText = `ScaleFeedback · ${commenterName} commented:\n${body.trim()}`;
+          const commentText = `Pinmarks · ${commenterName} commented:\n${body.trim()}`;
 
           await fetch(`https://api.clickup.com/api/v2/task/${feedback.external_id}/comment`, {
             method: 'POST',

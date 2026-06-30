@@ -116,13 +116,13 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
           Projects
         </Link>
         <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-        <span className="text-[#300a46] font-medium">{project.name}</span>
+        <span className="text-[#111111] font-medium">{project.name}</span>
       </div>
 
       {/* Page header */}
       <div className="flex items-start justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#300a46] font-heading">{project.name}</h1>
+          <h1 className="text-xl font-bold text-[#111111] font-heading">{project.name}</h1>
           {project.domain && (
             <p className="text-gray-400 text-sm mt-0.5 flex items-center gap-1">
               <span className="material-symbols-outlined text-[14px]">language</span>
@@ -134,14 +134,14 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
           <AiScanDialog projectId={id} projectDomain={project.domain ?? undefined} />
           <Link
             href={`/projects/${id}/analytics`}
-            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#300a46] transition-all"
+            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#111111] transition-all"
           >
             <span className="material-symbols-outlined text-[16px]">bar_chart</span>
             Analytics
           </Link>
           <Link
             href={`/projects/${id}/settings`}
-            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#300a46] transition-all"
+            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#111111] transition-all"
           >
             <span className="material-symbols-outlined text-[16px]">settings</span>
             Widget Settings

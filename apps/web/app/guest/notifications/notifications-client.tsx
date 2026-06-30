@@ -43,11 +43,11 @@ export function GuestNotificationsClient({ notifications, userEmail }: { notific
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a className="flex items-center gap-2 shrink-0" href="/projects">
-              <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">SF</div>
-              <span className="font-bold text-lg text-[#300a46]">ScaleFeedback</span>
+              <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">P</div>
+              <span className="font-bold text-lg text-[#111111]">Pinmarks</span>
             </a>
             <span className="text-gray-300">/</span>
-            <span className="text-sm font-semibold text-[#300a46]">Notifications</span>
+            <span className="text-sm font-semibold text-[#111111]">Notifications</span>
             <span className="text-xs bg-[#fff3f0] text-[#ff724f] font-semibold px-2 py-0.5 rounded-full border border-[#ff724f]/20">
               Guest view
             </span>
@@ -62,7 +62,7 @@ export function GuestNotificationsClient({ notifications, userEmail }: { notific
 
       <div className="px-6 py-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-[#300a46] mb-1">Notifications</h1>
+          <h1 className="text-2xl font-bold text-[#111111] mb-1">Notifications</h1>
           <p className="text-sm text-gray-400 mb-6">All your recent activity in one place.</p>
 
           {notifications.length === 0 ? (
@@ -85,7 +85,7 @@ export function GuestNotificationsClient({ notifications, userEmail }: { notific
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
-                      <p className="text-sm font-semibold text-[#300a46] leading-snug">
+                      <p className="text-sm font-semibold text-[#111111] leading-snug">
                         {n.title}
                       </p>
                       <FormattedDate date={n.created_at} className="text-[13px] text-gray-500 shrink-0 mt-0.5" />

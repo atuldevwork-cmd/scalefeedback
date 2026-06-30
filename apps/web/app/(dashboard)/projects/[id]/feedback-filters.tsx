@@ -54,7 +54,7 @@ export function FeedbackFilters({ projectId: _projectId }: { projectId: string }
           placeholder="Search feedback…"
           defaultValue={get('q')}
           onChange={(e) => update('q', e.target.value)}
-          className="w-full pl-9 pr-3 h-9 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff724f]/20 focus:border-[#ff724f]/50 bg-white text-[#300a46] placeholder:text-gray-400 transition-colors"
+          className="w-full pl-9 pr-3 h-9 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#ff724f]/20 focus:border-[#ff724f]/50 bg-white text-[#111111] placeholder:text-gray-400 transition-colors"
         />
       </div>
 

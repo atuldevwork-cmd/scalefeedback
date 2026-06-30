@@ -48,13 +48,13 @@ export default async function JoinPage({ params }: Props) {
           <span className="material-symbols-outlined text-[#ff724f] text-[28px]">group_add</span>
         </div>
 
-        <h1 className="text-xl font-bold text-[#300a46] mb-1" style={{ fontFamily: 'var(--font-poppins)' }}>
+        <h1 className="text-xl font-bold text-[#111111] mb-1" style={{ fontFamily: 'var(--font-poppins)' }}>
           You&apos;ve been invited
         </h1>
         <p className="text-gray-500 text-sm mb-2">
           You&apos;ve been invited to join
         </p>
-        <p className="text-[#300a46] font-semibold text-base mb-6">{org.name}</p>
+        <p className="text-[#111111] font-semibold text-base mb-6">{org.name}</p>
 
         <div className="space-y-3">
           <Link
@@ -66,7 +66,7 @@ export default async function JoinPage({ params }: Props) {
           </Link>
           <Link
             href={`/login?next=/join/${orgId}`}
-            className="flex items-center justify-center gap-2 w-full border border-gray-200 text-[#300a46] font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-all text-sm"
+            className="flex items-center justify-center gap-2 w-full border border-gray-200 text-[#111111] font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-all text-sm"
           >
             <span className="material-symbols-outlined text-[16px]">login</span>
             Sign in to an existing account

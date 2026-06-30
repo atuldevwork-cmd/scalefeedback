@@ -159,12 +159,12 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <a className="flex items-center gap-2 shrink-0" href="/projects">
-                <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">SF</div>
-                <span className="font-bold text-lg text-[#300a46]">ScaleFeedback</span>
+                <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">P</div>
+                <span className="font-bold text-lg text-[#111111]">Pinmarks</span>
               </a>
               </div>
             <span className="text-gray-300">/</span>
-            <Link href={`/guest/${projectId}`} className="text-sm font-semibold text-[#300a46] hover:text-[#ff724f]">
+            <Link href={`/guest/${projectId}`} className="text-sm font-semibold text-[#111111] hover:text-[#ff724f]">
               {project.name}
             </Link>
             {isGuest && (
@@ -192,7 +192,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
           {/* Feedback card */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-4">
             <div className="flex items-start justify-between gap-4 mb-4">
-              <h1 className="text-lg font-bold text-[#300a46]">{feedback.title || 'Untitled'}</h1>
+              <h1 className="text-lg font-bold text-[#111111]">{feedback.title || 'Untitled'}</h1>
               <div className="flex items-center gap-2 shrink-0">
                 <GuestStatusSelect feedbackId={feedbackId} currentStatus={feedback.status} />
                 {feedback.priority && (
@@ -216,7 +216,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
                       <div className="w-6 h-6 rounded-full bg-[#ff724f]/10 flex items-center justify-center text-[#ff724f] font-bold text-[10px] shrink-0">
                         {feedback.reporter_name[0].toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-[#300a46]">{feedback.reporter_name}</span>
+                      <span className="text-sm font-medium text-[#111111]">{feedback.reporter_name}</span>
                     </div>
                   </div>
                 )}
@@ -230,7 +230,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
                 )}
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Submitted</p>
-                  <span className="text-sm font-medium text-[#300a46]">{formatDate(feedback.created_at)}</span>
+                  <span className="text-sm font-medium text-[#111111]">{formatDate(feedback.created_at)}</span>
                 </div>
               </div>
               {feedback.page_url && (
@@ -259,7 +259,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
 
           {/* Comments */}
           <div className="space-y-3 mt-8">
-            <h2 className="text-sm font-semibold text-[#300a46]">
+            <h2 className="text-sm font-semibold text-[#111111]">
               Comments {comments?.length ? `(${comments.length})` : ''}
             </h2>
 
@@ -288,7 +288,7 @@ export default async function GuestFeedbackDetailPage({ params }: Props) {
                             </div>
                           )}
                           <div>
-                            <p className="text-xs font-semibold text-[#300a46]">
+                            <p className="text-xs font-semibold text-[#111111]">
                               {isClickUp ? 'ClickUp' : (commenter?.name ?? 'Unknown')}
                               {isMine && !isClickUp && <span className="ml-1.5 text-[10px] text-[#ff724f] font-normal">(you)</span>}
                             </p>

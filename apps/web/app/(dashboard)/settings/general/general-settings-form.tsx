@@ -48,7 +48,7 @@ function NotificationToggle({
 }
 
 export function GeneralSettingsForm({ canManage }: { canManage: boolean }) {
-  const [orgName, setOrgName] = useState('ScaleStation');
+  const [orgName, setOrgName] = useState('Pinmarks');
   const [saved, setSaved] = useState(false);
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [prefsSaving, setPrefsSaving] = useState(false);

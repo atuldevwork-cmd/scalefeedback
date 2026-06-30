@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 
 /**
  * Syncs the Supabase access token to localStorage under 'sf-widget-token'.
- * This allows the widget-session iframe (which runs on the ScaleFeedback origin)
+ * This allows the widget-session iframe (which runs on the Pinmarks origin)
  * to read the token cross-origin and auto-identify logged-in users in the widget.
  *
  * @supabase/ssr uses cookie-based storage, so the token is not in localStorage

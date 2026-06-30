@@ -40,7 +40,7 @@ export function NotificationBell({ isGuest, noLink }: { isGuest?: boolean; noLin
   return (
     <Link
       href={href}
-      className="relative w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-[#300a46] hover:bg-gray-100 transition-colors"
+      className="relative w-9 h-9 flex items-center justify-center rounded-xl text-gray-400 hover:text-[#111111] hover:bg-gray-100 transition-colors"
       aria-label="Notifications"
     >
       <span className="material-symbols-outlined text-[20px]">notifications</span>

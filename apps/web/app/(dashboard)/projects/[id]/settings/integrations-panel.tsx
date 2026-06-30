@@ -147,7 +147,7 @@ function ConfigSummary({ rows, onEdit }: ConfigSummaryProps) {
             </div>
           ))}
         </div>
-        <button onClick={onEdit} className="text-xs text-[#ff724f] hover:text-[#e8603a] font-semibold shrink-0">
+        <button onClick={onEdit} className="text-xs text-[#ff724f] hover:text-[#ff724f] font-semibold shrink-0">
           Change
         </button>
       </div>
@@ -227,7 +227,7 @@ function SlackConfig({ projectId, config }: SlackConfigProps) {
           Add to Slack
         </a>
         <p className="text-xs text-gray-400">
-          You&apos;ll be redirected to Slack to choose a channel. ScaleFeedback will post a message whenever new feedback is submitted.
+          You&apos;ll be redirected to Slack to choose a channel. Pinmarks will post a message whenever new feedback is submitted.
         </p>
       </div>
     );
@@ -645,7 +645,7 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#300a46] text-sm font-heading">{meta.label}</span>
+                  <span className="font-semibold text-[#111111] text-sm font-heading">{meta.label}</span>
                   {isComingSoon && (
                     <span className="text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                       Coming Soon

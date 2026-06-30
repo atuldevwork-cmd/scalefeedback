@@ -70,15 +70,15 @@ export default function AboutPage() {
       {/* ── Hero ── */}
       <section className="bg-gradient-to-b from-slate-50 to-white py-20 text-center">
         <div className="max-w-3xl mx-auto px-6">
-          <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-medium mb-8">
+          <div className="inline-flex items-center gap-2 bg-[#fff3f0] border border-yellow-200 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-medium mb-8">
             <span className="w-1.5 h-1.5 bg-[#ff724f] rounded-full" />
             Our story
           </div>
-          <h1 className="text-5xl font-extrabold text-[#300a46] leading-tight mb-6">
+          <h1 className="text-5xl font-extrabold text-[#111111] leading-tight mb-6">
             Built for teams tired of <span className="text-[#ff724f]">chasing bugs</span>
           </h1>
           <p className="text-xl text-slate-500 leading-relaxed">
-            ScaleFeedback was born from a simple frustration — reporting a bug should never require a five-email thread.
+            Pinmarks was born from a simple frustration — reporting a bug should never require a five-email thread.
             We&apos;re a small team on a mission to make the web free of bugs, one annotated screenshot at a time.
           </p>
         </div>
@@ -88,17 +88,17 @@ export default function AboutPage() {
       <section className="py-20 max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
         <div>
           <p className="text-sm font-semibold text-[#ff724f] uppercase tracking-widest mb-3">Our mission</p>
-          <h2 className="text-3xl font-extrabold text-[#300a46] mb-5 leading-snug">
+          <h2 className="text-3xl font-extrabold text-[#111111] mb-5 leading-snug">
             A web free of bugs, built one team at a time
           </h2>
           <p className="text-slate-500 leading-relaxed mb-4">
-            We started ScaleFeedback after watching QA teams drown in screenshots attached to emails, Slack threads with no context, and Jira tickets that developers couldn&apos;t reproduce.
+            We started Pinmarks after watching QA teams drown in screenshots attached to emails, Slack threads with no context, and Jira tickets that developers couldn&apos;t reproduce.
           </p>
           <p className="text-slate-500 leading-relaxed">
             Today we help 3,000+ teams collect, manage, and resolve website feedback — from QA engineers to product managers to client stakeholders — all in one place, with the technical context developers actually need.
           </p>
         </div>
-        <div className="bg-gradient-to-br from-purple-50 to-orange-50 rounded-3xl p-8 border border-purple-100">
+        <div className="bg-gradient-to-br from-[#fff3f0] to-[#F9F9F9] rounded-3xl p-8 border border-yellow-200">
           <div className="grid grid-cols-2 gap-6">
             {[
               { value: '3,000+', label: 'Teams worldwide' },
@@ -116,20 +116,20 @@ export default function AboutPage() {
       </section>
 
       {/* ── Values ── */}
-      <section className="bg-slate-50 py-20">
+      <section className="bg-[#F9F9F9] py-20">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-14">
             <p className="text-sm font-semibold text-[#ff724f] uppercase tracking-widest mb-3">What drives us</p>
-            <h2 className="text-3xl font-extrabold text-[#300a46]">Our values</h2>
+            <h2 className="text-3xl font-extrabold text-[#111111]">Our values</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {VALUES.map(v => (
               <div key={v.title} className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex gap-4">
-                <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-[#fff3f0] flex items-center justify-center shrink-0">
                   {v.icon}
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#300a46] mb-1">{v.title}</h3>
+                  <h3 className="font-bold text-[#111111] mb-1">{v.title}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">{v.desc}</p>
                 </div>
               </div>
@@ -139,19 +139,19 @@ export default function AboutPage() {
       </section>
 
       {/* ── Team ── */}
-      <section className="relative bg-[#1a0530] py-24 overflow-hidden">
+      <section className="relative bg-[#111111] py-24 overflow-hidden">
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#ff724f] opacity-10 blur-[120px] pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-purple-500 opacity-10 blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[#ff724f] opacity-10 blur-[120px] pointer-events-none" />
         <div className="relative max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-semibold uppercase tracking-widest mb-6">
+            <div className="inline-flex items-center gap-2 bg-[#ff724f]/10 border border-[#ff724f]/20 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-semibold uppercase tracking-widest mb-6">
               <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </svg>
               The people
             </div>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">Meet the team</h2>
-            <p className="text-purple-300 text-lg max-w-xl mx-auto">The people behind ScaleFeedback — obsessed with making web feedback effortless.</p>
+            <p className="text-gray-400 text-lg max-w-xl mx-auto">The people behind Pinmarks — obsessed with making web feedback effortless.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -159,7 +159,7 @@ export default function AboutPage() {
               <div key={member.name} className="group relative bg-white/5 border border-white/10 rounded-3xl p-8 text-center hover:bg-white/[0.08] hover:border-[#ff724f]/30 transition-all duration-300">
                 {/* Photo */}
                 <div className="relative w-32 h-32 mx-auto mb-6">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#ff724f] to-purple-600 opacity-20 scale-110 blur-md" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#ff724f] to-gray-600 opacity-20 scale-110 blur-md" />
                   <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white/10 group-hover:border-[#ff724f]/40 transition-colors duration-300">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
@@ -169,7 +169,7 @@ export default function AboutPage() {
                 <p className="text-lg font-extrabold text-white mb-1">{member.name}</p>
                 <p className="text-sm font-semibold text-[#ff724f] mb-4 uppercase tracking-wide">{member.role}</p>
                 <div className="w-8 h-0.5 bg-[#ff724f]/40 mx-auto mb-4 rounded-full" />
-                <p className="text-sm text-purple-300 leading-relaxed">{member.bio}</p>
+                <p className="text-sm text-gray-400 leading-relaxed">{member.bio}</p>
               </div>
             ))}
           </div>
@@ -177,14 +177,14 @@ export default function AboutPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="bg-[#300a46] py-16 text-center">
+      <section className="bg-[#111111] py-16 text-center">
         <div className="max-w-2xl mx-auto px-6">
           <h2 className="text-3xl font-extrabold text-white mb-4">Ready to squash some bugs?</h2>
-          <p className="text-purple-300 mb-8">Join 3,000+ teams already using ScaleFeedback. Free for 15 days, no credit card required.</p>
+          <p className="text-gray-400 mb-8">Join 3,000+ teams already using Pinmarks. Free for 15 days, no credit card required.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/signup"
-              className="bg-[#ff724f] hover:bg-[#e8623f] text-white font-semibold px-8 py-3.5 rounded-xl transition-colors text-base shadow-lg shadow-orange-900/30"
+              className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-semibold px-8 py-3.5 rounded-xl transition-colors text-base shadow-lg"
             >
               Start free trial
             </Link>

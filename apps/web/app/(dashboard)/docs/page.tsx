@@ -2,20 +2,20 @@
 
 import { useState } from 'react';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.scalefeedback.io';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.pinmarks.io';
 const WIDGET_URL = `${APP_URL}/widget.js`;
 
 /* ── Snippets ─────────────────────────────────────────────────────────── */
 
 const htmlSnippet = (apiKey: string) =>
-`<!-- ScaleFeedback Widget -->
+`<!-- Pinmarks Widget -->
 <script src="${WIDGET_URL}" data-project="${apiKey}" async></script>`;
 
 const reactSnippet = (apiKey: string) =>
-`// src/components/ScaleFeedbackWidget.tsx
+`// src/components/PinmarksWidget.tsx
 import { useEffect } from 'react';
 
-export function ScaleFeedbackWidget() {
+export function PinmarksWidget() {
   useEffect(() => {
     const script = document.createElement('script');
     script.src = '${WIDGET_URL}';
@@ -30,7 +30,7 @@ export function ScaleFeedbackWidget() {
 }
 
 // Add to your root App component:
-// <ScaleFeedbackWidget />`;
+// <PinmarksWidget />`;
 
 const nextjsSnippet = (apiKey: string) =>
 `// app/layout.tsx
@@ -61,15 +61,15 @@ document.body.appendChild(script);`;
 
 const sdkSnippet =
 `// Open the widget programmatically
-ScaleFeedback.open();
+Pinmarks.open();
 
 // Pre-identify the reporter (hides name/email fields in the form)
-ScaleFeedback.setUser({ name: 'Jane Smith', email: 'jane@acme.com' });
+Pinmarks.setUser({ name: 'Jane Smith', email: 'jane@acme.com' });
 // Clear the user (shows guest fields again)
-ScaleFeedback.setUser(null);
+Pinmarks.setUser(null);
 
 // Pre-identify via window config (set BEFORE the widget script loads)
-window.ScaleFeedbackConfig = {
+window.PinmarksConfig = {
   user: { name: 'Jane Smith', email: 'jane@acme.com' },
   // OR use individual fields:
   reporterName: 'Jane Smith',
@@ -170,7 +170,7 @@ export default function DocsPage() {
       {/* ── Content ── */}
       <div className="flex-1 px-6 lg:px-10 py-8 max-w-3xl">
         <h1 className="text-2xl font-bold text-foreground mb-1">Widget Documentation</h1>
-        <p className="text-muted-foreground mb-10">Embed the ScaleFeedback widget on any site in under 2 minutes.</p>
+        <p className="text-muted-foreground mb-10">Embed the Pinmarks widget on any site in under 2 minutes.</p>
 
         <div className="space-y-14">
 
@@ -185,7 +185,7 @@ export default function DocsPage() {
                 <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the snippet from <strong className="text-foreground">Settings → Widget Settings</strong>.</>,
                 <>Paste the snippet before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag of your site.</>,
                 <>Reload your site — a <strong className="text-[#ff724f]">Report issue</strong> button appears on your page.</>,
-                <>Submit a test report. It appears instantly in your ScaleFeedback dashboard.</>,
+                <>Submit a test report. It appears instantly in your Pinmarks dashboard.</>,
                 <>Use <code className="bg-muted px-1 rounded text-xs">Cmd+I</code> (Mac) or <code className="bg-muted px-1 rounded text-xs">Ctrl+I</code> (Windows) as a keyboard shortcut to open the widget anytime.</>,
               ].map((step, i) => (
                 <li key={i} className="flex gap-3">
@@ -221,7 +221,7 @@ export default function DocsPage() {
                     key={fw}
                     onClick={() => setFramework(fw)}
                     className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                      framework === fw ? 'bg-white text-[#300a46] shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      framework === fw ? 'bg-white text-[#111111] shadow-sm' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {fw === 'html' ? 'HTML' : fw === 'react' ? 'React' : fw === 'nextjs' ? 'Next.js' : 'Vue'}
@@ -253,8 +253,8 @@ export default function DocsPage() {
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { method: 'ScaleFeedback.open()', desc: 'Opens the widget panel' },
-                { method: 'ScaleFeedback.setUser(user)', desc: 'Pre-identify the reporter; pass null to clear' },
+                { method: 'Pinmarks.open()', desc: 'Opens the widget panel' },
+                { method: 'Pinmarks.setUser(user)', desc: 'Pre-identify the reporter; pass null to clear' },
                 { method: 'onSubmit(fb)', desc: 'Fires after a report is submitted' },
               ].map(({ method, desc }) => (
                 <div key={method} className="bg-card border border-border rounded-xl p-4">
@@ -290,7 +290,7 @@ export default function DocsPage() {
                     ['collectConsole', 'boolean', 'true', 'Capture browser console logs with each report.'],
                     ['collectNetwork', 'boolean', 'false', 'Capture failed XHR / fetch requests (4xx / 5xx only).'],
                     ['guestReporting', 'boolean', 'true', 'Show name & email fields for anonymous users. Overridden by dashboard settings.'],
-                    ['user', '{ name, email }', '—', 'Pre-identify the reporter via window.ScaleFeedbackConfig.user or ScaleFeedback.setUser(). Hides name/email fields.'],
+                    ['user', '{ name, email }', '—', 'Pre-identify the reporter via window.PinmarksConfig.user or Pinmarks.setUser(). Hides name/email fields.'],
                     ['onOpen', '() => void', '—', 'Callback fired when the widget panel opens.'],
                     ['onClose', '() => void', '—', 'Callback fired when the widget panel closes.'],
                     ['onSubmit', '(fb: object) => void', '—', 'Callback fired after a successful submission.'],
@@ -317,7 +317,7 @@ export default function DocsPage() {
               {[
                 {
                   q: 'The widget button is not showing',
-                  a: 'Ensure the script tag has a valid data-project attribute and is placed before the closing </body> tag. Check the browser console for [ScaleFeedback] errors.',
+                  a: 'Ensure the script tag has a valid data-project attribute and is placed before the closing </body> tag. Check the browser console for [Pinmarks] errors.',
                 },
                 {
                   q: 'Screenshots are blank or incomplete',
@@ -325,7 +325,7 @@ export default function DocsPage() {
                 },
                 {
                   q: 'Widget does not appear in production but works locally',
-                  a: 'Check that your Content Security Policy (CSP) allows scripts from the ScaleFeedback domain. You may need to add it to script-src and connect-src.',
+                  a: 'Check that your Content Security Policy (CSP) allows scripts from the Pinmarks domain. You may need to add it to script-src and connect-src.',
                 },
                 {
                   q: 'Console / network logs are empty',
@@ -352,8 +352,8 @@ export default function DocsPage() {
                 <p className="text-sm font-semibold text-foreground mb-0.5">Still stuck?</p>
                 <p className="text-sm text-muted-foreground">
                   Email us at{' '}
-                  <a href="mailto:hello@scalefeedback.io" className="text-[#ff724f] hover:underline font-medium">
-                    hello@scalefeedback.io
+                  <a href="mailto:hello@pinmarks.io" className="text-[#ff724f] hover:underline font-medium">
+                    hello@pinmarks.io
                   </a>{' '}
                   and we&apos;ll get back to you within one business day.
                 </p>

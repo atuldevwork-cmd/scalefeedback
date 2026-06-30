@@ -14,17 +14,17 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
   const linkClass = (page?: string) =>
     `text-sm transition-colors ${
       activePage === page
-        ? 'font-semibold text-[#300a46]'
-        : 'text-slate-600 hover:text-[#300a46]'
+        ? 'font-semibold text-[#111111]'
+        : 'text-[#555555] hover:text-[#111111]'
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
+    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">SF</div>
-          <span className="font-bold text-lg text-[#300a46]">ScaleFeedback</span>
+          <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">P</div>
+          <span className="font-bold text-lg text-[#111111]">Pinmarks</span>
         </Link>
 
         {/* Nav links — centered, desktop only */}
@@ -38,17 +38,17 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
 
         {/* Right side — desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-[#300a46] transition-colors px-3 py-2">
+          <Link href="/login" className="text-sm font-medium text-[#555555] hover:text-[#111111] transition-colors px-3 py-2">
             Login
           </Link>
-          <Link href="/signup" className="bg-[#ff724f] hover:bg-[#e8623f] text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors whitespace-nowrap">
+          <Link href="/signup" className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-5 py-2 rounded-lg text-sm transition-colors whitespace-nowrap">
             Start free trial
           </Link>
         </div>
 
         {/* Hamburger — mobile only */}
         <button
-          className="md:hidden p-2 rounded-lg text-slate-600 hover:text-[#300a46] hover:bg-slate-100 transition-colors"
+          className="md:hidden p-2 rounded-lg text-[#555555] hover:text-[#111111] hover:bg-gray-100 transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle menu"
         >
@@ -58,17 +58,17 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 border-t border-slate-100 bg-white/95 backdrop-blur shadow-lg px-4 py-4 flex flex-col gap-4 z-50">
-          <Link href="/#features" className="text-sm text-slate-600 hover:text-[#300a46] transition-colors py-1" onClick={() => setMobileOpen(false)}>Features</Link>
-          <Link href="/#integrations" className="text-sm text-slate-600 hover:text-[#300a46] transition-colors py-1" onClick={() => setMobileOpen(false)}>Integrations</Link>
-          <Link href="/#testimonials" className="text-sm text-slate-600 hover:text-[#300a46] transition-colors py-1" onClick={() => setMobileOpen(false)}>Customers</Link>
+        <div className="md:hidden absolute top-full left-0 right-0 border-t border-gray-100 bg-white/95 backdrop-blur shadow-lg px-4 py-4 flex flex-col gap-4 z-50">
+          <Link href="/#features" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Features</Link>
+          <Link href="/#integrations" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Integrations</Link>
+          <Link href="/#testimonials" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Customers</Link>
           <Link href="/pricing" className={`py-1 ${linkClass('pricing')}`} onClick={() => setMobileOpen(false)}>Pricing</Link>
           <Link href="/contact" className={`py-1 ${linkClass('contact')}`} onClick={() => setMobileOpen(false)}>Contact</Link>
-          <div className="border-t border-slate-100 pt-4 flex flex-col gap-3">
-            <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-[#300a46] transition-colors" onClick={() => setMobileOpen(false)}>
+          <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
+            <Link href="/login" className="text-sm font-medium text-[#555555] hover:text-[#111111] transition-colors" onClick={() => setMobileOpen(false)}>
               Login
             </Link>
-            <Link href="/signup" className="bg-[#ff724f] hover:bg-[#e8623f] text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors text-center" onClick={() => setMobileOpen(false)}>
+            <Link href="/signup" className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors text-center" onClick={() => setMobileOpen(false)}>
               Start free trial
             </Link>
           </div>

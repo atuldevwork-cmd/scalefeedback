@@ -107,9 +107,9 @@ const CATEGORIES = ['Notifications', 'Project Management', 'Developer'];
 export default function ConnectedAppsPage() {
   return (
     <div className="p-8 max-w-3xl">
-      <h1 className="text-2xl font-bold text-[#300a46] mb-1">Connected apps</h1>
+      <h1 className="text-2xl font-bold text-[#111111] mb-1">Connected apps</h1>
       <p className="text-sm text-gray-500 mb-8">
-        Connect ScaleFeedback to your existing tools. Configure integrations per project in{' '}
+        Connect Pinmarks to your existing tools. Configure integrations per project in{' '}
         <Link href="/projects" className="text-[#ff724f] hover:underline">Project Settings → Integrations</Link>.
       </p>
 

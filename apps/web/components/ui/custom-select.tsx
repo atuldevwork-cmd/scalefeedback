@@ -52,14 +52,14 @@ export function CustomSelect({
         disabled={disabled}
         onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex items-center gap-1.5 h-9 px-3 rounded-xl border border-gray-200 bg-white text-sm text-[#300a46] hover:border-[#ff724f]/40 hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap',
+          'flex items-center gap-1.5 h-9 px-3 rounded-xl border border-gray-200 bg-white text-sm text-[#111111] hover:border-[#ff724f]/40 hover:bg-gray-50 transition-colors disabled:opacity-50 whitespace-nowrap',
           open && 'border-[#ff724f]/50 ring-2 ring-[#ff724f]/20',
           triggerClassName
         )}
       >
         {icon && <span className="material-symbols-outlined text-[15px] text-gray-400">{icon}</span>}
         {selected?.dot && <span className={`w-2 h-2 rounded-full shrink-0 ${selected.dot}`} />}
-        <span className={selected?.textColor ?? 'text-[#300a46]'}>
+        <span className={selected?.textColor ?? 'text-[#111111]'}>
           {selected ? selected.label : (placeholder ?? 'Select')}
         </span>
         <span className="material-symbols-outlined text-[16px] text-gray-400 ml-1">
@@ -80,7 +80,7 @@ export function CustomSelect({
                   'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors',
                   isSelected
                     ? 'bg-[#fff3f0] text-[#ff724f] font-semibold'
-                    : 'text-[#300a46] hover:bg-gray-50'
+                    : 'text-[#111111] hover:bg-gray-50'
                 )}
               >
                 {opt.dot && <span className={`w-2 h-2 rounded-full shrink-0 ${opt.dot}`} />}

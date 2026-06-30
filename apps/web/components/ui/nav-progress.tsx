@@ -87,8 +87,8 @@ export function NavProgress() {
       className="fixed top-0 left-0 z-[9999] h-0.5"
       style={{
         width: `${progress}%`,
-        background: 'linear-gradient(90deg, #ff724f, #ff9a7a)',
-        boxShadow: '0 0 8px rgba(255,114,79,0.6)',
+        background: 'linear-gradient(90deg, #ff724f, #e8603a)',
+        boxShadow: '0 0 8px rgba(245,200,0,0.5)',
         opacity: fading ? 0 : 1,
         transition: fading
           ? 'opacity 0.3s ease-out'

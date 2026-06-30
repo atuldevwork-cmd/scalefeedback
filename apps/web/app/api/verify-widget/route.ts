@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'ScaleFeedback-Verifier/1.0' },
+      headers: { 'User-Agent': 'Pinmarks-Verifier/1.0' },
       signal: AbortSignal.timeout(8000),
     });
 

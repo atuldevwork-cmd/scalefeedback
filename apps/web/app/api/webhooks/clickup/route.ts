@@ -112,8 +112,8 @@ export async function POST(req: NextRequest) {
       const authorName = hi.comment.user?.username ?? 'ClickUp';
 
       if (!commentText.trim()) continue;
-      // Skip comments that we posted from ScaleFeedback to avoid duplicates
-      if (commentText.includes('ScaleFeedback ·') || commentText.includes('(via ScaleFeedback)')) continue;
+      // Skip comments that we posted from Pinmarks to avoid duplicates
+      if (commentText.includes('Pinmarks ·') || commentText.includes('(via Pinmarks)')) continue;
 
       // Fetch full comment text from ClickUp API if we only got a partial payload
       const body = commentText

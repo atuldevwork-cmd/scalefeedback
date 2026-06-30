@@ -84,7 +84,7 @@ export function BulkActionsBar({ feedbackIds, onDone }: Props) {
               <SelectItem
                 key={s.value}
                 value={s.value}
-                className="rounded-lg px-3 py-2 text-sm text-[#300a46] cursor-pointer focus:bg-[#fff3f0] focus:text-[#ff724f] data-[state=checked]:text-[#ff724f] data-[state=checked]:font-semibold"
+                className="rounded-lg px-3 py-2 text-sm text-[#111111] cursor-pointer focus:bg-[#fff3f0] focus:text-[#ff724f] data-[state=checked]:text-[#ff724f] data-[state=checked]:font-semibold"
               >
                 {s.label}
               </SelectItem>
@@ -128,7 +128,7 @@ export function BulkActionsBar({ feedbackIds, onDone }: Props) {
               <span className="material-symbols-outlined text-red-500 text-[24px]">delete</span>
             </div>
             <div className="text-center">
-              <p className="font-semibold text-[#300a46] text-lg">Delete {count} item{count > 1 ? 's' : ''}?</p>
+              <p className="font-semibold text-[#111111] text-lg">Delete {count} item{count > 1 ? 's' : ''}?</p>
               <p className="text-sm text-gray-500 mt-1">This action cannot be undone.</p>
             </div>
             <div className="flex gap-3 w-full mt-2">

@@ -14,7 +14,7 @@ interface WebhookPayload {
 
 export async function fireWebhook(p: WebhookPayload): Promise<void> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (p.secret) headers['X-ScaleFeedback-Secret'] = p.secret;
+  if (p.secret) headers['X-Pinmarks-Secret'] = p.secret;
 
   await fetch(p.url, {
     method: 'POST',
