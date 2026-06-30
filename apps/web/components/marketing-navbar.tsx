@@ -8,6 +8,9 @@ interface MarketingNavbarProps {
   activePage?: 'home' | 'pricing' | 'contact';
 }
 
+const appHost = process.env.NEXT_PUBLIC_APP_HOST;
+const appUrl = (path: string) => appHost ? `https://${appHost}${path}` : path;
+
 export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -38,10 +41,10 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
 
         {/* Right side — desktop */}
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/login" className="text-sm font-medium text-[#555555] hover:text-[#111111] transition-colors px-3 py-2">
+          <Link href={appUrl('/login')} className="text-sm font-medium text-[#555555] hover:text-[#111111] transition-colors px-3 py-2">
             Login
           </Link>
-          <Link href="/signup" className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-5 py-2 rounded-lg text-sm transition-colors whitespace-nowrap">
+          <Link href={appUrl('/signup')} className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-5 py-2 rounded-lg text-sm transition-colors whitespace-nowrap">
             Start free trial
           </Link>
         </div>
@@ -65,10 +68,10 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
           <Link href="/pricing" className={`py-1 ${linkClass('pricing')}`} onClick={() => setMobileOpen(false)}>Pricing</Link>
           <Link href="/contact" className={`py-1 ${linkClass('contact')}`} onClick={() => setMobileOpen(false)}>Contact</Link>
           <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
-            <Link href="/login" className="text-sm font-medium text-[#555555] hover:text-[#111111] transition-colors" onClick={() => setMobileOpen(false)}>
+            <Link href={appUrl('/login')} className="text-sm font-medium text-[#555555] hover:text-[#111111] transition-colors" onClick={() => setMobileOpen(false)}>
               Login
             </Link>
-            <Link href="/signup" className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors text-center" onClick={() => setMobileOpen(false)}>
+            <Link href={appUrl('/signup')} className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-5 py-2.5 rounded-lg text-sm transition-colors text-center" onClick={() => setMobileOpen(false)}>
               Start free trial
             </Link>
           </div>
