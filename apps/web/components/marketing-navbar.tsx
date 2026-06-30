@@ -31,7 +31,7 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
         <div className="hidden md:flex items-center gap-6">
           <Link href="/#features" className={linkClass()}>Features</Link>
           <Link href="/#integrations" className={linkClass()}>Integrations</Link>
-          <Link href="/#testimonials" className={linkClass()}>Customers</Link>
+          <Link href="/about" className={linkClass()}>About Us</Link>
           <Link href="/pricing" className={linkClass('pricing')}>Pricing</Link>
           <Link href="/contact" className={linkClass('contact')}>Contact</Link>
         </div>

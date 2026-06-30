@@ -115,45 +115,193 @@ function CommunicationVisual() {
   );
 }
 
+function TwoWayIntegrationsVisual() {
+  const tools = [
+    { name: 'ClickUp', color: '#7B68EE', letter: 'CU' },
+    { name: 'Jira', color: '#2684FF', letter: 'J' },
+    { name: 'GitHub', color: '#24292E', letter: 'GH' },
+    { name: 'Slack', color: '#E01E5A', letter: 'S' },
+  ];
+  return (
+    <div className="bg-[#F9F9F9] rounded-2xl p-6 h-72 flex flex-col justify-center gap-4 border border-gray-100">
+      <div className="flex items-center justify-between gap-4">
+        {/* Pinmarks side */}
+        <div className="flex flex-col items-center gap-1.5 shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-[#111111] flex items-center justify-center shadow-md">
+            <span className="text-[#ff724f] font-black text-xs">PM</span>
+          </div>
+          <span className="text-[9px] font-semibold text-[#111111]">Pinmarks</span>
+        </div>
+
+        {/* Arrows + sync rows */}
+        <div className="flex-1 flex flex-col gap-2">
+          {tools.map((tool, i) => (
+            <div key={tool.name} className="flex items-center gap-2">
+              {/* Left arrow (tool → Pinmarks) */}
+              <div className="flex-1 flex items-center gap-1">
+                <div className="flex-1 h-px bg-gray-300" />
+                <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 8 8">
+                  <path d="M1 4h6M4 1l3 3-3 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              {/* Tool icon */}
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-[8px] shrink-0 shadow-sm"
+                style={{ backgroundColor: tool.color }}
+              >
+                {tool.letter}
+              </div>
+              {/* Right arrow (Pinmarks → tool) */}
+              <div className="flex-1 flex items-center gap-1">
+                <svg className="w-3 h-3 text-[#ff724f] shrink-0" fill="none" viewBox="0 0 8 8">
+                  <path d="M7 4H1M4 7L1 4l3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="flex-1 h-px bg-[#ff724f]/40" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Status update badge */}
+        <div className="shrink-0 flex flex-col gap-1.5">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1 text-center">
+            <p className="text-[8px] font-bold text-emerald-700">Status synced</p>
+            <p className="text-[7px] text-emerald-600">Resolved ✓</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-2 py-1 text-center">
+            <p className="text-[8px] font-bold text-blue-700">Issue created</p>
+            <p className="text-[7px] text-blue-600">Jira #4821</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl px-3 py-2 border border-gray-100 shadow-sm">
+        <p className="text-[9px] text-[#555555]">
+          <span className="font-semibold text-[#111111]">Status update:</span> Jira issue #4821 marked &ldquo;Done&rdquo; → Pinmarks feedback auto-resolved
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsVisual() {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-md overflow-hidden h-72">
+      <div className="px-4 py-2.5 border-b border-gray-100">
+        <p className="text-xs font-bold text-[#111111]">Analytics</p>
+      </div>
+      <div className="grid grid-cols-4 divide-x divide-gray-100 border-b border-gray-100">
+        {[
+          { label: 'Total feedback', value: '247', color: 'text-[#111111]' },
+          { label: 'Open', value: '38', color: 'text-blue-500' },
+          { label: 'Resolved', value: '189', color: 'text-emerald-500' },
+          { label: 'Avg resolution', value: '2.4d', color: 'text-[#ff724f]' },
+        ].map(s => (
+          <div key={s.label} className="p-3">
+            <p className={`text-base font-black ${s.color}`}>{s.value}</p>
+            <p className="text-[8px] text-[#555555] font-medium mt-0.5 leading-tight">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="px-4 py-3 border-b border-gray-100">
+        <p className="text-[9px] font-semibold text-[#111111] mb-2">Feedback over time (last 30 days)</p>
+        <div className="flex items-end gap-px h-10">
+          {[2,4,3,6,5,8,4,7,9,5,11,8,14,6,9,7,12,8,15,10,7,13,9,11,8,14,12,16,13,18].map((h, i) => (
+            <div key={i} className="flex-1 rounded-t-sm"
+              style={{ height: `${(h / 18) * 100}%`, backgroundColor: i >= 27 ? '#ff724f' : '#E5E7EB' }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 divide-x divide-gray-100">
+        <div className="p-3">
+          <p className="text-[9px] font-bold text-[#111111] mb-2">By type</p>
+          {[{ label: 'Bug', pct: 65 }, { label: 'Suggestion', pct: 20 }, { label: 'Question', pct: 10 }, { label: 'Other', pct: 5 }].map(t => (
+            <div key={t.label} className="flex items-center gap-1.5 mb-1">
+              <span className="text-[8px] text-gray-500 w-12 shrink-0">{t.label}</span>
+              <div className="flex-1 h-1 bg-gray-100 rounded-full">
+                <div className="h-full bg-[#ff724f] rounded-full" style={{ width: `${t.pct}%` }} />
+              </div>
+              <span className="text-[8px] text-gray-400 w-6 text-right">{t.pct}%</span>
+            </div>
+          ))}
+        </div>
+        <div className="p-3">
+          <p className="text-[9px] font-bold text-[#111111] mb-2">By status</p>
+          {[{ label: 'Open', pct: 15 }, { label: 'In Progress', pct: 10 }, { label: 'Resolved', pct: 65 }, { label: 'Closed', pct: 8 }, { label: "Won't Fix", pct: 2 }].map(t => (
+            <div key={t.label} className="flex items-center gap-1.5 mb-1">
+              <span className="text-[8px] text-gray-500 w-12 shrink-0">{t.label}</span>
+              <div className="flex-1 h-1 bg-gray-100 rounded-full">
+                <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${t.pct}%` }} />
+              </div>
+              <span className="text-[8px] text-gray-400 w-6 text-right">{t.pct}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const FEATURES = [
   {
     id: 'feedback',
     badge: 'Website feedback',
-    headline: 'Annotate your site with visual feedback',
-    desc: 'Easily make comments and add annotations to live pages or websites in production. Your whole team can log issues without ever leaving the browser.',
-    quote: '"We can log issues directly on our site, without leaving the browser."',
-    author: "Vincent, Director of Excellence at L'Oréal",
+    headline: 'Pin feedback anywhere on your live site',
+    desc: 'Click on any element on a live page to leave a comment or annotation. Your whole team sees it instantly — no screenshots buried in emails, no context lost in translation.',
+    quote: '',
+    author: '',
     Visual: FeedbackVisual,
     flip: false,
   },
   {
     id: 'bugs',
     badge: 'Bug reporting',
-    headline: 'Reproduce website bugs faster',
-    desc: 'Give your engineering team the context they need to squash bugs automatically. Every report includes browser, OS, screen, URL, console errors, and failed network requests.',
-    quote: '"Our developers have everything they need to debug and fix issues."',
-    author: 'Andrew, Product Manager at FantasyPros',
+    headline: 'Every bug report ships with full developer context',
+    desc: 'Browser, OS, screen size, URL, console errors, and failed network requests — all auto-captured the moment feedback is submitted. Devs can reproduce it without a single follow-up question.',
+    quote: '',
+    author: '',
     Visual: BugReportVisual,
     flip: true,
   },
   {
     id: 'replay',
     badge: 'Session replay',
-    headline: 'Replay user sessions',
-    desc: 'See exactly what actions led to a bug and share the video with key stakeholders. No more asking users to record their screen.',
-    quote: '"We get to see what happened, without our users needing to record a video."',
-    author: 'Cody, Scrum Master at Samtec.com',
+    headline: 'Watch exactly what happened, not just a screenshot',
+    desc: 'Session replay shows every click, scroll, and action leading up to a bug. Share the recording with your team — no more asking users to screen-record and send a video.',
+    quote: '',
+    author: '',
     Visual: SessionReplayVisual,
     flip: false,
   },
   {
     id: 'communication',
     badge: 'Communication',
-    headline: 'Collaborate with stakeholders on revisions',
-    desc: 'Keep everyone aligned with inline comments, file attachments, and status updates — all in one place. No more back-and-forth emails.',
-    quote: '"We cut down emails by 70%."',
-    author: 'Josh, Founder at Mobile App City',
+    headline: 'All the discussion. None of the email chains.',
+    desc: 'Inline comments, file attachments, and status updates — all threaded to the exact issue on the exact page. Keep clients and developers in sync without leaving Pinmarks.',
+    quote: '',
+    author: '',
     Visual: CommunicationVisual,
+    flip: true,
+  },
+  {
+    id: 'integrations',
+    badge: 'Two-way integrations',
+    headline: 'Changes in your tools reflect back in Pinmarks',
+    desc: 'Push feedback to Jira, ClickUp, GitHub, or Slack in one click — and when the issue is resolved in your tool, Pinmarks updates automatically. No manual status syncing, ever.',
+    quote: '',
+    author: '',
+    Visual: TwoWayIntegrationsVisual,
+    flip: false,
+  },
+  {
+    id: 'analytics',
+    badge: 'Analytics',
+    headline: 'Full visibility into your feedback pipeline',
+    desc: 'Track total feedback, open issues, resolution rate, and average fix time — broken down by type and status. Know exactly where bugs come from and how fast your team fixes them.',
+    quote: '',
+    author: '',
+    Visual: AnalyticsVisual,
     flip: true,
   },
 ];
@@ -165,10 +313,10 @@ export function FeaturesSection() {
         <div className="text-center mb-20">
           <p className="text-sm font-semibold text-[#D4A800] uppercase tracking-widest mb-3">Features</p>
           <h2 className="text-4xl md:text-5xl font-black text-[#111111] mb-4 leading-tight">
-            Collect website feedback 10× faster
+            From feedback to fix,<br />without the friction
           </h2>
           <p className="text-[#555555] text-lg max-w-2xl mx-auto">
-            Everything your team needs to collect visual feedback, report bugs, and ship fixes — faster.
+            Everything your team needs to pin issues, capture full context, and ship fixes — all in one place.
           </p>
         </div>
 
@@ -191,10 +339,12 @@ export function FeaturesSection() {
                     {feature.headline}
                   </h3>
                   <p className="text-[#555555] leading-relaxed mb-7">{feature.desc}</p>
-                  <blockquote className="border-l-4 border-[#F5C800] pl-4">
-                    <p className="text-[#555555] italic text-sm">{feature.quote}</p>
-                    <footer className="text-xs text-gray-400 mt-1.5 font-semibold">— {feature.author}</footer>
-                  </blockquote>
+                  {feature.quote && (
+                    <blockquote className="border-l-4 border-[#F5C800] pl-4">
+                      <p className="text-[#555555] italic text-sm">{feature.quote}</p>
+                      <footer className="text-xs text-gray-400 mt-1.5 font-semibold">— {feature.author}</footer>
+                    </blockquote>
+                  )}
                 </div>
 
                 {/* Visual side */}

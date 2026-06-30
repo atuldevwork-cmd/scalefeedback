@@ -19,8 +19,8 @@ const CONTACT_ITEMS = [
   {
     icon: 'mail',
     label: 'Email us',
-    value: 'hello@scalefeedback.io',
-    href: 'mailto:hello@scalefeedback.io',
+    value: 'hello@pinmarks.in',
+    href: 'mailto:hello@pinmarks.in',
     desc: 'We reply within 24 hours on business days.',
   },
   {

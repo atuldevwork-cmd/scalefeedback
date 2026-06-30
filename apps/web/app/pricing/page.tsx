@@ -106,28 +106,32 @@ const COMPARISON = [
 
 const FAQS = [
   {
-    q: 'What is a seat?',
-    a: 'A seat is a team member who can access the Pinmarks dashboard. Guests who submit feedback via the widget do not consume a seat.',
+    q: 'Do I need a credit card to start the free trial?',
+    a: 'No. Your 15-day free trial starts immediately — no credit card, no commitment. You get full access to all features on your chosen plan during the trial.',
   },
   {
-    q: 'Do I need a credit card to start?',
-    a: 'No. Your 15-day free trial starts immediately with no credit card required.',
+    q: 'What is the difference between a seat, a guest, and a reporter?',
+    a: 'A seat is a team member with full dashboard access to manage, comment on, and resolve issues. A guest gets limited read and comment access — ideal for clients who need visibility. A reporter is anyone who submits feedback via the widget on your site — reporters are always unlimited and never consume a seat.',
   },
   {
-    q: 'Can I switch plans later?',
-    a: 'Yes, upgrade or downgrade at any time. Changes take effect immediately and are prorated.',
+    q: 'Which plan should I choose?',
+    a: 'Starter ($9/mo) is great for freelancers and small teams with up to 5 projects and 3 seats. Pro ($29/mo) adds session replay, issue sync, and scales to 25 projects and 15 seats — the most popular choice for growing teams. Agency ($59/mo) is built for agencies managing multiple clients with unlimited projects, 50 seats, and advanced analytics.',
   },
   {
-    q: 'What happens after my free trial?',
-    a: 'After 15 days, your account moves to the Free plan. You can upgrade anytime to continue with your chosen plan.',
+    q: 'What does "issue sync" mean?',
+    a: 'Issue sync enables two-way integration with your tools. When you push a bug to Jira, ClickUp, or GitHub and it gets resolved there, the status automatically updates in Pinmarks too — no manual syncing needed. Available on Pro and Agency plans.',
   },
   {
-    q: 'Is annual billing required?',
-    a: 'No, monthly billing is available on all plans. Annual billing saves you up to 25%.',
+    q: 'Can I upgrade or downgrade my plan later?',
+    a: 'Yes, you can upgrade or downgrade at any time. Upgrades take effect immediately and are prorated. Downgrades take effect at the start of your next billing cycle.',
+  },
+  {
+    q: 'What happens after my free trial ends?',
+    a: 'After 15 days your account moves to a read-only state — all your data and feedback is preserved. Upgrade to any paid plan at any time to continue without losing anything.',
   },
   {
     q: 'Can I cancel anytime?',
-    a: 'Yes. Cancel from your account settings at any time — no cancellation fees.',
+    a: 'Yes. Cancel directly from your account settings at any time — no cancellation fees, no awkward phone calls. If you cancel an annual plan mid-cycle, the remaining period is not refunded but your access continues until the end of the billing period.',
   },
 ];
 
