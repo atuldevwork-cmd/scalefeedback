@@ -52,7 +52,9 @@ export async function updateSession(request: NextRequest) {
     supabaseResponse.cookies.delete('sf-wt');
   }
 
-  const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
+  const isPublic = PUBLIC_PATHS.some((p) =>
+    p === '/' ? request.nextUrl.pathname === '/' : request.nextUrl.pathname.startsWith(p)
+  );
   const needsCors = CORS_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
 
   // Handle CORS preflight for cross-origin API routes
