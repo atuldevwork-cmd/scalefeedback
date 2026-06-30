@@ -5,10 +5,10 @@ const MARKETING_HOST = process.env.NEXT_PUBLIC_MARKETING_HOST;
 const APP_HOST = process.env.NEXT_PUBLIC_APP_HOST;
 
 // Paths that live exclusively on the app (dashboard) host
-const DASHBOARD_PATHS = ['/projects', '/settings', '/docs', '/notifications', '/support', '/no-access'];
+const DASHBOARD_PATHS = ['/projects', '/settings', '/docs', '/notifications', '/support', '/no-access', '/login', '/signup'];
 
-// Marketing-only paths — not served on the app host (auth paths like /login are shared)
-const MARKETING_ONLY_PATHS = ['/pricing', '/contact'];
+// Marketing-only paths — redirected to marketing host when accessed on app host
+const MARKETING_ONLY_PATHS = ['/pricing', '/contact', '/about'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

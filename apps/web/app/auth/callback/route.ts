@@ -25,8 +25,9 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const response = NextResponse.redirect(`${origin}${next}`);
-      // Clear the cookie after use
+      const appHost = process.env.NEXT_PUBLIC_APP_HOST;
+      const appOrigin = appHost ? `https://${appHost}` : origin;
+      const response = NextResponse.redirect(`${appOrigin}${next}`);
       response.cookies.set('auth_next', '', { maxAge: 0, path: '/' });
       return response;
     }
