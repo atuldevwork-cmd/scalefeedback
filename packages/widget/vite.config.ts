@@ -17,7 +17,8 @@ export default defineConfig({
     },
     minify: true,
     target: 'es2017',
-    // Output to apps/web/public so Next.js can serve it
-    outDir: '../../apps/web/public',
+    // Output to apps/dashboard/public — widget.js must be served from app.pinmarks.in
+    // (the domain the install snippet and widget's own API calls point to)
+    outDir: '../../apps/dashboard/public',
   },
 });
