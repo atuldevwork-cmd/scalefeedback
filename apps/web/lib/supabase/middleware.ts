@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 const MARKETING_HOST = process.env.NEXT_PUBLIC_MARKETING_HOST;
 const APP_HOST = process.env.NEXT_PUBLIC_APP_HOST;
 
-const PUBLIC_PATHS = ['/', '/pricing', '/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/auth/me', '/api/widget-config', '/api/widget-session', '/widget.js', '/demo.html', '/guest/join'];
+const PUBLIC_PATHS = ['/', '/pricing', '/about', '/contact', '/login', '/signup', '/auth', '/join', '/guest', '/api/feedback', '/api/contact', '/api/auth/me', '/api/widget-config', '/api/widget-session', '/widget.js', '/demo.html', '/guest/join'];
 
 // API routes called cross-origin from customer websites
 const CORS_PATHS = ['/api/widget-config', '/api/feedback'] as const;
