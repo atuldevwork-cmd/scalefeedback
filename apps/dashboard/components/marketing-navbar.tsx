@@ -64,7 +64,7 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
         <div className="md:hidden absolute top-full left-0 right-0 border-t border-gray-100 bg-white/95 backdrop-blur shadow-lg px-4 py-4 flex flex-col gap-4 z-50">
           <Link href="/#features" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Features</Link>
           <Link href="/#integrations" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Integrations</Link>
-          <Link href="/#testimonials" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Customers</Link>
+          <Link href="/about" className={`py-1 ${linkClass()}`} onClick={() => setMobileOpen(false)}>About Us</Link>
           <Link href="/pricing" className={`py-1 ${linkClass('pricing')}`} onClick={() => setMobileOpen(false)}>Pricing</Link>
           <Link href="/contact" className={`py-1 ${linkClass('contact')}`} onClick={() => setMobileOpen(false)}>Contact</Link>
           <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">

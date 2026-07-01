@@ -14,7 +14,7 @@ const FOOTER_LINKS = {
     { label: 'GitHub', href: '/#integrations' },
   ],
   'Company': [
-    { label: 'About', href: '/about' },
+    { label: 'About Us', href: '/about' },
     { label: 'Contact', href: '/contact' },
     { label: 'Pricing', href: '/pricing' },
   ],
