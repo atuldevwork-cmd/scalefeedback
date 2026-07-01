@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { MarketingNavbar } from '@/components/marketing-navbar';
 import { MarketingFooter } from '@/components/marketing-footer';
+import { appUrl } from '@/lib/app-url';
 
 const TEAM = [
   {
@@ -190,7 +191,7 @@ export default function AboutPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/signup"
+              href={appUrl('/signup')}
               className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-10 py-4 rounded-xl transition-all text-base shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 hover:-translate-y-px"
             >
               Start free trial →

@@ -1,5 +1,5 @@
 {
-  "name": "@scalefeedback/web",
+  "name": "@scalefeedback/dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {

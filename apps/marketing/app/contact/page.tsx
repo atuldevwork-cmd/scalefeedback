@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { MarketingNavbar } from '@/components/marketing-navbar';
 import { MarketingFooter } from '@/components/marketing-footer';
+import { appUrl } from '@/lib/app-url';
 
 const TOPICS = [
   'General Inquiry',
@@ -206,7 +207,7 @@ export default function ContactPage() {
               <div>
                 <p className="text-sm font-semibold text-[#111111] mb-1">Ready to get started?</p>
                 <p className="text-xs text-slate-500 mb-3">Sign up free and start collecting feedback in minutes — no credit card required.</p>
-                <Link href="/signup" className="inline-block bg-[#ff724f] hover:bg-[#e8603a] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+                <Link href={appUrl('/signup')} className="inline-block bg-[#ff724f] hover:bg-[#e8603a] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
                   Start free trial →
                 </Link>
               </div>

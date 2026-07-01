@@ -1,6 +1,6 @@
 {
   "functions": {
-    "apps/web/app/api/ai-scan/route.ts": {
+    "app/api/ai-scan/route.ts": {
       "memory": 1024,
       "maxDuration": 120
     }

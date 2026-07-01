@@ -37,7 +37,11 @@ A visual bug feedback tool — a [marker.io](https://marker.io) alternative buil
 ```
 ScaleFeedback/
 ├── apps/
-│   └── web/                  # Next.js 14 dashboard (App Router)
+│   ├── marketing/             # Next.js 14 marketing site (pinmarks.in)
+│   │   ├── app/                # Home, pricing, about, contact
+│   │   ├── components/         # Marketing navbar/footer/sections
+│   │   └── lib/                 # appUrl() cross-domain link helper
+│   └── dashboard/             # Next.js 14 dashboard app (app.pinmarks.in)
 │       ├── app/
 │       │   ├── (auth)/       # Login & signup pages
 │       │   ├── (dashboard)/  # Protected dashboard pages
@@ -54,6 +58,8 @@ ScaleFeedback/
 ├── turbo.json                # Turborepo pipeline config
 └── package.json              # Root workspace config
 ```
+
+`marketing` and `dashboard` are deployed independently (separate Vercel projects, each bound to its own domain) — there's no shared host-detection logic between them.
 
 ---
 
@@ -105,14 +111,15 @@ cd ScaleFeedback
 npm install
 ```
 
-This installs dependencies for all workspaces (`apps/web`, `packages/widget`, `packages/shared`) in one command.
+This installs dependencies for all workspaces (`apps/marketing`, `apps/dashboard`, `packages/widget`, `packages/shared`) in one command.
 
 ### 3. Configure environment variables
 
-Copy the example env file for the web app:
+Copy the example env files:
 
 ```bash
-cp apps/web/.env.local.example apps/web/.env.local
+cp apps/dashboard/.env.local.example apps/dashboard/.env.local
+cp apps/marketing/.env.local.example apps/marketing/.env.local
 ```
 
 Then fill in the values (see [Environment Variables](#environment-variables) below).
@@ -123,7 +130,7 @@ Then fill in the values (see [Environment Variables](#environment-variables) bel
 
 1. Create a project at [supabase.com](https://supabase.com)
 2. Copy your **Project URL**, **Anon Key**, and **Service Role Key** from the Supabase dashboard → Settings → API
-3. Paste them into `apps/web/.env.local`
+3. Paste them into `apps/dashboard/.env.local`
 4. Run migrations manually via the Supabase SQL editor or the CLI:
 
 ```bash
@@ -136,7 +143,7 @@ supabase db push
 # Start local Supabase stack (requires Docker)
 supabase start
 
-# This outputs local credentials — copy them into apps/web/.env.local
+# This outputs local credentials — copy them into apps/dashboard/.env.local
 ```
 
 ### 5. Apply database migrations
@@ -181,14 +188,22 @@ npm run dev
 ```
 
 This starts:
-- `apps/web` → Next.js dev server at **http://localhost:3000**
-- `packages/widget` → Vite watch build (outputs `widget.js` to `apps/web/public/`)
+- `apps/dashboard` → Next.js dev server at **http://localhost:3000**
+- `apps/marketing` → Next.js dev server at **http://localhost:3001**
+- `packages/widget` → Vite watch build (outputs `widget.js` to `apps/dashboard/public/`)
 
 ### Run only the dashboard
 
 ```bash
-cd apps/web
+cd apps/dashboard
 npx next dev
+```
+
+### Run only the marketing site
+
+```bash
+cd apps/marketing
+npx next dev -p 3001
 ```
 
 ### Run only the widget in watch mode
@@ -207,7 +222,7 @@ npm run build
 ### Start production server
 
 ```bash
-cd apps/web
+cd apps/dashboard
 npm run start
 ```
 
@@ -215,7 +230,7 @@ npm run start
 
 ## Environment Variables
 
-Create `apps/web/.env.local` with the following:
+Create `apps/dashboard/.env.local` with the following:
 
 ```env
 # Supabase — get from Supabase dashboard → Settings → API
@@ -300,7 +315,7 @@ The scanner crawls a URL with Puppeteer (local) or Cheerio (production/Vercel), 
 | Content | Placeholder text, broken images, outdated copyright |
 
 **Requirements:**
-- `OPENAI_API_KEY` must be set in `apps/web/.env.local`
+- `OPENAI_API_KEY` must be set in `apps/dashboard/.env.local`
 - Locally, Puppeteer is used automatically (installs Chromium via `puppeteer`)
 - On Vercel, the fetch-based crawler is used (no Chromium required)
 

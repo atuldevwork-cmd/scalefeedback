@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { marketingUrl } from '@/lib/marketing-url';
 import { NotificationBell } from './notification-bell';
 import { SupportInboxBadge } from './support-chat/inbox-badge';
 
@@ -97,7 +98,7 @@ export function Sidebar() {
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-gray-100 space-y-0.5">
         <Link
-          href="/contact"
+          href={marketingUrl('/contact')}
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] font-medium text-[#111111]/60 hover:bg-gray-50 hover:text-[#111111] transition-all"
         >
           <span className="material-symbols-outlined text-[20px] text-[#111111]/30">contact_support</span>

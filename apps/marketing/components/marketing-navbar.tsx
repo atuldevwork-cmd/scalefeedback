@@ -3,13 +3,11 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { appUrl } from '@/lib/app-url';
 
 interface MarketingNavbarProps {
   activePage?: 'home' | 'pricing' | 'contact';
 }
-
-const appHost = process.env.NEXT_PUBLIC_APP_HOST;
-const appUrl = (path: string) => appHost ? `https://${appHost}${path}` : path;
 
 export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);

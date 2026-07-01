@@ -28,8 +28,7 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       const next = getNext();
-      const appHost = process.env.NEXT_PUBLIC_APP_HOST;
-      window.location.href = next || (appHost ? `https://${appHost}/projects` : '/projects');
+      window.location.href = next || '/projects';
     }
   }
 
@@ -39,12 +38,10 @@ export default function LoginPage() {
     if (next) {
       document.cookie = `auth_next=${encodeURIComponent(next)}; path=/; max-age=300; SameSite=Lax`;
     }
-    const appHost = process.env.NEXT_PUBLIC_APP_HOST;
-    const callbackBase = appHost ? `https://${appHost}` : window.location.origin;
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${callbackBase}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
   }

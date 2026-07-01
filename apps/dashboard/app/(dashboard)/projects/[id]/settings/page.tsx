@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured, MOCK_PROJECTS } from '@/lib/mock-data';
+import { marketingUrl } from '@/lib/marketing-url';
 import { WidgetInstallSnippet } from './widget-install-snippet';
 import { ProjectSettingsForm } from './project-settings-form';
 import { DeleteProjectButton } from './delete-project-button';
@@ -210,7 +211,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
                   Read Docs
                 </Link>
                 <Link
-                  href="/contact"
+                  href={marketingUrl('/contact')}
                   className="inline-flex items-center justify-center gap-2 bg-white text-[#ff5733] text-sm font-bold px-5 py-2.5 rounded-xl transition-all hover:bg-white/90 shadow-lg shadow-black/10"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
