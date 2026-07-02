@@ -35,15 +35,17 @@ export async function GET(request: Request) {
           .maybeSingle();
 
         if (profile && !profile.welcome_email_sent_at && user.email) {
-          await sendWelcomeEmail({
+          const sent = await sendWelcomeEmail({
             to: user.email,
             name: profile.full_name ?? user.user_metadata?.full_name ?? null,
             dashboardUrl: `${origin}/projects`,
           });
-          await supabase
-            .from('profiles')
-            .update({ welcome_email_sent_at: new Date().toISOString() })
-            .eq('id', user.id);
+          if (sent) {
+            await supabase
+              .from('profiles')
+              .update({ welcome_email_sent_at: new Date().toISOString() })
+              .eq('id', user.id);
+          }
         }
       }
 

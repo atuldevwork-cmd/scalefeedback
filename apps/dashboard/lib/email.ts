@@ -67,12 +67,12 @@ export interface WelcomeEmailParams {
 }
 
 export async function sendWelcomeEmail(params: WelcomeEmailParams) {
-  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith('re_your')) return;
+  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.startsWith('re_your')) return false;
 
   const { to, name, dashboardUrl } = params;
   const greetingName = name ? name.split(' ')[0] : 'there';
 
-  await getResend().emails.send({
+  const { error } = await getResend().emails.send({
     from: 'Pinmarks <noreply@pinmarks.in>',
     to,
     subject: 'Welcome to Pinmarks 🎉',
@@ -108,6 +108,12 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams) {
       </div>
     `,
   });
+
+  if (error) {
+    console.error('Welcome email failed:', error);
+    return false;
+  }
+  return true;
 }
 
 export interface GuestCommentEmailParams {
