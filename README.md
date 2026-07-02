@@ -192,18 +192,20 @@ This starts:
 - `apps/marketing` → Next.js dev server at **http://localhost:3001**
 - `packages/widget` → Vite watch build (outputs `widget.js` to `apps/dashboard/public/`)
 
+> Both apps' ports are pinned in their `package.json` `dev` script (`next dev -p 3000` / `-p 3001`). Don't remove the `-p` flag — without it both apps default to port 3000 and whichever process wins the race gets it, silently swapping the two apps relative to what `NEXT_PUBLIC_APP_URL` in each `.env.local` expects.
+
 ### Run only the dashboard
 
 ```bash
 cd apps/dashboard
-npx next dev
+npm run dev
 ```
 
 ### Run only the marketing site
 
 ```bash
 cd apps/marketing
-npx next dev -p 3001
+npm run dev
 ```
 
 ### Run only the widget in watch mode

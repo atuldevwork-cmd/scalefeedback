@@ -3,27 +3,6 @@ import { MarketingNavbar } from '@/components/marketing-navbar';
 import { MarketingFooter } from '@/components/marketing-footer';
 import { appUrl } from '@/lib/app-url';
 
-const TEAM = [
-  {
-    name: 'Dharmesh Porwal',
-    role: 'Founder & CEO',
-    photo: '/team/dharmesh-porwal.png',
-    bio: '20 years scaling businesses, founded on one belief, strategy before software.',
-  },
-  {
-    name: 'Kieran Krohn',
-    role: 'Head of Growth',
-    photo: '/team/kieran-krohn.png',
-    bio: "8 years as HubSpot's #1 consultant, now fixing GTM for mid-market B2B companies.",
-  },
-  {
-    name: 'Kritika Thakur',
-    role: 'Account Strategist',
-    photo: '/team/kritika-thakur.png',
-    bio: 'Certified strategist bringing strategic CRM thinking and a sharp eye for execution.',
-  },
-];
-
 const VALUES = [
   {
     icon: (

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -23,8 +24,29 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      const user = data.user;
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('welcome_email_sent_at, full_name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profile && !profile.welcome_email_sent_at && user.email) {
+          await sendWelcomeEmail({
+            to: user.email,
+            name: profile.full_name ?? user.user_metadata?.full_name ?? null,
+            dashboardUrl: `${origin}/projects`,
+          });
+          await supabase
+            .from('profiles')
+            .update({ welcome_email_sent_at: new Date().toISOString() })
+            .eq('id', user.id);
+        }
+      }
+
       const response = NextResponse.redirect(`${origin}${next}`);
       response.cookies.set('auth_next', '', { maxAge: 0, path: '/' });
       return response;

@@ -1,14 +1,16 @@
 import Link from 'next/link';
+import { appUrl } from '@/lib/app-url';
 
 const FOOTER_LINKS = {
   'Quick Links': [
     { label: 'Features', href: '/#features' },
     { label: 'Integrations', href: '/#integrations' },
     { label: 'Pricing', href: '/pricing' },
-    { label: 'Free Trial', href: '/signup' },
-    { label: 'Login', href: '/login' },
+    { label: 'Free Trial', href: appUrl('/signup') },
+    { label: 'Login', href: appUrl('/login') },
   ],
 'Integrations': [
+    { label: 'ClickUp', href: '/#integrations' },
     { label: 'Slack', href: '/#integrations' },
     { label: 'Jira', href: '/#integrations' },
     { label: 'GitHub', href: '/#integrations' },
