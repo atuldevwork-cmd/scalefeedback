@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await getResend().emails.send({
-      from: 'Pinmarks Contact <hello@pinmarks.io>',
+      from: 'Pinmarks Contact <noreply@pinmarks.in>',
       to: ['atul@scalestation.io'],
       replyTo: email,
       subject: `[Contact] ${topic ? `${topic}: ` : ''}${subject || '(no subject)'}`,

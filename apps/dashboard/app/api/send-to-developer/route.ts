@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const { data, error } = await getResend().emails.send({
-      from: 'Pinmarks <hello@pinmarks.io>',
+      from: 'Pinmarks <noreply@pinmarks.in>',
       to: [to.trim()],
       subject: subject || 'Can you install this widget on our website?',
       html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">

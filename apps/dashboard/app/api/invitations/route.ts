@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       const resend = new Resend(resendKey);
       const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/accept-invite?token=${token}`;
       const { error: emailError } = await resend.emails.send({
-        from: 'Pinmarks <onboarding@resend.dev>',
+        from: 'Pinmarks <noreply@pinmarks.in>',
         to: email,
         subject: "You've been invited to Pinmarks",
         html: `

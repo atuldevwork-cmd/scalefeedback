@@ -29,7 +29,7 @@ export async function sendNewFeedbackEmail(params: NewFeedbackEmailParams) {
   const { to, projectName, feedbackTitle, feedbackType, reporterName, pageUrl, dashboardUrl } = params;
 
   await getResend().emails.send({
-    from: 'Pinmarks <onboarding@resend.dev>',
+    from: 'Pinmarks <noreply@pinmarks.in>',
     to,
     subject: `New ${feedbackType} on ${projectName}`,
     html: `
@@ -73,7 +73,7 @@ export async function sendWelcomeEmail(params: WelcomeEmailParams) {
   const greetingName = name ? name.split(' ')[0] : 'there';
 
   await getResend().emails.send({
-    from: 'Pinmarks <onboarding@resend.dev>',
+    from: 'Pinmarks <noreply@pinmarks.in>',
     to,
     subject: 'Welcome to Pinmarks 🎉',
     html: `
@@ -127,7 +127,7 @@ export async function sendGuestCommentEmail(params: GuestCommentEmailParams) {
   const from = guestName ? `${guestName} (${guestEmail})` : guestEmail;
 
   await getResend().emails.send({
-    from: 'Pinmarks <onboarding@resend.dev>',
+    from: 'Pinmarks <noreply@pinmarks.in>',
     to,
     subject: `Guest comment on "${feedbackTitle}" — ${projectName}`,
     html: `
@@ -166,7 +166,7 @@ export async function sendStatusChangeEmail(params: StatusChangeEmailParams) {
   const label = newStatus.replace('_', ' ');
 
   await getResend().emails.send({
-    from: 'Pinmarks <onboarding@resend.dev>',
+    from: 'Pinmarks <noreply@pinmarks.in>',
     to,
     subject: `Feedback status updated to "${label}" on ${projectName}`,
     html: `

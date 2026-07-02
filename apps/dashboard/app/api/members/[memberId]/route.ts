@@ -136,7 +136,7 @@ export async function DELETE(
     try {
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: 'Pinmarks <onboarding@resend.dev>',
+        from: 'Pinmarks <noreply@pinmarks.in>',
         to: targetEmail,
         subject: `You've been removed from ${org?.name ?? 'a Pinmarks workspace'}`,
         html: `

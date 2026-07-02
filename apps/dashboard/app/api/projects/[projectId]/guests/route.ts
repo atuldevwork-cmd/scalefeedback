@@ -90,7 +90,7 @@ export async function POST(
     try {
       const resend = new Resend(resendKey);
       const { error: emailError } = await resend.emails.send({
-        from: 'Pinmarks <onboarding@resend.dev>',
+        from: 'Pinmarks <noreply@pinmarks.in>',
         to: email,
         subject: `You've been invited to view ${project.name}`,
         html: `
