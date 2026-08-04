@@ -48,16 +48,30 @@ export default function AboutPage() {
       <MarketingNavbar />
 
       {/* ── Hero ── */}
-      <section className="bg-gradient-to-b from-slate-50 to-white py-20 text-center">
-        <div className="max-w-3xl mx-auto px-6">
-          <div className="inline-flex items-center gap-2 bg-[#fff3f0] border border-yellow-200 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-medium mb-8">
+      <section className="bg-[#111111] relative overflow-hidden">
+        {/* Yellow glow at top */}
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(245,200,0,0.18) 0%, transparent 65%)' }}
+        />
+        {/* Subtle grid */}
+        <div
+          className="absolute inset-0 opacity-[0.035] pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+
+        <div className="relative max-w-3xl mx-auto px-6 pt-20 pb-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-[#ff724f]/10 border border-[#ff724f]/20 text-[#ff724f] rounded-full px-4 py-1.5 text-sm font-medium mb-8">
             <span className="w-1.5 h-1.5 bg-[#ff724f] rounded-full" />
             Our story
           </div>
-          <h1 className="text-5xl font-extrabold text-[#111111] leading-tight mb-6">
+          <h1 className="text-5xl md:text-[64px] font-black text-white leading-[1.04] mb-6 tracking-tight">
             Built for teams tired of <span className="text-[#ff724f]">chasing bugs</span>
           </h1>
-          <p className="text-xl text-slate-500 leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 leading-relaxed max-w-xl mx-auto">
             Pinmarks was born from a simple frustration — bug reporting was broken. Screenshots without context. Emails with no follow-up. Jira tickets developers couldn&apos;t reproduce. We built the tool we always wished existed.
           </p>
         </div>

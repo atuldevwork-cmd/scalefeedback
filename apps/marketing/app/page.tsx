@@ -144,7 +144,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-4">
             <Link
               href={appUrl('/signup')}
-              className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-9 py-4 rounded-xl transition-all text-base shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 hover:-translate-y-px"
+              className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-9 py-4 rounded-xl transition-all text-base shadow-lg shadow-yellow-500/20 hover:shadow-none hover:-translate-y-px"
             >
               Start free trial →
             </Link>
@@ -195,7 +195,7 @@ export default function HomePage() {
           <div className="mt-14 text-center">
             <Link
               href={appUrl('/signup')}
-              className="inline-flex items-center gap-2 bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-8 py-3.5 rounded-xl transition-all text-sm shadow-lg shadow-yellow-200 hover:-translate-y-px"
+              className="inline-flex items-center gap-2 bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-8 py-4 rounded-xl transition-all text-base hover:-translate-y-px"
             >
               Get started free →
             </Link>
@@ -306,7 +306,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href={appUrl('/signup')}
-              className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-10 py-4 rounded-xl transition-all text-base shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 hover:-translate-y-px"
+              className="bg-[#ff724f] hover:bg-[#e8603a] text-white font-bold px-10 py-4 rounded-xl transition-all text-base shadow-lg shadow-yellow-500/20 hover:shadow-none hover:-translate-y-px"
             >
               Start free trial →
             </Link>
