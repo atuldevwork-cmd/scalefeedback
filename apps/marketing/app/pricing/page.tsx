@@ -240,7 +240,7 @@ export default function PricingPage() {
               </div>
 
               <Link
-                href={plan.ctaHref}
+                href={appUrl(plan.ctaHref)}
                 className={`w-full text-center py-2.5 rounded-xl font-semibold text-sm transition-all mb-6 ${
                   plan.highlight
                     ? 'bg-[#ff724f] hover:bg-[#e8603a] text-white'
