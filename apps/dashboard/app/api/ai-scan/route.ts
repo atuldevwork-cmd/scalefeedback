@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { crawlWebsite } from '@/lib/crawler';
 import { analyzePages, type ScanIssue } from '@/lib/ai-analyzer';
 import type { PageContent } from '@/lib/crawler';
+import { planAtLeast } from '@/lib/plan';
 
 export const dynamic = 'force-dynamic';
 // Allow up to 2 min on Vercel Pro; locally there is no timeout
@@ -81,6 +82,19 @@ export async function POST(request: NextRequest) {
 
     if (!membership?.length) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { data: org } = await service
+      .from('organisations')
+      .select('plan')
+      .eq('id', proj.organisation_id)
+      .single();
+
+    if (!planAtLeast(org?.plan, 'agency')) {
+      return NextResponse.json(
+        { error: 'AI Website Scanner is available on the Agency plan.' },
+        { status: 403 }
+      );
     }
 
     const { pages, failedUrls } = await crawlWebsite(url, Math.min(Math.max(1, maxPages), 30));

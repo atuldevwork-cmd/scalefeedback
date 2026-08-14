@@ -1,4 +1,4 @@
-/* ===== ScaleFeedback Widget Styles ===== */
+/* ===== Pinmarks Widget Styles ===== */
 /* All styles are scoped inside Shadow DOM */
 
 * {
@@ -504,6 +504,64 @@
   flex-wrap: nowrap;
 }
 
+.sf-emoji-popup {
+  /* position/top/left are set inline in JS (toggleEmojiPicker) using the
+     toggle button's real screen coordinates — see widget.ts for why. */
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid #f0e5e0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 8px;
+}
+
+.sf-emoji-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid #e5d9d3;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+}
+
+.sf-emoji-search:focus { border-color: #ff724f; }
+
+.sf-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sf-emoji-empty {
+  grid-column: 1 / -1;
+  padding: 16px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.sf-emoji-btn {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 6px;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.sf-emoji-btn:hover { background: #fff3f0; }
+
 .sf-tool-btn {
   background: none;
   border: 1.5px solid transparent;
@@ -524,6 +582,11 @@
 
 .sf-tool-btn:hover { background: #fff3f0; color: #ff724f; }
 .sf-tool-btn.active { background: #fff3f0; border-color: #ff724f; color: #ff724f; }
+/* Default browser focus rings look identical to a "selected tool" highlight —
+   suppress them so a plain action button (e.g. Insert image) never reads as
+   active alongside the actually-selected drawing tool. */
+.sf-tool-btn:focus { outline: none; }
+.sf-tool-btn:focus-visible { outline: 2px solid #ff724f; outline-offset: 1px; }
 
 .sf-tool-btn svg { width: 18px; height: 18px; }
 

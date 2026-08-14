@@ -1,9 +1,9 @@
 {
-  "name": "@scalefeedback/dashboard",
+  "name": "@pinmarks/dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -16,7 +16,7 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
-    "@scalefeedback/shared": "*",
+    "@pinmarks/shared": "*",
     "@sparticuz/chromium": "^147.0.2",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.43.0",

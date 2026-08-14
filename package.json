@@ -1,5 +1,5 @@
 {
-  "name": "scalefeedback",
+  "name": "pinmarks",
   "private": true,
   "scripts": {
     "build": "turbo run build",

@@ -3,7 +3,8 @@ import { gunzipSync } from 'zlib';
 import { createServiceClient } from '@/lib/supabase/server';
 import { sendNewFeedbackEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
-import type { SubmitFeedbackPayload } from '@scalefeedback/shared';
+import { planAtLeast } from '@/lib/plan';
+import type { SubmitFeedbackPayload } from '@pinmarks/shared';
 
 // Handle CORS preflight
 export async function OPTIONS() {
@@ -86,6 +87,21 @@ export async function POST(request: NextRequest) {
           }
         })()
       : (body.session_events ?? null);
+
+    // Defense in depth: session_events is only a Pro/Agency feature. The widget
+    // already gets `sessionReplay: false` from /api/widget-config on lower plans
+    // and won't record, but a stale cached config or a direct API call
+    // shouldn't be able to smuggle a recording in anyway.
+    if (sessionEvents) {
+      const { data: org } = await supabase
+        .from('organisations')
+        .select('plan')
+        .eq('id', project.organisation_id)
+        .single();
+      if (!planAtLeast(org?.plan, 'pro')) {
+        sessionEvents = null;
+      }
+    }
 
     const baseInsert = {
       project_id: project.id,
@@ -182,6 +198,7 @@ export async function POST(request: NextRequest) {
           feedbackType: body.type,
           description: body.description,
           reporterName: body.reporter_name,
+          reporterEmail: body.reporter_email,
           pageUrl: body.page_url,
           status: 'open',
           priority: body.priority,
@@ -192,6 +209,9 @@ export async function POST(request: NextRequest) {
           screenSize: body.screen_size,
           viewportSize: body.viewport_size,
           devicePixelRatio: body.device_pixel_ratio,
+          consoleLogs: body.console_logs,
+          hasSessionReplay: Boolean(sessionEvents && sessionEvents.length),
+          customMetadata: body.custom_metadata,
         }, supabase);
       }
     } catch { /* integrations must never break submission */ }

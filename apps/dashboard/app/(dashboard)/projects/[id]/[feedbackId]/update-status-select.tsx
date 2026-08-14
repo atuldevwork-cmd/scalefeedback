@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { FeedbackStatus } from '@scalefeedback/shared';
+import type { FeedbackStatus } from '@pinmarks/shared';
 import {
   Select,
   SelectContent,

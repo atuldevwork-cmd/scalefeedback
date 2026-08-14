@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { Project } from '@scalefeedback/shared';
+import type { Project } from '@pinmarks/shared';
 
 const PLACEMENTS = [
   { value: 'middle-right', label: 'Middle right' },

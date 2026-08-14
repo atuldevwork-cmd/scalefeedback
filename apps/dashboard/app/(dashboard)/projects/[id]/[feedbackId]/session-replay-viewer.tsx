@@ -53,7 +53,12 @@ export function SessionReplayViewer({ events }: Props) {
           skipInactive: true,
           showController: false,
           useVirtualDom: false,
-          mouseTail: false,
+          mouseTail: {
+            duration: 500,
+            lineCap: 'round',
+            lineWidth: 2,
+            strokeStyle: '#ff724f',
+          },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 

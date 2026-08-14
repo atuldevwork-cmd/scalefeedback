@@ -109,9 +109,11 @@ interface ConnectedBadgeProps {
 }
 function ConnectedBadge({ projectId, provider, children }: ConnectedBadgeProps) {
   async function handleDisconnect() {
-    // ClickUp needs to clean up the registered webhook before removing the record
+    // ClickUp and GitHub need to clean up their registered webhook before removing the record
     if (provider === 'clickup') {
       await fetch(`/api/clickup/${projectId}/setup`, { method: 'DELETE' });
+    } else if (provider === 'github') {
+      await fetch(`/api/github/${projectId}/setup`, { method: 'DELETE' });
     } else {
       await fetch(`/api/integrations/${projectId}?type=${provider}`, { method: 'DELETE' });
     }
@@ -562,6 +564,98 @@ function ClickUpConfig({ projectId, config, onSave, saving, saved, autoOpen }: C
   );
 }
 
+/* ─── GitHub Config ──────────────────────────────────────────────────────────── */
+
+interface GitHubRepoOption { id: string; name: string; owner: string; repo: string; private: boolean }
+
+interface GitHubConfigProps {
+  projectId: string;
+  config: Record<string, string>;
+  onSave: (updates: Record<string, string>) => Promise<void>;
+  saving: boolean;
+  saved: boolean;
+  autoOpen: boolean;
+}
+function GitHubConfig({ projectId, config, onSave, saving, saved, autoOpen }: GitHubConfigProps) {
+  const isConnected = Boolean(config.accessToken);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [repos, setRepos] = useState<GitHubRepoOption[]>([]);
+  const [loadingRepos, setLoadingRepos] = useState(false);
+  const [selRepoId, setSelRepoId] = useState('');
+
+  useEffect(() => { if (autoOpen && isConnected) openModal(); }, [autoOpen, isConnected]); // eslint-disable-line
+
+  function openModal() {
+    setSelRepoId(config.owner && config.repo ? `${config.owner}/${config.repo}` : '');
+    setRepos([]);
+    setModalOpen(true);
+  }
+
+  useEffect(() => {
+    if (!modalOpen || !isConnected) return;
+    setLoadingRepos(true);
+    fetch(`/api/github/${projectId}/data?type=repos`)
+      .then(r => r.json())
+      .then(({ data }) => setRepos(data ?? []))
+      .finally(() => setLoadingRepos(false));
+  }, [modalOpen, isConnected, projectId]);
+
+  if (!isConnected) {
+    return (
+      <div className="flex items-center gap-3 py-1">
+        <a href={`/api/github/auth?projectId=${projectId}`}
+          className="inline-flex items-center gap-2 bg-[#111111] hover:bg-[#333333] text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+          <GitHubLogo size={18} /> Connect GitHub
+        </a>
+        <span className="text-xs text-gray-400">You&apos;ll be redirected to GitHub to authorize.</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="space-y-2">
+        <ConnectedBadge projectId={projectId} provider="github">
+          GitHub connected{config.githubLogin ? ` as @${config.githubLogin}` : ''}
+        </ConnectedBadge>
+        {config.repo ? (
+          <ConfigSummary rows={[{ label: 'Repository', value: `${config.owner}/${config.repo}` }]} onEdit={openModal} />
+        ) : (
+          <button onClick={openModal} className="w-full border border-dashed border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-500 hover:border-[#ff724f] hover:text-[#ff724f] transition-colors text-left">
+            + Select repository
+          </button>
+        )}
+        {saved && <p className="text-xs text-green-600 font-medium">✓ Saved</p>}
+      </div>
+
+      {modalOpen && (
+        <ConfigModal
+          title="Configure GitHub"
+          logo={<GitHubLogo size={20} />}
+          subtitle="Select which repository to create issues in"
+          onClose={() => setModalOpen(false)}
+          onSave={async () => {
+            const r = repos.find(x => x.id === selRepoId);
+            if (!r) return;
+            await onSave({ accessToken: config.accessToken, githubLogin: config.githubLogin ?? '', owner: r.owner, repo: r.repo });
+            setModalOpen(false);
+          }}
+          saving={saving}
+          canSave={Boolean(selRepoId)}
+        >
+          <div>
+            <label className={LABEL_CLASS}>Repository</label>
+            <select value={selRepoId} onChange={e => setSelRepoId(e.target.value)} disabled={loadingRepos} className={SELECT_CLASS}>
+              <option value="">{loadingRepos ? 'Loading repositories…' : 'Select repository'}</option>
+              {repos.map(r => <option key={r.id} value={r.id}>{r.name}{r.private ? ' (private)' : ''}</option>)}
+            </select>
+          </div>
+        </ConfigModal>
+      )}
+    </>
+  );
+}
+
 /* ─── Main Panel ─────────────────────────────────────────────────────────────── */
 
 export function IntegrationsPanel({ projectId }: { projectId: string }) {
@@ -601,9 +695,9 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
     setSaving(type);
     const updated: Integration = { ...integrations[type], enabled: true, config: configUpdates };
     try {
-      if (type === 'clickup') {
-        // ClickUp goes through /setup which also registers/updates the webhook
-        const res = await fetch(`/api/clickup/${projectId}/setup`, {
+      if (type === 'clickup' || type === 'github') {
+        // ClickUp and GitHub go through /setup which also registers/updates the webhook
+        const res = await fetch(`/api/${type}/${projectId}/setup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(configUpdates),
@@ -628,7 +722,7 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
     }
   }
 
-  const COMING_SOON: IntegrationType[] = ['github', 'webhook'];
+  const COMING_SOON: IntegrationType[] = ['webhook'];
 
   return (
     <div className="space-y-3">
@@ -685,6 +779,15 @@ export function IntegrationsPanel({ projectId }: { projectId: string }) {
                     onSave={c => saveWithConfig('clickup', c)}
                     saving={saving === 'clickup'} saved={saved === 'clickup'}
                     autoOpen={searchParams.get('clickup') === 'connected'}
+                  />
+                )}
+
+                {type === 'github' && (
+                  <GitHubConfig
+                    projectId={projectId} config={integration.config}
+                    onSave={c => saveWithConfig('github', c)}
+                    saving={saving === 'github'} saved={saved === 'github'}
+                    autoOpen={searchParams.get('github') === 'connected'}
                   />
                 )}
               </div>

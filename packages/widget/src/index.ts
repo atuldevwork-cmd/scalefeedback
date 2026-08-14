@@ -1,16 +1,17 @@
 import { parseConfig } from './core/config';
-import { ScaleFeedbackWidget } from './core/widget';
+import { PinmarksWidget } from './core/widget';
 
 // Expose a global API for the host page
 declare global {
   interface Window {
-    ScaleFeedback: {
+    Pinmarks: {
       open: () => void;
       version: string;
       /** Pre-identify the reporter. When set, the name/email fields are hidden in the form. */
       setUser: (user: { name: string; email: string } | null) => void;
       setMetadata: (meta: Record<string, unknown>) => void;
     };
+    __PINMARKS_LOADED__?: boolean;
   }
 }
 
@@ -34,10 +35,10 @@ async function init() {
 
     // audience: 'members_only' — only show if user is pre-identified via setUser
     // Widget will render but FAB is deferred until setUser is called
-    const widget = new ScaleFeedbackWidget(config);
+    const widget = new PinmarksWidget(config);
 
     // Public SDK
-    window.ScaleFeedback = {
+    window.Pinmarks = {
       open() {
         widget.open();
       },
@@ -50,13 +51,21 @@ async function init() {
       },
     };
   } catch (err) {
-    console.error('[ScaleFeedback]', err);
+    console.error('[Pinmarks]', err);
   }
 }
 
-// Auto-init when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
+// Guard against double-initialization — if the script tag is present more than
+// once on the page, or re-executes (host-page re-render/HMR), a second run would
+// mount a second `#pinmarks-widget` host with its own full UI stacked on the first.
+// This flag is set synchronously so a same-tick second execution can't race past it.
+if (!window.__PINMARKS_LOADED__) {
+  window.__PINMARKS_LOADED__ = true;
+
+  // Auto-init when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 }

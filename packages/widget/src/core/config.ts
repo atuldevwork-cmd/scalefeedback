@@ -5,14 +5,14 @@ function getScriptTag(): HTMLScriptElement {
     (document.currentScript as HTMLScriptElement | null) ??
     (document.querySelector('script[data-project]') as HTMLScriptElement | null);
 
-  if (!script) throw new Error('[ScaleFeedback] Could not find widget script tag.');
+  if (!script) throw new Error('[Pinmarks] Could not find widget script tag.');
   return script;
 }
 
 /**
- * Get the Supabase auth token via a hidden iframe served from the ScaleFeedback
+ * Get the Supabase auth token via a hidden iframe served from the Pinmarks
  * origin. This solves the cross-origin localStorage restriction — the iframe
- * runs in the ScaleFeedback origin context, reads its own localStorage, and
+ * runs in the Pinmarks origin context, reads its own localStorage, and
  * posts the token back via postMessage.
  */
 function getTokenViaIframe(apiBaseUrl: string): Promise<string | null> {
@@ -52,12 +52,12 @@ export async function parseConfig(): Promise<WidgetConfig> {
   const script = getScriptTag();
 
   const projectApiKey = script.dataset['project'] ?? '';
-  if (!projectApiKey) throw new Error('[ScaleFeedback] Missing data-project attribute.');
+  if (!projectApiKey) throw new Error('[Pinmarks] Missing data-project attribute.');
 
   const apiBaseUrl = script.dataset['api'] ?? (script.src ? new URL(script.src).origin : window.location.origin);
 
   // Read optional pre-identified reporter from host-page config
-  const hostCfg = (window as unknown as { ScaleFeedbackConfig?: Record<string, unknown> }).ScaleFeedbackConfig ?? {};
+  const hostCfg = (window as unknown as { PinmarksConfig?: Record<string, unknown> }).PinmarksConfig ?? {};
   const hostReporterName  = hostCfg['reporterName']  as string | undefined;
   const hostReporterEmail = hostCfg['reporterEmail'] as string | undefined;
   const hostUser = hostCfg['user'] as { name: string; email: string } | undefined;
@@ -88,7 +88,7 @@ export async function parseConfig(): Promise<WidgetConfig> {
         projectApiKey,
         apiBaseUrl,
         color:           remote.color           ?? '#7C3AED',
-        position:        remote.position        ?? 'bottom-right',
+        position:        remote.position        ?? 'middle-right',
         buttonText:      remote.buttonText      ?? 'Report issue',
         guestReporting:  remote.guestReporting  ?? true,
         collectConsole:  remote.collectConsole  ?? true,
@@ -110,7 +110,7 @@ export async function parseConfig(): Promise<WidgetConfig> {
     projectApiKey,
     apiBaseUrl,
     color:          script.dataset['color']    ?? '#7C3AED',
-    position:       (script.dataset['position'] as WidgetConfig['position']) ?? 'bottom-right',
+    position:       (script.dataset['position'] as WidgetConfig['position']) ?? 'middle-right',
     buttonText:     script.dataset['text']     ?? 'Report issue',
     guestReporting: script.dataset['guest']    !== 'false',
     collectConsole: script.dataset['console']  !== 'false',

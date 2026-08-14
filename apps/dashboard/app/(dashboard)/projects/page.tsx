@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured, MOCK_PROJECTS } from '@/lib/mock-data';
 import { ProjectsClient } from './projects-client';
-import type { Project } from '@scalefeedback/shared';
+import type { Project } from '@pinmarks/shared';
 
 export const dynamic = 'force-dynamic';
 

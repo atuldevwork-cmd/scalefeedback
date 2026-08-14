@@ -1,4 +1,59 @@
 import html2canvas from 'html2canvas';
+import { detectExtension, captureViewportViaExtension } from './extension-bridge';
+import { captureViaServerRender } from './snapshot-render';
+
+const LOADING_OVERLAY_ID = 'sf-body-loading-overlay';
+
+// Orchestrates the AUTOMATIC capture-on-open strategy, best to worst:
+//   1. Companion browser extension (frictionless, real pixels) — if installed.
+//   2. Server-side snapshot render — a real headless browser renders a
+//      serialized DOM snapshot (matches how marker.io's own default capture
+//      works). No DOM-reconstruction bugs, no permission prompt.
+//   3. html2canvas (DOM reconstruction) — last-resort fallback if the backend
+//      is unreachable. Still silent, still works everywhere (incl. mobile).
+export async function captureScreenshot(
+  ignoreElementId: string,
+  apiBaseUrl: string,
+  projectApiKey: string,
+): Promise<string> {
+  const widgetHost = document.getElementById(ignoreElementId);
+  const loadingOverlay = document.getElementById(LOADING_OVERLAY_ID);
+  // Save the ORIGINAL inline display value (the loading overlay has its own
+  // `display:flex` from showLoadingOverlay()'s cssText) — removeProperty()
+  // would drop that instead of restoring it, collapsing the overlay to the
+  // default block display and breaking its flex centering (text jumps to
+  // the top instead of staying centered).
+  const origWidgetHostDisplay = widgetHost?.style.display ?? '';
+  const origLoadingOverlayDisplay = loadingOverlay?.style.display ?? '';
+  const hideOwnUi = () => {
+    widgetHost?.style.setProperty('display', 'none', 'important');
+    loadingOverlay?.style.setProperty('display', 'none', 'important');
+  };
+  const restoreOwnUi = () => {
+    if (widgetHost) widgetHost.style.display = origWidgetHostDisplay;
+    if (loadingOverlay) loadingOverlay.style.display = origLoadingOverlayDisplay;
+  };
+
+  const ext = await detectExtension();
+  if (ext.installed) {
+    try {
+      hideOwnUi();
+      return await captureViewportViaExtension();
+    } catch (err) {
+      console.warn('[Pinmarks] Extension capture failed, falling back.', err);
+    } finally {
+      restoreOwnUi();
+    }
+  }
+
+  try {
+    return await captureViaServerRender(apiBaseUrl, projectApiKey, hideOwnUi, restoreOwnUi);
+  } catch (err) {
+    console.warn('[Pinmarks] Server-side render failed, falling back to DOM capture.', err);
+  }
+
+  return captureScreenshotViaDom(ignoreElementId, apiBaseUrl);
+}
 
 async function toDataUrl(src: string, apiBaseUrl: string): Promise<string | null> {
   try {
@@ -173,7 +228,7 @@ async function patchUnsupportedColors(): Promise<() => void> {
   return () => undoFns.forEach((fn) => fn());
 }
 
-export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: string): Promise<string> {
+async function captureScreenshotViaDom(ignoreElementId: string, apiBaseUrl?: string): Promise<string> {
   const widgetHost = document.getElementById(ignoreElementId);
   if (widgetHost) widgetHost.style.setProperty('display', 'none', 'important');
 
@@ -196,6 +251,54 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
     '.sf-cap-hide-pseudo::before, .sf-cap-hide-pseudo::after { opacity: 0 !important; }',
   ].join('\n');
   document.head.appendChild(fix);
+
+  // Freeze position:sticky / position:fixed elements (e.g. a sticky navbar) to
+  // their current on-screen coordinates as position:absolute. html2canvas clones
+  // the document and renders it windowed at (scrollX, scrollY) — it doesn't
+  // reliably re-stick sticky elements or re-anchor fixed ones on that clone when
+  // the page is scrolled, so they end up rendered at their raw flow position
+  // instead of where they visually sit, appearing disconnected from the rest of
+  // the capture. Absolute-positioning them at rect + current scroll offset gives
+  // html2canvas the correct document-space coordinates regardless of scroll.
+  type FrozenPos = {
+    el: HTMLElement; position: string; top: string; left: string;
+    right: string; bottom: string; width: string; zIndex: string;
+  };
+  const frozenPositions: FrozenPos[] = [];
+  // Absolute-positioning a sticky element pulls it out of the document flow.
+  // A sticky navbar in a flex/grid layout (e.g. flex-col + min-h-screen) is
+  // still an in-flow box that reserves its height — removing it shifts every
+  // sibling below it upward, leaving a gap at the bottom of the fixed-size
+  // capture that renders as transparent (visible as the editor's gray canvas
+  // backdrop). A same-size placeholder holds that space open in the flow.
+  const placeholders: HTMLElement[] = [];
+  document.querySelectorAll<HTMLElement>('*').forEach((el) => {
+    const cs = getComputedStyle(el);
+    if (cs.position !== 'sticky' && cs.position !== 'fixed') return;
+    const rect = el.getBoundingClientRect();
+
+    if (cs.position === 'sticky' && el.parentNode) {
+      const placeholder = document.createElement('div');
+      placeholder.style.cssText =
+        `width:${rect.width}px;height:${rect.height}px;margin:0;padding:0;border:0;flex-shrink:0;`;
+      el.parentNode.insertBefore(placeholder, el);
+      placeholders.push(placeholder);
+    }
+
+    frozenPositions.push({
+      el,
+      position: el.style.position, top: el.style.top, left: el.style.left,
+      right: el.style.right, bottom: el.style.bottom,
+      width: el.style.width, zIndex: el.style.zIndex,
+    });
+    el.style.setProperty('position', 'absolute', 'important');
+    el.style.setProperty('top', `${rect.top + window.scrollY}px`, 'important');
+    el.style.setProperty('left', `${rect.left + window.scrollX}px`, 'important');
+    el.style.setProperty('right', 'auto', 'important');
+    el.style.setProperty('bottom', 'auto', 'important');
+    el.style.setProperty('width', `${rect.width}px`, 'important');
+    if (!cs.zIndex || cs.zIndex === 'auto') el.style.setProperty('z-index', '999', 'important');
+  });
 
   // Strip ALL background-image / mask-image on the ORIGINAL document before
   // html2canvas clones it. This is the only reliable way to stop Safari from
@@ -401,6 +504,16 @@ export async function captureScreenshot(ignoreElementId: string, apiBaseUrl?: st
   } finally {
     restorations.forEach(({ img, originalSrc }) => { img.src = originalSrc; });
     blurPseudoEls.forEach((el) => el.classList.remove('sf-cap-hide-pseudo'));
+    frozenPositions.forEach(({ el, position, top, left, right, bottom, width, zIndex }) => {
+      el.style.position = position;
+      el.style.top = top;
+      el.style.left = left;
+      el.style.right = right;
+      el.style.bottom = bottom;
+      el.style.width = width;
+      el.style.zIndex = zIndex;
+    });
+    placeholders.forEach((p) => p.remove());
     document.getElementById('sf-cap-fix')?.remove();
     document.getElementById('sf-bg-scrub')?.remove();
     bgRestorations.forEach(({ el, orig, pri }) => {

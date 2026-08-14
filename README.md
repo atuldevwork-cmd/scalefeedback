@@ -1,4 +1,4 @@
-# ScaleFeedback 🚀
+# Pinmarks 🚀
 
 A visual bug feedback tool — a [marker.io](https://marker.io) alternative built for the ScaleStation agency. Users embed a lightweight JavaScript widget on any website to capture annotated screenshots and submit feedback directly to a dashboard.
 
@@ -35,7 +35,7 @@ A visual bug feedback tool — a [marker.io](https://marker.io) alternative buil
 ## Project Structure
 
 ```
-ScaleFeedback/
+Pinmarks/
 ├── apps/
 │   ├── marketing/             # Next.js 14 marketing site (pinmarks.in)
 │   │   ├── app/                # Home, pricing, about, contact
@@ -102,7 +102,7 @@ brew install supabase/tap/supabase
 
 ```bash
 git clone <repo-url>
-cd ScaleFeedback
+cd Pinmarks
 ```
 
 ### 2. Install dependencies
@@ -336,8 +336,8 @@ Connect a project to ClickUp to push AI-scan issues as tasks and keep statuses i
 
 ### How it works
 - **Push:** Owners/Admins can push any AI-scan issue to ClickUp with one click; the ClickUp task URL is stored and shown in the sidebar
-- **Status sync:** When a task status changes in ClickUp (via webhook or on page load), ScaleFeedback updates the issue status automatically
-- **Comment sync:** Comments added in ClickUp appear in the ScaleFeedback comment thread (prefixed with `[via ClickUp]`)
+- **Status sync:** When a task status changes in ClickUp (via webhook or on page load), Pinmarks updates the issue status automatically
+- **Comment sync:** Comments added in ClickUp appear in the Pinmarks comment thread (prefixed with `[via ClickUp]`)
 
 ---
 

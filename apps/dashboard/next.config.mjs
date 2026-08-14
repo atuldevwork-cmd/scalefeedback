@@ -4,6 +4,12 @@ const nextConfig = {
   // (puppeteer ships with a ~300MB Chromium binary; @sparticuz/chromium downloads at runtime)
   experimental: {
     serverComponentsExternalPackages: ['puppeteer', 'puppeteer-core', '@sparticuz/chromium', 'cheerio'],
+    // Ensures the vendored rrweb-snapshot bundle ships in the deployed
+    // function's filesystem — it's only reached via a runtime fs.readFileSync,
+    // which Vercel's build-time file tracer won't pick up on its own.
+    outputFileTracingIncludes: {
+      '/api/render-snapshot/route': ['./lib/vendor/**'],
+    },
   },
   images: {
     remotePatterns: [
@@ -42,6 +48,15 @@ const nextConfig = {
         headers: [
           { key: 'Access-Control-Allow-Origin',  value: '*' },
           { key: 'Access-Control-Allow-Methods', value: 'GET, OPTIONS' },
+        ],
+      },
+      // ── Widget server-side screenshot render — cross-origin from any site ──
+      {
+        source: '/api/render-snapshot',
+        headers: [
+          { key: 'Access-Control-Allow-Origin',  value: '*' },
+          { key: 'Access-Control-Allow-Methods', value: 'POST, OPTIONS' },
+          { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
         ],
       },
     ];

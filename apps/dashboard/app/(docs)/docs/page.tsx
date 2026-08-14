@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { LIVE_INTEGRATIONS, CMS_PLATFORMS_COMING_SOON } from '@/lib/cms-plugins';
+import { DocsSidebar } from '../docs-sidebar';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.pinmarks.io';
 const WIDGET_URL = `${APP_URL}/widget.js`;
@@ -74,14 +77,43 @@ window.PinmarksConfig = {
   // OR use individual fields:
   reporterName: 'Jane Smith',
   reporterEmail: 'jane@acme.com',
-
-  // Event hooks
-  onOpen:   () => console.log('Widget opened'),
-  onClose:  () => console.log('Widget closed'),
-  onSubmit: (fb) => console.log('Submitted:', fb),
 };
 
 // Keyboard shortcut: Cmd+I (Mac) / Ctrl+I (Windows) also opens the widget`;
+
+const CONFIG_ITEMS = [
+  { opt: 'data-project *', type: 'HTML attribute', def: '—', desc: 'Required. Your project API key, set on the <script> tag.' },
+  { opt: 'color', type: 'string', def: '#7C3AED', desc: 'Accent color for the widget button and UI. Overridden by dashboard settings.' },
+  { opt: 'position', type: '"bottom-right" | "bottom-left" | "middle-right" | "middle-left"', def: '"middle-right"', desc: 'Where the feedback button appears on screen. Overridden by dashboard settings.' },
+  { opt: 'buttonText', type: 'string', def: '"Report issue"', desc: 'Label on the feedback button (data-text attribute on script tag).' },
+  { opt: 'collectConsole', type: 'boolean', def: 'true', desc: 'Capture browser console logs with each report.' },
+  { opt: 'collectNetwork', type: 'boolean', def: 'false', desc: 'Capture failed XHR / fetch requests (4xx / 5xx only).' },
+  { opt: 'guestReporting', type: 'boolean', def: 'true', desc: 'Show name & email fields for anonymous users.' },
+  { opt: 'user', type: '{ name, email }', def: '—', desc: 'Pre-identify the reporter via window.PinmarksConfig.user or Pinmarks.setUser(). Hides name/email fields.' },
+];
+
+const TROUBLESHOOTING_ITEMS = [
+  {
+    q: 'The widget button is not showing',
+    a: 'Ensure the script tag has a valid data-project attribute and is placed before the closing </body> tag. Check the browser console for [Pinmarks] errors.',
+  },
+  {
+    q: 'Screenshots are blank or incomplete',
+    a: 'The widget captures screenshots via a fallback chain: the Pinmarks browser extension (if installed), then a server-side render, then a client-side DOM reconstruction (html2canvas) as a last resort. Cross-origin iframes and some CSS features (backdrop-filter) may not render correctly in the html2canvas fallback. Ensure your site allows same-origin canvas access.',
+  },
+  {
+    q: 'Widget does not appear in production but works locally',
+    a: 'Check that your Content Security Policy (CSP) allows scripts from the Pinmarks domain. You may need to add it to script-src and connect-src.',
+  },
+  {
+    q: 'Console / network logs are empty',
+    a: 'Set collectConsole: true and collectNetwork: true in your config. Network capture only records failed requests (4xx / 5xx).',
+  },
+  {
+    q: 'Submissions are not appearing in the dashboard',
+    a: 'Verify the data-project value matches your API key exactly. Check the Network tab for a POST to /api/feedback — any 4xx response means the key is wrong or the project is inactive.',
+  },
+];
 
 /* ── Reusable components ──────────────────────────────────────────────── */
 
@@ -116,22 +148,13 @@ function SectionBadge({ n }: { n: number }) {
   );
 }
 
-/* ── Sidebar nav sections ─────────────────────────────────────────────── */
-
-const SECTIONS = [
-  { id: 'quickstart', label: 'Quick start' },
-  { id: 'install', label: 'Installation' },
-  { id: 'sdk', label: 'SDK & Hooks' },
-  { id: 'config', label: 'Config reference' },
-  { id: 'troubleshooting', label: 'Troubleshooting' },
-];
-
 /* ── Page ─────────────────────────────────────────────────────────────── */
 
 export default function DocsPage() {
   const [apiKey] = useState('proj_your_api_key_here');
   const [framework, setFramework] = useState<'html' | 'react' | 'nextjs' | 'vue'>('html');
-  const [active, setActive] = useState('quickstart');
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
+  const [openConfig, setOpenConfig] = useState<string | null>(null);
 
   const frameworkSnippet = {
     html: htmlSnippet(apiKey),
@@ -144,31 +167,10 @@ export default function DocsPage() {
 
   return (
     <div className="flex min-h-screen">
-      {/* ── Sidebar ── */}
-      <aside className="w-52 shrink-0 border-r border-border bg-muted/30 py-8 px-4 sticky top-0 h-screen hidden lg:block">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-4 px-2">On this page</p>
-        <nav className="space-y-0.5">
-          {SECTIONS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setActive(s.id);
-                document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                active === s.id
-                  ? 'bg-[#fff3f0] text-[#ff724f] font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
+      <DocsSidebar />
 
       {/* ── Content ── */}
-      <div className="flex-1 px-6 lg:px-10 py-8 max-w-3xl">
+      <div className="flex-1 px-6 lg:px-10 py-8">
         <h1 className="text-2xl font-bold text-foreground mb-1">Widget Documentation</h1>
         <p className="text-muted-foreground mb-10">Embed the Pinmarks widget on any site in under 2 minutes.</p>
 
@@ -182,7 +184,7 @@ export default function DocsPage() {
             </h2>
             <ol className="space-y-3 text-sm text-muted-foreground">
               {[
-                <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the snippet from <strong className="text-foreground">Settings → Widget Settings</strong>.</>,
+                <>Go to <strong className="text-foreground">Projects</strong> → open your project → copy the snippet from <strong className="text-foreground">Settings → Widget Installation</strong>.</>,
                 <>Paste the snippet before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag of your site.</>,
                 <>Reload your site — a <strong className="text-[#ff724f]">Report issue</strong> button appears on your page.</>,
                 <>Submit a test report. It appears instantly in your Pinmarks dashboard.</>,
@@ -210,12 +212,12 @@ export default function DocsPage() {
                 <h3 className="font-medium text-foreground">Add to your site</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                Copy your Snippet code from <strong className="text-foreground">Projects → Settings → Widget Settings
+                Copy your Snippet code from <strong className="text-foreground">Projects → Settings → Widget Installation
                 </strong>, then paste the snippet before the closing <code className="bg-muted px-1 rounded text-xs">&lt;/body&gt;</code> tag.
               </p>
 
               {/* Framework tabs */}
-              <div className="flex gap-1 mb-3 bg-muted rounded-lg p-1 w-fit">
+              <div className="flex gap-1 mb-3 bg-muted rounded-lg p-1 w-fit flex-wrap">
                 {(['html', 'react', 'nextjs', 'vue'] as const).map((fw) => (
                   <button
                     key={fw}
@@ -237,25 +239,80 @@ export default function DocsPage() {
                   Uses Next.js <code className="bg-muted px-1 rounded">next/script</code> for optimal loading.
                 </p>
               )}
+
             </div>
           </section>
 
-          {/* ── SDK & hooks ── */}
+          {/* ── CMS plugins ── */}
+          <section id="cms">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#ff724f] text-[20px]">extension</span>
+              CMS plugins
+            </h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              Available now — no plugin needed, just paste the snippet into these tools&apos; existing custom code fields.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              {LIVE_INTEGRATIONS.map(({ id, name, abbr }) => (
+                <Link
+                  key={id}
+                  href={`/docs/${id}`}
+                  className="text-left border border-border rounded-xl p-4 flex items-center gap-3 transition-colors hover:border-[#ff724f]/40"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground shrink-0">
+                    {abbr}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
+                    <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                      Available
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-xl mb-5">
+              <span className="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">construction</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Native CMS plugins — coming soon</p>
+                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                  Native integrations for these platforms are under development. Use the Installation snippet above in the meantime.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pointer-events-none select-none">
+              {CMS_PLATFORMS_COMING_SOON.map(({ name, abbr }) => (
+                <div key={name} className="border border-border rounded-xl p-4 flex items-center gap-3 cursor-not-allowed">
+                  <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground shrink-0">
+                    {abbr}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground leading-tight">{name}</p>
+                    <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[#ff724f]/10 text-[#ff724f] font-medium">
+                      Coming soon
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* ── SDK ── */}
           <section id="sdk">
             <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-[#ff724f] text-[20px]">code</span>
-              SDK & Event hooks
+              SDK
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Trigger the widget programmatically, prefill user data, or react to events.
+              Trigger the widget programmatically or prefill user data.
             </p>
             <CodeBlock lang="JavaScript" code={sdkSnippet} />
 
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { method: 'Pinmarks.open()', desc: 'Opens the widget panel' },
                 { method: 'Pinmarks.setUser(user)', desc: 'Pre-identify the reporter; pass null to clear' },
-                { method: 'onSubmit(fb)', desc: 'Fires after a report is submitted' },
               ].map(({ method, desc }) => (
                 <div key={method} className="bg-card border border-border rounded-xl p-4">
                   <p className="font-mono text-xs text-[#ff724f] mb-1">{method}</p>
@@ -271,39 +328,33 @@ export default function DocsPage() {
               <span className="material-symbols-outlined text-[#ff724f] text-[20px]">tune</span>
               Configuration reference
             </h2>
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left px-4 py-3 font-medium text-foreground text-xs">Option</th>
-                    <th className="text-left px-4 py-3 font-medium text-foreground text-xs">Type</th>
-                    <th className="text-left px-4 py-3 font-medium text-foreground text-xs">Default</th>
-                    <th className="text-left px-4 py-3 font-medium text-foreground text-xs">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {[
-                    ['data-project *', 'HTML attribute', '—', 'Required. Your project API key, set on the <script> tag.'],
-                    ['color', 'string', '#7C3AED', 'Accent color for the widget button and UI. Overridden by dashboard settings.'],
-                    ['position', '"bottom-right" | "bottom-left" | "middle-right" | "middle-left"', '"bottom-right"', 'Where the feedback button appears on screen. Overridden by dashboard settings.'],
-                    ['buttonText', 'string', '"Report issue"', 'Label on the feedback button (data-text attribute on script tag).'],
-                    ['collectConsole', 'boolean', 'true', 'Capture browser console logs with each report.'],
-                    ['collectNetwork', 'boolean', 'false', 'Capture failed XHR / fetch requests (4xx / 5xx only).'],
-                    ['guestReporting', 'boolean', 'true', 'Show name & email fields for anonymous users. Overridden by dashboard settings.'],
-                    ['user', '{ name, email }', '—', 'Pre-identify the reporter via window.PinmarksConfig.user or Pinmarks.setUser(). Hides name/email fields.'],
-                    ['onOpen', '() => void', '—', 'Callback fired when the widget panel opens.'],
-                    ['onClose', '() => void', '—', 'Callback fired when the widget panel closes.'],
-                    ['onSubmit', '(fb: object) => void', '—', 'Callback fired after a successful submission.'],
-                  ].map(([opt, type, def, desc]) => (
-                    <tr key={opt} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 font-mono text-xs text-[#ff724f] whitespace-nowrap">{opt}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-500 whitespace-nowrap">{type}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-400">{def}</td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground">{desc}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
+              {CONFIG_ITEMS.map(({ opt, type, def, desc }) => {
+                const isOpen = openConfig === opt;
+                return (
+                  <div key={opt}>
+                    <button
+                      onClick={() => setOpenConfig(isOpen ? null : opt)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="font-mono text-xs text-[#ff724f] whitespace-nowrap">{opt}</span>
+                        <span className="font-mono text-[11px] text-gray-500 truncate hidden sm:inline">{type}</span>
+                        <span className="font-mono text-[11px] text-gray-400 whitespace-nowrap">{def}</span>
+                      </div>
+                      <span className={`material-symbols-outlined text-[18px] text-muted-foreground shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <div className="px-4 pb-3 space-y-1">
+                        <p className="text-xs text-muted-foreground sm:hidden">Type: <span className="font-mono">{type}</span></p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 
@@ -314,36 +365,28 @@ export default function DocsPage() {
               Troubleshooting
             </h2>
             <div className="space-y-3">
-              {[
-                {
-                  q: 'The widget button is not showing',
-                  a: 'Ensure the script tag has a valid data-project attribute and is placed before the closing </body> tag. Check the browser console for [Pinmarks] errors.',
-                },
-                {
-                  q: 'Screenshots are blank or incomplete',
-                  a: 'The widget uses html-to-image to capture screenshots. Cross-origin iframes and some CSS features (backdrop-filter) may not render. Ensure your site allows same-origin canvas access.',
-                },
-                {
-                  q: 'Widget does not appear in production but works locally',
-                  a: 'Check that your Content Security Policy (CSP) allows scripts from the Pinmarks domain. You may need to add it to script-src and connect-src.',
-                },
-                {
-                  q: 'Console / network logs are empty',
-                  a: 'Set collectConsole: true and collectNetwork: true in your config. Network capture only records failed requests (4xx / 5xx).',
-                },
-                {
-                  q: 'Submissions are not appearing in the dashboard',
-                  a: 'Verify the data-project value matches your API key exactly. Check the Network tab for a POST to /api/feedback — any 4xx response means the key is wrong or the project is inactive.',
-                },
-              ].map(({ q, a }) => (
-                <div key={q} className="border border-border rounded-xl p-5">
-                  <p className="font-semibold text-foreground text-sm mb-1.5 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[#ff724f] text-[16px]">help</span>
-                    {q}
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed pl-6">{a}</p>
-                </div>
-              ))}
+              {TROUBLESHOOTING_ITEMS.map(({ q, a }) => {
+                const isOpen = openFaq === q;
+                return (
+                  <div key={q} className="border border-border rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => setOpenFaq(isOpen ? null : q)}
+                      className="w-full flex items-center justify-between gap-3 p-5 text-left"
+                    >
+                      <span className="font-semibold text-foreground text-sm flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#ff724f] text-[16px]">help</span>
+                        {q}
+                      </span>
+                      <span className={`material-symbols-outlined text-[20px] text-muted-foreground shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+                    {isOpen && (
+                      <p className="text-sm text-muted-foreground leading-relaxed px-5 pb-5 pl-[3.25rem]">{a}</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="mt-6 bg-muted/50 border border-border rounded-xl p-5 flex items-start gap-3">

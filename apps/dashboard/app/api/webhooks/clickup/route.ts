@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { createHmac } from 'crypto';
 import { mapClickUpStatus } from '@/lib/integrations/clickup';
+import { planAtLeast } from '@/lib/plan';
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -58,6 +59,16 @@ export async function POST(req: NextRequest) {
   const feedback = feedbackRows?.[0] as { id: string; status: string } | undefined;
   if (!feedback) {
     return NextResponse.json({ ok: true }); // task not tracked by us
+  }
+
+  // Issue sync (status + comments flowing back from ClickUp) is a Pro/Agency
+  // feature. Free orgs still get one-way "push to ClickUp" — just not this.
+  const { data: proj } = await service.from('projects').select('organisation_id').eq('id', projectId).single();
+  const { data: org } = proj
+    ? await service.from('organisations').select('plan').eq('id', proj.organisation_id).single()
+    : { data: null };
+  if (!planAtLeast(org?.plan, 'pro')) {
+    return NextResponse.json({ ok: true }); // silently ignore — org isn't on a syncing plan
   }
 
   const historyItems = (payload.history_items as unknown[]) ?? [];

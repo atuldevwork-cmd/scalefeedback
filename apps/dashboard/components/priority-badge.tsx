@@ -1,4 +1,4 @@
-import type { FeedbackPriority } from '@scalefeedback/shared';
+import type { FeedbackPriority } from '@pinmarks/shared';
 
 const config: Record<FeedbackPriority, { label: string; className: string }> = {
   low:      { label: 'Low',      className: 'bg-gray-100 text-gray-600' },

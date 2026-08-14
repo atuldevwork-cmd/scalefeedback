@@ -1,43 +1,4 @@
-function parseBrowser(raw: string): string {
-  if (!raw || !raw.startsWith('Mozilla')) return raw;
-  if (raw.includes('Edg/')) {
-    const m = raw.match(/Edg\/([\d.]+)/);
-    return `Edge ${m ? m[1].split('.').slice(0, 2).join('.') : ''}`.trim();
-  }
-  if (raw.includes('Chrome/')) {
-    const m = raw.match(/Chrome\/([\d.]+)/);
-    return `Chrome ${m ? m[1].split('.').slice(0, 2).join('.') : ''}`.trim();
-  }
-  if (raw.includes('Firefox/')) {
-    const m = raw.match(/Firefox\/([\d.]+)/);
-    return `Firefox ${m ? m[1].split('.').slice(0, 2).join('.') : ''}`.trim();
-  }
-  if (raw.includes('Safari/') && !raw.includes('Chrome')) {
-    const m = raw.match(/Version\/([\d.]+)/);
-    return `Safari ${m ? m[1].split('.').slice(0, 2).join('.') : ''}`.trim();
-  }
-  return raw;
-}
-
-function parseOS(raw: string): string {
-  if (!raw) return raw;
-  if (raw.includes('Windows NT 10.0')) return 'Windows 10/11';
-  if (raw.includes('Windows NT')) return 'Windows';
-  if (raw.includes('Mac OS X')) {
-    const m = raw.match(/Mac OS X ([\d_]+)/);
-    return `macOS ${m ? m[1].replace(/_/g, '.').split('.').slice(0, 2).join('.') : ''}`.trim();
-  }
-  if (raw === 'MacIntel' || raw === 'MacPPC') return 'macOS';
-  if (raw === 'Win32' || raw === 'Win64') return 'Windows';
-  if (raw.includes('iPhone')) return 'iOS (iPhone)';
-  if (raw.includes('iPad')) return 'iOS (iPad)';
-  if (raw.includes('Android')) {
-    const m = raw.match(/Android ([\d.]+)/);
-    return `Android ${m ? m[1] : ''}`.trim();
-  }
-  if (raw.includes('Linux')) return 'Linux';
-  return raw;
-}
+import { parseBrowser, parseOS } from './format';
 
 interface ClickUpPayload {
   accessToken: string;
@@ -101,7 +62,7 @@ export async function createClickUpTask(
     name,
     markdown_description: markdownDescription,
     priority: PRIORITY_MAP[p.feedbackType] ?? 3,
-    tags: ['scalefeedback', p.feedbackType],
+    tags: ['pinmarks', p.feedbackType],
   };
 
   if (p.assigneeId) {

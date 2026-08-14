@@ -1,30 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { LIVE_INTEGRATIONS, CMS_PLATFORMS_COMING_SOON } from '@/lib/cms-plugins';
 
 interface Props {
   apiKey: string;
   projectName?: string;
 }
 
-type Tab = 'snippet' | 'npm' | 'cms';
-
-const CMS_PLATFORMS = [
-  { name: 'WordPress',          abbr: 'WP'  },
-  { name: 'Drupal',             abbr: 'DR'  },
-  { name: 'Google Tag Manager', abbr: 'GTM' },
-  { name: 'Webflow',            abbr: 'WF'  },
-  { name: 'Squarespace',        abbr: 'SS'  },
-  { name: 'Ghost',              abbr: 'GH'  },
-  { name: 'Prestashop',         abbr: 'PS'  },
-  { name: 'Craft CMS',          abbr: 'CR'  },
-  { name: 'Shopify',            abbr: 'SH'  },
-  { name: 'Sylius',             abbr: 'SY'  },
-  { name: 'HubSpot',            abbr: 'HS'  },
-  { name: 'Bubble.io',          abbr: 'BB'  },
-  { name: 'Wix',                abbr: 'WX'  },
-  { name: 'MkDocs',             abbr: 'MK'  },
-];
+type Tab = 'snippet' | 'npm' | 'cms' | 'ai';
 
 function StepNumber({ n }: { n: number }) {
   return (
@@ -80,11 +65,11 @@ export function WidgetInstallSnippet({ apiKey, projectName }: Props) {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<boolean | null>(null);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://scalefeedback.app';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://pinmarks.app';
   const snippet = `<script src="${appUrl}/widget.js" data-project="${apiKey}"></script>`;
 
-  const npmInstall = `npm install -s @scalefeedback/widget`;
-  const npmUsage = `import scaleFeedback from '@scalefeedback/widget';\n\nconst widget = await scaleFeedback.init({\n  projectKey: '${apiKey}',\n});`;
+  const npmInstall = `npm install -s @pinmarks/widget`;
+  const npmUsage = `import pinmarks from '@pinmarks/widget';\n\nconst widget = await pinmarks.init({\n  projectKey: '${apiKey}',\n});`;
 
   const defaultSubject = 'Can you install this widget on our website?';
   const defaultMessage = `Hi,
@@ -104,6 +89,66 @@ Thanks!`;
   const [subject, setSubject] = useState(defaultSubject);
   const [message, setMessage] = useState(defaultMessage);
 
+  const aiInstallPrompt = `You are installing the Pinmarks feedback widget in this codebase.
+
+## 1. Detect the install path
+
+Inspect the codebase and pick ONE:
+
+- **Bundler-based app** if a JavaScript bundler is configured (vite, webpack,
+  rollup, parcel, esbuild, next, nuxt, remix, astro, sveltekit, gatsby).
+  Add the snippet via a lifecycle hook in the app entry (main.ts, App.vue,
+  _app.tsx, layout.tsx, ...) — e.g. a Next.js <Script strategy="lazyOnload">,
+  a React useEffect that appends the <script> tag, or the equivalent mounted
+  hook for your framework.
+
+- **CMS / no-code tool** if it is HubSpot, Webflow, Google Tag Manager,
+  Squarespace, Ghost, Shopify, Prestashop, Bubble.io, Wix, or MkDocs — paste
+  the snippet into that tool's existing custom code / footer HTML field.
+  Full guides: ${appUrl}/docs/hubspot, ${appUrl}/docs/webflow, and
+  ${appUrl}/docs/<platform> for the rest.
+  (WordPress, Drupal, Craft CMS and Sylius don't have a native Pinmarks
+  plugin yet — use the code snippet instead.)
+
+- **Code snippet** otherwise (static site, plain HTML, server-rendered
+  templates without a bundler). Insert the snippet before the closing
+  </body> tag on every page.
+
+If the choice is unclear, ask the user before proceeding.
+
+## 2. Ask the user (use askquestion when supported)
+
+Before writing code, ask:
+
+- Should the widget auto-identify reporters? If yes, point me at the auth or
+  session module so I can wire \`Pinmarks.setUser({ name, email })\`.
+- Install in dev only, prod only, or both? (Default: both.)
+- Is there a feature-flag system to gate the load?
+
+Skip questions whose answers are obvious from the codebase.
+
+## 3. Install
+
+Apply the chosen path. Keep the snippet unmodified except for the reporter
+bits the user asked for.
+
+## 4. Verify
+
+Run the dev server, load a page, confirm the Pinmarks feedback button
+appears on screen. Report the file(s) changed and the verification result.
+
+---
+
+**Project API key:** \`${apiKey}\`
+
+Code snippet:
+
+\`\`\`html
+${snippet}
+\`\`\`
+
+Docs: ${appUrl}/docs`;
+
   function openModal() {
     setSubject(defaultSubject);
     setMessage(defaultMessage);
@@ -121,9 +166,10 @@ Thanks!`;
   }
 
   const TABS: { id: Tab; label: string; icon: string }[] = [
-    { id: 'snippet', label: 'Code snippet', icon: 'code'      },
-    { id: 'npm',     label: 'NPM package',  icon: 'package_2' },
-    { id: 'cms',     label: 'CMS plugins',  icon: 'extension' },
+    { id: 'snippet', label: 'Code snippet',    icon: 'code'         },
+    { id: 'npm',     label: 'NPM package',     icon: 'package_2'    },
+    { id: 'cms',     label: 'CMS plugins',     icon: 'extension'    },
+    { id: 'ai',      label: 'AI install prompt', icon: 'auto_awesome' },
   ];
 
   return (
@@ -236,7 +282,7 @@ Thanks!`;
             <div>
               <p className="text-sm font-semibold text-amber-800">NPM package — coming soon</p>
               <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                The <code className="bg-amber-100 px-1 rounded">@scalefeedback/widget</code> npm package is under development. Use the <button onClick={() => setTab('snippet')} className="underline font-medium hover:text-amber-900">Code snippet</button> tab in the meantime.
+                The <code className="bg-amber-100 px-1 rounded">@pinmarks/widget</code> npm package is under development. Use the <button onClick={() => setTab('snippet')} className="underline font-medium hover:text-amber-900">Code snippet</button> tab in the meantime.
               </p>
             </div>
           </div>
@@ -270,8 +316,8 @@ Thanks!`;
           {/* Resource links */}
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#111111]/10 bg-[#111111]/3">
             {[
-              { icon: 'package_2', label: 'npm Package',      sub: 'View in npm',        href: 'https://www.npmjs.com/package/@scalefeedback/widget' },
-              { icon: 'code',      label: 'GitHub repository', sub: 'View in GitHub',     href: 'https://github.com/atuldevwork-cmd/scalefeedback'    },
+              { icon: 'package_2', label: 'npm Package',      sub: 'View in npm',        href: 'https://www.npmjs.com/package/@pinmarks/widget' },
+              { icon: 'code',      label: 'GitHub repository', sub: 'View in GitHub',     href: 'https://github.com/atuldevwork-cmd/pinmarks'    },
               { icon: 'menu_book', label: 'Documentation',     sub: 'View documentation', href: `${appUrl}/docs`                                       },
             ].map(({ icon, label, sub, href }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer"
@@ -291,10 +337,37 @@ Thanks!`;
       {/* ── CMS plugins ── */}
       {tab === 'cms' && (
         <div className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-3">
+              Available now — no plugin needed, just paste the snippet into these tools&apos; existing custom code fields.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {LIVE_INTEGRATIONS.map(({ id, name, abbr }) => (
+                <Link
+                  key={id}
+                  href={`/docs/${id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-left border border-[#111111]/10 rounded-xl p-4 flex items-center gap-3 transition-colors hover:border-[#ff724f]/40"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-[#111111]/8 flex items-center justify-center text-[10px] font-bold text-[#111111]/50 shrink-0">
+                    {abbr}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#111111] leading-tight">{name}</p>
+                    <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                      Available
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-xl">
             <span className="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">construction</span>
             <div>
-              <p className="text-sm font-semibold text-amber-800">CMS plugins — coming soon</p>
+              <p className="text-sm font-semibold text-amber-800">Native CMS plugins — coming soon</p>
               <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
                 Native CMS integrations are under development. Use the <button onClick={() => setTab('snippet')} className="underline font-medium hover:text-amber-900">Code snippet</button> tab in the meantime.
               </p>
@@ -305,7 +378,7 @@ Thanks!`;
             Native plugins for your favourite CMS — no code required.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {CMS_PLATFORMS.map(({ name, abbr }) => (
+            {CMS_PLATFORMS_COMING_SOON.map(({ name, abbr }) => (
               <div key={name} className="border border-[#111111]/10 rounded-xl p-4 flex items-center gap-3 cursor-not-allowed">
                 <div className="w-9 h-9 rounded-lg bg-[#111111]/8 flex items-center justify-center text-[10px] font-bold text-[#111111]/50 shrink-0">
                   {abbr}
@@ -320,6 +393,17 @@ Thanks!`;
             ))}
           </div>
           </div>
+        </div>
+      )}
+
+      {/* ── AI install prompt ── */}
+      {tab === 'ai' && (
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Copy this prompt into Claude Code, Cursor, or any AI coding assistant — it'll detect how your codebase is
+            built and wire up the Pinmarks widget for you, with your project&apos;s API key already filled in.
+          </p>
+          <SnippetCodeBlock code={aiInstallPrompt} />
         </div>
       )}
 

@@ -3,6 +3,7 @@ import { createGithubIssue } from './github';
 import { createJiraIssue } from './jira';
 import { fireWebhook } from './webhook';
 import { createClickUpTask } from './clickup';
+import type { ConsoleLogEntry } from './format';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface FeedbackIntegrationData {
@@ -13,6 +14,7 @@ export interface FeedbackIntegrationData {
   feedbackType: string;
   description?: string;
   reporterName?: string;
+  reporterEmail?: string;
   pageUrl: string;
   status: string;
   priority?: string;
@@ -24,6 +26,10 @@ export interface FeedbackIntegrationData {
   screenSize?: string;
   viewportSize?: string;
   devicePixelRatio?: number;
+  // Extras
+  consoleLogs?: ConsoleLogEntry[];
+  hasSessionReplay?: boolean;
+  customMetadata?: Record<string, unknown>;
 }
 
 export interface Integration {
@@ -67,8 +73,8 @@ async function fireOne(
         });
         break;
 
-      case 'github':
-        await createGithubIssue({
+      case 'github': {
+        const result = await createGithubIssue({
           accessToken: integration.config.accessToken,
           owner: integration.config.owner,
           repo: integration.config.repo,
@@ -77,10 +83,27 @@ async function fireOne(
           feedbackType: data.feedbackType,
           description: data.description,
           reporterName: data.reporterName,
+          reporterEmail: data.reporterEmail,
           pageUrl: data.pageUrl,
           dashboardUrl: data.dashboardUrl,
+          screenshotUrl: data.screenshotUrl,
+          browser: data.browser,
+          os: data.os,
+          screenSize: data.screenSize,
+          viewportSize: data.viewportSize,
+          devicePixelRatio: data.devicePixelRatio,
+          consoleLogs: data.consoleLogs,
+          hasSessionReplay: data.hasSessionReplay,
+          customMetadata: data.customMetadata,
         });
+        if (result && supabase) {
+          await supabase
+            .from('feedback')
+            .update({ external_id: String(result.issueNumber), external_url: result.issueUrl })
+            .eq('id', data.feedbackId);
+        }
         break;
+      }
 
       case 'jira':
         await createJiraIssue({

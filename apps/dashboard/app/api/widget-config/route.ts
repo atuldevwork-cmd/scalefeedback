@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { planAtLeast } from '@/lib/plan';
 
 // CORS — this endpoint is called from customer websites
 const CORS = {
@@ -20,11 +21,11 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
 
-  let project: { id: string; widget_config: unknown } | null = null;
+  let project: { id: string; widget_config: unknown; organisations: { plan: string } | { plan: string }[] | null } | null = null;
   try {
     const { data } = await supabase
       .from('projects')
-      .select('id, widget_config')
+      .select('id, widget_config, organisations(plan)')
       .eq('api_key', key)
       .single();
     project = data;
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   if (!project) {
     return NextResponse.json(
-      { color: '#7C3AED', position: 'bottom-right', buttonText: 'Report issue',
+      { color: '#7C3AED', position: 'middle-right', buttonText: 'Report issue',
         guestReporting: true, collectConsole: true, collectNetwork: false,
         audience: 'everyone', pages: 'all', sessionReplay: false },
       { headers: CORS }
@@ -42,6 +43,8 @@ export async function GET(req: NextRequest) {
   }
 
   const cfg = (project.widget_config ?? {}) as Record<string, unknown>;
+  const orgRow = Array.isArray(project.organisations) ? project.organisations[0] : project.organisations;
+  const hasProAccess = planAtLeast(orgRow?.plan, 'pro');
 
   // If the request includes a valid Supabase auth token, auto-identify the reporter
   // so the widget hides the name/email fields.
@@ -85,16 +88,16 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(
     {
       color:           cfg.color           ?? '#7C3AED',
-      position:        cfg.buttonPlacement ?? cfg.position ?? 'bottom-right',
+      position:        cfg.buttonPlacement ?? cfg.position ?? 'middle-right',
       buttonText:      cfg.buttonText      ?? 'Report issue',
       guestReporting:  cfg.guestReporting  ?? true,
       collectConsole:  cfg.collectConsole  ?? true,
-      collectNetwork:  cfg.collectNetwork  ?? false,
+      collectNetwork:  hasProAccess && Boolean(cfg.collectNetwork ?? false),
       audience:        cfg.audience        ?? 'everyone',
       pages:           cfg.pages           ?? 'all',
       secretParamType: cfg.secretParamType ?? 'default',
       secretParam:     cfg.secretParam     ?? '',
-      sessionReplay:   cfg.sessionReplay   ?? false,
+      sessionReplay:   hasProAccess && Boolean(cfg.sessionReplay),
       ...(loggedInUser ? { user: loggedInUser } : {}),
     },
     { headers: CORS }

@@ -9,13 +9,21 @@ import { marketingUrl } from '@/lib/marketing-url';
 import { NotificationBell } from './notification-bell';
 import { SupportInboxBadge } from './support-chat/inbox-badge';
 
-const BASE_NAV: { label: string; href: string; icon: string; badge?: React.ReactNode }[] = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: string;
+  badge?: React.ReactNode;
+  newTab?: boolean;
+}
+
+const BASE_NAV: NavItem[] = [
   { label: 'Projects', href: '/projects', icon: 'folder_open' },
   { label: 'Settings', href: '/settings', icon: 'settings' },
-  { label: 'Docs', href: '/docs', icon: 'article' },
+  { label: 'Docs', href: '/docs', icon: 'article', newTab: true },
 ];
 
-const AGENT_NAV_ITEM = { label: 'Support Inbox', href: '/support', icon: 'support_agent', badge: <SupportInboxBadge /> };
+const AGENT_NAV_ITEM: NavItem = { label: 'Support Inbox', href: '/support', icon: 'support_agent', badge: <SupportInboxBadge /> };
 
 
 function NotificationSidebarItem() {
@@ -34,11 +42,20 @@ function NotificationSidebarItem() {
 export function Sidebar() {
   const pathname = usePathname();
   const [isAgent, setIsAgent] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.from('support_agents').select('user_id').maybeSingle()
       .then(({ data }) => { if (data) setIsAgent(true); });
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      setUserName(user.user_metadata?.full_name ?? user.user_metadata?.name ?? '');
+      setUserEmail(user.email ?? '');
+      setAvatarUrl(user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? null);
+    });
   }, []);
 
   const navItems = isAgent
@@ -70,6 +87,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              {...(item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               className={cn(
                 'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] font-medium transition-all',
                 active
@@ -97,6 +115,27 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="px-3 py-4 border-t border-gray-100 space-y-0.5">
+        <Link
+          href="/settings/profile"
+          className="flex items-center gap-2.5 px-3 py-2.5 mb-1 rounded-lg hover:bg-gray-50 transition-all"
+        >
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[#fff3f0] flex items-center justify-center text-xs font-bold text-[#111111] shrink-0">
+              {(userName || userEmail || '?').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-[#111111] truncate leading-tight">
+              {userName || userEmail || 'Loading…'}
+            </p>
+            {userName && userEmail && (
+              <p className="text-xs text-gray-400 truncate leading-tight">{userEmail}</p>
+            )}
+          </div>
+        </Link>
         <Link
           href={marketingUrl('/contact')}
           className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] font-medium text-[#111111]/60 hover:bg-gray-50 hover:text-[#111111] transition-all"

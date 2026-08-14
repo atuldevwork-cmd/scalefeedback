@@ -9,7 +9,7 @@ const MOCK_MEMBERS = [
   { id: 'm-3', user_id: 'u-3', email: 'dev@scalestation.io', name: 'Dev Team', role: 'member' },
 ];
 
-const MOCK_INVITE_LINK = 'https://scalefeedback.app/join/demo-invite-token-abc123';
+const MOCK_INVITE_LINK = 'https://pinmarks.app/join/demo-invite-token-abc123';
 
 export interface PendingInvitation {
   id: string;

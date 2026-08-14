@@ -1,6 +1,7 @@
 import { load } from 'cheerio';
 import { readFileSync } from 'fs';
 import { createRequire } from 'module';
+import { getBrowser } from './browser';
 
 const _require = createRequire(import.meta.url);
 
@@ -76,7 +77,7 @@ export interface CrawlResult {
 const PAGE_TIMEOUT_MS = 20_000;
 const MAX_BODY_CHARS = 3_000;
 
-const BOT_UA = 'Mozilla/5.0 (compatible; PinmarksBot/1.0; +https://scalefeedback.com)';
+const BOT_UA = 'Mozilla/5.0 (compatible; PinmarksBot/1.0; +https://pinmarks.com)';
 
 function isSitemapUrl(url: string) {
   return /sitemap.*\.xml/i.test(url);
@@ -318,19 +319,8 @@ async function crawlWithFetch(url: string, maxPages: number): Promise<CrawlResul
 
 // ─── Puppeteer-based crawler ─────────────────────────────────────────────────
 
-async function crawlWithPuppeteer(
-  url: string,
-  maxPages: number,
-  launchOptions?: { executablePath?: string; args?: string[]; headless?: boolean }
-): Promise<CrawlResult> {
-  const puppeteer = await (launchOptions?.executablePath
-    ? import('puppeteer-core') as Promise<typeof import('puppeteer')>
-    : import('puppeteer'));
-  const browser = await puppeteer.default.launch({
-    headless: launchOptions?.headless ?? true,
-    executablePath: launchOptions?.executablePath,
-    args: launchOptions?.args ?? ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  });
+async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlResult> {
+  const browser = await getBrowser();
 
   type PuppeteerBrowser = typeof browser;
   type PuppeteerPage = Awaited<ReturnType<PuppeteerBrowser['newPage']>>;
@@ -465,21 +455,13 @@ async function crawlWithPuppeteer(
 // ─── Public entry point ───────────────────────────────────────────────────────
 
 export async function crawlWebsite(url: string, maxPages = 10): Promise<CrawlResult> {
-  if (process.env.VERCEL) {
-    console.log('[crawler] Using Puppeteer + @sparticuz/chromium (production)');
-    try {
-      const chromium = await import('@sparticuz/chromium');
-      const executablePath = await chromium.default.executablePath();
-      return await crawlWithPuppeteer(url, maxPages, {
-        executablePath,
-        args: chromium.default.args,
-        headless: true,
-      });
-    } catch (err) {
-      console.warn('[crawler] Chromium launch failed, falling back to fetch:', err);
-      return crawlWithFetch(url, maxPages);
-    }
+  console.log(process.env.VERCEL
+    ? '[crawler] Using Puppeteer + @sparticuz/chromium (production)'
+    : '[crawler] Using Puppeteer crawler (local dev)');
+  try {
+    return await crawlWithPuppeteer(url, maxPages);
+  } catch (err) {
+    console.warn('[crawler] Chromium launch failed, falling back to fetch:', err);
+    return crawlWithFetch(url, maxPages);
   }
-  console.log('[crawler] Using Puppeteer crawler (local dev)');
-  return crawlWithPuppeteer(url, maxPages);
 }

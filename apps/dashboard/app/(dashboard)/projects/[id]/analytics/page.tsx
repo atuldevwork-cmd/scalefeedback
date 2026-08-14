@@ -1,8 +1,11 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured, MOCK_FEEDBACK, MOCK_PROJECTS } from '@/lib/mock-data';
+import { marketingUrl } from '@/lib/marketing-url';
+import { planAtLeast } from '@/lib/plan';
 import { AnalyticsClient } from './analytics-client';
-import type { Feedback } from '@scalefeedback/shared';
+import type { Feedback } from '@pinmarks/shared';
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -10,15 +13,31 @@ export default async function AnalyticsPage({ params }: Props) {
   const { id } = await params;
   let feedback: Feedback[] = [];
   let projectName = '';
+  let blockedByPlan = false;
 
   if (isSupabaseConfigured()) {
     try {
       const supabase = await createClient();
-      const { data: proj } = await supabase.from('projects').select('name').eq('id', id).single();
+      const service = createServiceClient();
+      const { data: proj } = await supabase.from('projects').select('name, organisation_id').eq('id', id).single();
       projectName = proj?.name ?? '';
-      const { data } = await supabase.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: true });
-      feedback = (data ?? []) as Feedback[];
+
+      if (proj?.organisation_id) {
+        const { data: org } = await service.from('organisations').select('plan').eq('id', proj.organisation_id).single();
+        blockedByPlan = !planAtLeast(org?.plan, 'agency');
+      }
+
+      if (!blockedByPlan) {
+        const { data } = await supabase.from('feedback').select('*').eq('project_id', id).order('created_at', { ascending: true });
+        feedback = (data ?? []) as Feedback[];
+      }
     } catch { /* fall through */ }
+  }
+
+  // redirect() throws internally — must run outside the try/catch above,
+  // or Next's own control-flow exception gets swallowed by `catch`.
+  if (blockedByPlan) {
+    redirect(marketingUrl('/pricing'));
   }
 
   if (!feedback.length) {

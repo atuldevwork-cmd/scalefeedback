@@ -1,5 +1,5 @@
 // Used as fallback when Supabase is not yet configured
-import type { Project, Feedback } from '@scalefeedback/shared';
+import type { Project, Feedback } from '@pinmarks/shared';
 
 export const MOCK_PROJECTS: Project[] = [
   {

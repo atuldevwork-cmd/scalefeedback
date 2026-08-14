@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { PasswordInput } from '@/components/ui/password-input';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -105,15 +106,18 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Password</label>
-              <input
-                type="password"
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Password</label>
+                <Link href="/forgot-password" className="text-xs font-semibold text-[#ff724f] hover:text-[#e8603a]">
+                  Forgot password?
+                </Link>
+              </div>
+              <PasswordInput
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={setPassword}
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
-                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all"
               />
             </div>
 

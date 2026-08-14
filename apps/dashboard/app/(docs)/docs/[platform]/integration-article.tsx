@@ -1,0 +1,98 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import type { CmsIntegration } from '../cms-integrations';
+import { DocsSidebar } from '../../docs-sidebar';
+import { ArticleTOC } from '../../article-toc';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.pinmarks.io';
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      className="flex items-center gap-1.5 text-xs font-medium bg-[#ff724f] hover:bg-[#e8603a] text-white px-3 py-1.5 rounded-md transition-colors"
+    >
+      <span className="material-symbols-outlined text-[14px]">{copied ? 'check' : 'content_copy'}</span>
+      {copied ? 'Copied!' : 'Copy code'}
+    </button>
+  );
+}
+
+function CodeBlock({ code }: { code: string }) {
+  return (
+    <div className="border border-[#111111]/15 rounded-lg overflow-hidden">
+      <div className="flex justify-end px-3 py-2 bg-[#111111]/5 border-b border-[#111111]/10">
+        <CopyButton text={code} />
+      </div>
+      <pre className="px-4 py-4 text-sm font-mono text-gray-800 overflow-x-auto whitespace-pre bg-white leading-relaxed">{code}</pre>
+    </div>
+  );
+}
+
+export function IntegrationArticle({ integration }: { integration: CmsIntegration }) {
+  const snippet = `<script src="${APP_URL}/widget.js" data-project="YOUR_API_KEY"></script>`;
+
+  const tocItems = [
+    { id: 'why', label: `Why ${integration.name}?` },
+    { id: 'how-to-add', label: `How to add Pinmarks to ${integration.name}` },
+    { id: 'issues', label: 'Still having issues?' },
+  ];
+
+  return (
+    <div className="flex min-h-[calc(100vh-3.5rem)]">
+      <DocsSidebar />
+
+      <div className="flex-1 px-6 lg:px-10 py-8">
+        <Link href="/docs" className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-[#ff724f] transition-colors mb-6">
+          <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+          Back to documentation
+        </Link>
+
+        <ArticleTOC items={tocItems} />
+
+        <h1 className="text-2xl font-bold text-foreground mb-1">{integration.name} Integration</h1>
+        <p className="text-muted-foreground mb-2">{integration.tagline}</p>
+        <p className="text-xs text-muted-foreground mb-10">August 13, 2026</p>
+
+        <div className="space-y-12">
+          <section id="why">
+            <h2 className="text-lg font-semibold text-foreground mb-3">Why {integration.name}?</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">{integration.why}</p>
+          </section>
+
+          <hr className="border-border" />
+
+          <section id="how-to-add">
+            <h2 className="text-lg font-semibold text-foreground mb-3">How to add Pinmarks to {integration.name}</h2>
+            <ul className="list-disc list-outside pl-5 space-y-1.5 text-sm text-muted-foreground mb-4">
+              <li>
+                Within <span className="text-foreground font-medium">{APP_URL.replace('https://', '')}</span>, open your
+                project&apos;s <strong className="text-foreground">Settings → Widget Installation → Code snippet</strong> tab
+                and click <strong className="text-foreground">Copy code</strong>.
+              </li>
+            </ul>
+            <CodeBlock code={snippet} />
+            <ul className="list-disc list-outside pl-5 space-y-1.5 text-sm text-muted-foreground mt-4">
+              {integration.steps.map((step, i) => <li key={i}>{step}</li>)}
+            </ul>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-3">You should now see the feedback button on your site.</p>
+          </section>
+
+          <hr className="border-border" />
+
+          <section id="issues">
+            <h2 className="text-lg font-semibold text-foreground mb-3">Still having issues?</h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Email us at{' '}
+              <a href="mailto:hello@pinmarks.io" className="text-[#ff724f] hover:underline font-medium">hello@pinmarks.io</a>{' '}
+              and we&apos;ll help you get set up.
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}

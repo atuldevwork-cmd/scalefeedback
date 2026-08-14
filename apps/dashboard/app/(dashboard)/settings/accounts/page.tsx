@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { PasswordInput } from '@/components/ui/password-input';
 
 const PROVIDER_META = [
   {
@@ -20,27 +21,53 @@ const PROVIDER_META = [
 
 export default function AccountsPage() {
   const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
   const [pwSaved, setPwSaved] = useState(false);
   const [pwError, setPwError] = useState('');
+  const [saving, setSaving] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       const providers = (user?.identities ?? []).map((i) => i.provider);
       setConnectedProviders(providers);
+      setHasPassword(providers.includes('email'));
+      setEmail(user?.email ?? '');
       setLoading(false);
     });
   }, []); // eslint-disable-line
 
-  function handlePasswordSave(e: React.FormEvent) {
+  async function handlePasswordSave(e: React.FormEvent) {
     e.preventDefault();
     setPwError('');
+    if (hasPassword && !currentPw) { setPwError('Enter your current password.'); return; }
     if (newPw !== confirmPw) { setPwError('Passwords do not match.'); return; }
     if (newPw.length < 8) { setPwError('Password must be at least 8 characters.'); return; }
+
+    setSaving(true);
+
+    if (hasPassword) {
+      const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: currentPw });
+      if (verifyError) {
+        setSaving(false);
+        setPwError('Current password is incorrect.');
+        return;
+      }
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    setSaving(false);
+    if (error) {
+      setPwError(error.message);
+      return;
+    }
+
+    setHasPassword(true);
     setPwSaved(true);
     setCurrentPw(''); setNewPw(''); setConfirmPw('');
     setTimeout(() => setPwSaved(false), 2000);
@@ -89,40 +116,42 @@ export default function AccountsPage() {
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-gray-900 mb-4">Change password</h2>
           <form onSubmit={handlePasswordSave} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1.5">Current password</label>
-              <input
-                type="password"
-                value={currentPw}
-                onChange={(e) => setCurrentPw(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f]"
-              />
-            </div>
+            {hasPassword !== false && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">Current password</label>
+                <PasswordInput
+                  value={currentPw}
+                  onChange={setCurrentPw}
+                  autoComplete="current-password"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">New password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f]"
+                onChange={setNewPw}
+                minLength={8}
+                autoComplete="new-password"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1.5">Confirm new password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f]"
+                onChange={setConfirmPw}
+                minLength={8}
+                autoComplete="new-password"
               />
             </div>
             {pwError && <p className="text-sm text-red-600">{pwError}</p>}
             <div className="flex justify-end pt-1">
               <button
                 type="submit"
-                className="bg-[#ff724f] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#e8603a] transition-colors"
+                disabled={saving}
+                className="bg-[#ff724f] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#e8603a] transition-colors disabled:opacity-60"
               >
-                {pwSaved ? '✓ Updated' : 'Update password'}
+                {saving ? 'Updating…' : pwSaved ? '✓ Updated' : 'Update password'}
               </button>
             </div>
           </form>

@@ -1,5 +1,5 @@
 # A string used to distinguish different Supabase projects on the same host.
-project_id = "scalefeedback"
+project_id = "pinmarks"
 
 [api]
 enabled = true
@@ -29,7 +29,7 @@ enabled = true
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000", "https://scalefeedback-staging.vercel.app", "https://scalefeedback.vercel.app"]
+additional_redirect_urls = ["https://localhost:3000", "https://pinmarks-staging.vercel.app", "https://pinmarks.vercel.app"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10

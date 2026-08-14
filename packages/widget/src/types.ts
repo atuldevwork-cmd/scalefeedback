@@ -35,4 +35,4 @@ export interface NetworkLogEntry {
 }
 
 export type FeedbackType = 'bug' | 'suggestion' | 'question' | 'other';
-export type AnnotationTool = 'arrow' | 'rectangle' | 'circle' | 'freehand' | 'text' | 'blur' | 'select';
+export type AnnotationTool = 'arrow' | 'rectangle' | 'circle' | 'freehand' | 'highlighter' | 'text' | 'blur' | 'select';

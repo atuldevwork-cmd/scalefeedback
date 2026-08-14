@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { FormattedDate } from '@/components/formatted-date';
-import { createClient } from '@/lib/supabase/client';
-import type { Project } from '@scalefeedback/shared';
+import type { Project } from '@pinmarks/shared';
 import { CreateProjectDialog } from './create-project-dialog';
-import { useToast } from '@/components/ui/toast';
+import { ProjectCardMenu } from './project-card-menu';
 
 type ViewMode = 'grid' | 'list';
 type TabFilter = 'active' | 'archived';
@@ -35,17 +33,16 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
-function GridCard({ project, onRestore }: { project: Project; onRestore: (id: string) => void }) {
+function GridCard({ project }: { project: Project }) {
   return (
-    <div className="relative group">
-      <Link
-        href={`/projects/${project.id}`}
-        className={`block bg-white border rounded-2xl p-5 hover:shadow-card-hover transition-all ${
-          project.is_active
-            ? 'border-gray-100 hover:border-[#ff724f]/20'
-            : 'border-gray-100 opacity-70 hover:opacity-100'
-        }`}
-      >
+    <div
+      className={`group bg-white border rounded-2xl p-5 hover:shadow-card-hover transition-all ${
+        project.is_active
+          ? 'border-gray-100 hover:border-[#ff724f]/20'
+          : 'border-gray-100 opacity-70 hover:opacity-100'
+      }`}
+    >
+      <Link href={`/projects/${project.id}`} className="block">
         <div className="flex items-start justify-between mb-4">
           <ProjectAvatar project={project} />
           <StatusBadge isActive={project.is_active} />
@@ -57,30 +54,22 @@ function GridCard({ project, onRestore }: { project: Project; onRestore: (id: st
         {project.domain && (
           <p className="text-xs text-gray-400 mt-0.5 truncate">{project.domain}</p>
         )}
+      </Link>
 
-        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+      <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+        <Link href={`/projects/${project.id}`} className="flex items-center gap-3 flex-1 min-w-0">
           <code className="text-[11px] font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded-lg truncate flex-1">
             {project.api_key}
           </code>
           <FormattedDate date={project.created_at} className="text-[11px] text-gray-400 shrink-0" />
-        </div>
-      </Link>
-
-      {/* Restore button shown on archived cards */}
-      {!project.is_active && (
-        <button
-          onClick={() => onRestore(project.id)}
-          className="absolute bottom-4 right-4 flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors"
-        >
-          <span className="material-symbols-outlined text-[13px]">unarchive</span>
-          Restore
-        </button>
-      )}
+        </Link>
+        <ProjectCardMenu project={project} />
+      </div>
     </div>
   );
 }
 
-function ListRow({ project, onRestore }: { project: Project; onRestore: (id: string) => void }) {
+function ListRow({ project }: { project: Project }) {
   return (
     <div className={`flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors border-b border-gray-50 last:border-0 ${!project.is_active ? 'opacity-70 hover:opacity-100' : ''}`}>
       <Link
@@ -111,25 +100,12 @@ function ListRow({ project, onRestore }: { project: Project; onRestore: (id: str
         </span>
       </Link>
 
-      {/* Restore button for archived rows */}
-      {!project.is_active && (
-        <button
-          onClick={() => onRestore(project.id)}
-          className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors shrink-0"
-        >
-          <span className="material-symbols-outlined text-[13px]">unarchive</span>
-          Restore
-        </button>
-      )}
+      <ProjectCardMenu project={project} />
     </div>
   );
 }
 
 export function ProjectsClient({ projects }: { projects: Project[] }) {
-  const toast = useToast();
-  const router = useRouter();
-  const supabase = createClient();
-
   const [tab, setTab] = useState<TabFilter>('active');
   const [search, setSearch] = useState('');
   const [view, setView] = useState<ViewMode>('grid');
@@ -145,19 +121,6 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
       (p.domain ?? '').toLowerCase().includes(search.toLowerCase());
     return matchTab && matchSearch;
   });
-
-  const handleRestore = useCallback(async (projectId: string) => {
-    const { error } = await supabase
-      .from('projects')
-      .update({ is_active: true })
-      .eq('id', projectId);
-    if (error) {
-      toast(error.message, 'error');
-    } else {
-      toast('Project restored successfully.');
-      router.refresh();
-    }
-  }, [supabase, router, toast]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="p-8">
@@ -286,13 +249,13 @@ export function ProjectsClient({ projects }: { projects: Project[] }) {
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((project) => (
-            <GridCard key={project.id} project={project} onRestore={handleRestore} />
+            <GridCard key={project.id} project={project} />
           ))}
         </div>
       ) : (
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-card">
           {filtered.map((project) => (
-            <ListRow key={project.id} project={project} onRestore={handleRestore} />
+            <ListRow key={project.id} project={project} />
           ))}
         </div>
       )}

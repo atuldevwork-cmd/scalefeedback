@@ -21,17 +21,41 @@ interface RRWebEvent {
   data?: { width?: number; height?: number };
 }
 
+interface ReplayerHandle {
+  play: (timeOffset?: number) => void;
+  pause: (timeOffset?: number) => void;
+  getCurrentTime: () => number;
+  getMetaData: () => { totalTime: number };
+  on: (event: string, handler: () => void) => void;
+}
+
+function formatTime(ms: number) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 function ReplayPlayer({ events }: { events: unknown[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const replayerRef = useRef<{ play: () => void; pause: () => void } | null>(null);
+  const replayerRef = useRef<ReplayerHandle | null>(null);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [playing, setPlaying] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [playerHeight, setPlayerHeight] = useState(320);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     if (!containerRef.current || !events?.length) return;
     let cancelled = false;
+
+    // rrweb has no destroy() API, and this effect can re-run (StrictMode's
+    // dev double-invoke, or `events` changing) — clear any leftover
+    // .replayer-wrapper from a previous run so we never stack two replayers
+    // in the same container.
+    containerRef.current.innerHTML = '';
 
     const metaEvent = (events as RRWebEvent[]).find(e => e.type === 4);
     const origW = metaEvent?.data?.width  ?? 1280;
@@ -40,11 +64,29 @@ function ReplayPlayer({ events }: { events: unknown[] }) {
     import('rrweb').then(({ Replayer }) => {
       if (cancelled || !containerRef.current) return;
 
+      // rrweb 1.1.3 doesn't guard nested-iframe scroll targets whose
+      // defaultView isn't ready yet — patch once so a stray scroll event
+      // on a not-yet-mounted nested iframe can't crash the whole replay.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const proto = Replayer.prototype as any;
+      if (!proto.__scrollGuarded) {
+        const originalApplyScroll = proto.applyScroll;
+        proto.applyScroll = function (...args: unknown[]) {
+          try {
+            return originalApplyScroll.apply(this, args);
+          } catch {
+            // ignore — target document wasn't ready for this scroll event
+          }
+        };
+        proto.__scrollGuarded = true;
+      }
+
       if (!document.getElementById('sf-rrweb-css')) {
         const s = document.createElement('style');
         s.id = 'sf-rrweb-css';
         s.textContent = `
           .replayer-wrapper { float: left; clear: both; transform-origin: top left; }
+          .replayer-mouse-tail { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 99; }
           .replayer-mouse {
             position: absolute; width: 20px; height: 20px; pointer-events: none; z-index: 100;
             transition: left .05s linear, top .05s linear;
@@ -61,10 +103,22 @@ function ReplayPlayer({ events }: { events: unknown[] }) {
           skipInactive: true,
           showController: false,
           useVirtualDom: false,
-          mouseTail: false,
+          mouseTail: {
+            duration: 500,
+            lineCap: 'round',
+            lineWidth: 2,
+            strokeStyle: '#ff724f',
+          },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
-        replayerRef.current = replayer as unknown as { play: () => void; pause: () => void };
+        replayerRef.current = replayer as unknown as ReplayerHandle;
+        setDuration(replayer.getMetaData().totalTime);
+
+        replayer.on('finish', () => {
+          if (cancelled) return;
+          setPlaying(false);
+          setCurrentTime(replayerRef.current?.getMetaData().totalTime ?? 0);
+        });
 
         setTimeout(() => {
           if (!containerRef.current || cancelled) return;
@@ -83,14 +137,64 @@ function ReplayPlayer({ events }: { events: unknown[] }) {
       } catch { if (!cancelled) setError(true); }
     }).catch(() => { if (!cancelled) setError(true); });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (tickRef.current) clearInterval(tickRef.current);
+    };
   }, [events]);
+
+  // Poll playback position while playing to drive the progress bar
+  useEffect(() => {
+    if (!playing) {
+      if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
+      return;
+    }
+    tickRef.current = setInterval(() => {
+      if (replayerRef.current) setCurrentTime(replayerRef.current.getCurrentTime());
+    }, 200);
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
+  }, [playing]);
 
   function togglePlay() {
     if (!replayerRef.current) return;
-    if (playing) replayerRef.current.pause();
-    else replayerRef.current.play();
+    if (playing) {
+      replayerRef.current.pause();
+    } else {
+      // Resume from where it was paused instead of restarting from 0
+      const resumeFrom = currentTime >= duration ? 0 : currentTime;
+      replayerRef.current.play(resumeFrom);
+    }
     setPlaying(p => !p);
+  }
+
+  function seekTo(ratio: number) {
+    if (!replayerRef.current || !duration) return;
+    const clamped = Math.min(1, Math.max(0, ratio));
+    const time = clamped * duration;
+    setCurrentTime(time);
+    if (playing) {
+      replayerRef.current.play(time);
+    } else {
+      replayerRef.current.pause(time);
+    }
+  }
+
+  function handleScrubberInteraction(e: React.MouseEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    const bar = e.currentTarget;
+    const updateFromEvent = (clientX: number) => {
+      const rect = bar.getBoundingClientRect();
+      seekTo((clientX - rect.left) / rect.width);
+    };
+    updateFromEvent(e.clientX);
+
+    const handleMove = (moveEvent: MouseEvent) => updateFromEvent(moveEvent.clientX);
+    const handleUp = () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
   }
 
   return (
@@ -133,15 +237,35 @@ function ReplayPlayer({ events }: { events: unknown[] }) {
 
       {/* Bottom info bar overlay */}
       {loaded && !error && (
-        <div className="absolute bottom-0 left-0 right-0 z-20 px-3 py-2 flex items-center justify-between pointer-events-none"
+        <div className="absolute bottom-0 left-0 right-0 z-20 px-3 py-2"
           style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
-          <span className="text-[11px] text-white/70">Last 30s · Inputs masked</span>
-          {playing && (
-            <span className="inline-flex items-center gap-1 text-[11px] text-white/70">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-              Playing
+          {/* Scrubber */}
+          <div
+            className="relative h-1.5 w-full rounded-full bg-white/20 cursor-pointer mb-2 group"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={handleScrubberInteraction}
+          >
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-[#ff724f]"
+              style={{ width: `${duration ? Math.min(100, (currentTime / duration) * 100) : 0}%` }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#ff724f] shadow opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ left: `${duration ? Math.min(100, (currentTime / duration) * 100) : 0}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between pointer-events-none">
+            <span className="text-[11px] text-white/70 tabular-nums">
+              {formatTime(currentTime)} / {formatTime(duration)}
             </span>
-          )}
+            {playing && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-white/70">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                Playing
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>

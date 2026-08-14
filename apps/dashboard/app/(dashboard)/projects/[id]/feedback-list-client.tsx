@@ -9,7 +9,7 @@ import { FeedbackStatusBadge } from '@/components/feedback-status-badge';
 import { FeedbackTypeBadge } from '@/components/feedback-type-badge';
 import { PriorityBadge } from '@/components/priority-badge';
 import { FormattedDate } from '@/components/formatted-date';
-import type { Feedback } from '@scalefeedback/shared';
+import type { Feedback } from '@pinmarks/shared';
 
 function ClickUpMark() {
   return (

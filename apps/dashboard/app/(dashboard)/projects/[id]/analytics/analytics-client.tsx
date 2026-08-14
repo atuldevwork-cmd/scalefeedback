@@ -1,6 +1,6 @@
 'use client';
 
-import type { Feedback } from '@scalefeedback/shared';
+import type { Feedback } from '@pinmarks/shared';
 
 interface Props { feedback: Feedback[] }
 

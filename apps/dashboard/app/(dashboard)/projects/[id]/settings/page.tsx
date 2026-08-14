@@ -12,7 +12,7 @@ import { GuestsPanel } from './guests-panel';
 import { ButtonPanel } from './button-panel';
 import { SessionReplayPanel } from './session-replay-panel';
 import { SettingsNav } from './settings-nav';
-import type { Project } from '@scalefeedback/shared';
+import type { Project } from '@pinmarks/shared';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -23,6 +23,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
 
   let project: Project | null = null;
   let canManage = true;
+  let plan: 'free' | 'pro' | 'agency' = 'free';
 
   if (isSupabaseConfigured()) {
     try {
@@ -31,6 +32,15 @@ export default async function ProjectSettingsPage({ params }: Props) {
       const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from('projects').select('*').eq('id', id).single();
       project = data as Project | null;
+
+      if (project) {
+        const { data: org } = await service
+          .from('organisations')
+          .select('plan')
+          .eq('id', project.organisation_id)
+          .single();
+        if (org?.plan) plan = org.plan as 'free' | 'pro' | 'agency';
+      }
 
       if (user) {
         const { data: memberRows } = await service
@@ -114,7 +124,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
           <p className="text-sm text-muted-foreground mb-6">
             Record user sessions so you can watch exactly what happened before a bug report was submitted.
           </p>
-          <SessionReplayPanel project={project} />
+          <SessionReplayPanel project={project} plan={plan} />
         </div>
 
         <div id="project-details" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">

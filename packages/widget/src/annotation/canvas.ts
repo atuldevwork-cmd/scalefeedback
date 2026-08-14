@@ -9,6 +9,10 @@ export class AnnotationCanvas {
   private startY = 0;
   private activeShape: fabric.Object | null = null;
   private color = '#FF6B35';
+  private pencilBrush: fabric.PencilBrush;
+  private highlighterBrush: fabric.PencilBrush;
+  private redoStack: fabric.Object[] = [];
+  private isRestoring = false; // guards redo()'s own canvas.add() from clearing redoStack
 
   constructor(canvasEl: HTMLCanvasElement, screenshotDataUrl: string) {
     this.canvas = new fabric.Canvas(canvasEl, {
@@ -16,44 +20,76 @@ export class AnnotationCanvas {
       selection: true,
     });
 
-    // CONTAIN scaling: fit the full screenshot inside the canvas without
-    // cropping. Any unused space shows the canvas background colour.
-    // Centered so screenshot sits in the middle of the canvas.
-    if (screenshotDataUrl) {
-      fabric.Image.fromURL(screenshotDataUrl, (img) => {
-        // Scale screenshot to fill canvas width exactly — no side gaps.
-        // Any unused vertical space shows the canvas background at the bottom.
-        const scale = this.canvas.width! / (img.width || 1);
-        this.canvas.setBackgroundImage(img, this.canvas.renderAll.bind(this.canvas), {
+    if (screenshotDataUrl) this.setBackgroundImage(screenshotDataUrl);
+
+    // Two brush instances so switching tools doesn't lose the other's config.
+    // Fabric's brush has no separate opacity channel, so the highlighter's
+    // translucency is baked directly into its rgba color.
+    this.pencilBrush = new fabric.PencilBrush(this.canvas);
+    this.pencilBrush.width = 3;
+    this.pencilBrush.color = this.color;
+
+    this.highlighterBrush = new fabric.PencilBrush(this.canvas);
+    this.highlighterBrush.width = 18;
+    this.highlighterBrush.color = this.hexToRgba(this.color, 0.35);
+
+    this.canvas.freeDrawingBrush = this.pencilBrush;
+
+    this.bindMouseEvents();
+
+    // Any genuinely new addition (draw, shape, text, image, emoji) invalidates
+    // redo history — except redo() re-adding a previously undone object.
+    this.canvas.on('object:added', () => {
+      if (!this.isRestoring) this.redoStack = [];
+    });
+  }
+
+  private hexToRgba(hex: string, alpha: number): string {
+    const clean = hex.replace('#', '');
+    const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+    const n = parseInt(full, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+  }
+
+  // CONTAIN scaling: fit the full screenshot inside the canvas without
+  // cropping. Any unused space shows the canvas background colour.
+  private setBackgroundImage(dataUrl: string): Promise<void> {
+    return new Promise((resolve) => {
+      fabric.Image.fromURL(dataUrl, (img) => {
+        // Scale screenshot to fill canvas width minus an 8px gutter on each side.
+        // Any unused vertical space is split evenly above and below the image.
+        const sidePadding = 8;
+        const scale = (this.canvas.width! - sidePadding * 2) / (img.width || 1);
+        const top = (this.canvas.height! - (img.height || 0) * scale) / 2;
+        this.canvas.setBackgroundImage(img, () => { this.canvas.renderAll(); resolve(); }, {
           scaleX: scale,
           scaleY: scale,
-          left: 0,
-          top: 0,
+          left: sidePadding,
+          top,
           originX: 'left',
           originY: 'top',
         });
       });
-    }
+    });
+  }
 
-    // Configure freehand brush
-    this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
-    this.canvas.freeDrawingBrush.width = 3;
-    this.canvas.freeDrawingBrush.color = this.color;
-
-    this.bindMouseEvents();
+  /** Swaps the background screenshot (e.g. after an "Entire page" re-capture) without discarding existing annotation objects. */
+  replaceBackgroundImage(dataUrl: string): Promise<void> {
+    return this.setBackgroundImage(dataUrl);
   }
 
   setTool(tool: AnnotationTool) {
     this.currentTool = tool;
-    this.canvas.isDrawingMode = tool === 'freehand';
+    this.canvas.isDrawingMode = tool === 'freehand' || tool === 'highlighter';
     this.canvas.selection = tool === 'select';
+    if (tool === 'highlighter') this.canvas.freeDrawingBrush = this.highlighterBrush;
+    else if (tool === 'freehand') this.canvas.freeDrawingBrush = this.pencilBrush;
   }
 
   setColor(color: string) {
     this.color = color;
-    if (this.canvas.freeDrawingBrush) {
-      this.canvas.freeDrawingBrush.color = color;
-    }
+    this.pencilBrush.color = color;
+    this.highlighterBrush.color = this.hexToRgba(color, 0.35);
   }
 
   /** Build an SVG path string for a line + arrowhead pointing from (x1,y1) to (x2,y2) */
@@ -74,6 +110,11 @@ export class AnnotationCanvas {
   private bindMouseEvents() {
     this.canvas.on('mouse:down', (opt) => {
       if (this.currentTool === 'select' || this.currentTool === 'freehand') return;
+      // Clicking/dragging an existing object (e.g. grabbing an inserted
+      // image's resize handle) must move/scale it, not also start a new
+      // shape underneath — otherwise a stray annotation gets drawn alongside
+      // the resize.
+      if (opt.target) return;
       const pointer = this.canvas.getPointer(opt.e);
       this.isDrawing = true;
       this.startX = pointer.x;
@@ -191,8 +232,54 @@ export class AnnotationCanvas {
   undo() {
     const objects = this.canvas.getObjects();
     if (objects.length > 0) {
-      this.canvas.remove(objects[objects.length - 1]);
+      const obj = objects[objects.length - 1];
+      this.canvas.remove(obj);
+      this.redoStack.push(obj);
     }
+  }
+
+  redo() {
+    const obj = this.redoStack.pop();
+    if (!obj) return;
+    this.isRestoring = true;
+    this.canvas.add(obj);
+    this.isRestoring = false;
+    this.canvas.renderAll();
+  }
+
+  /** Adds an uploaded image as a draggable/resizable object, centered and scaled to fit. */
+  addImage(dataUrl: string): void {
+    fabric.Image.fromURL(dataUrl, (img) => {
+      const canvasW = this.canvas.width ?? 0;
+      const canvasH = this.canvas.height ?? 0;
+      const maxDim = Math.min(canvasW, canvasH) * 0.6;
+      const scale = Math.min(1, maxDim / Math.max(img.width || 1, img.height || 1));
+      img.set({
+        left: (canvasW - (img.width || 0) * scale) / 2,
+        top: (canvasH - (img.height || 0) * scale) / 2,
+        scaleX: scale,
+        scaleY: scale,
+      });
+      this.canvas.add(img);
+      this.canvas.setActiveObject(img);
+      this.canvas.renderAll();
+    });
+  }
+
+  /** Adds an emoji as a draggable/resizable text object, centered. */
+  addEmoji(char: string): void {
+    const fontSize = 48;
+    const canvasW = this.canvas.width ?? 0;
+    const canvasH = this.canvas.height ?? 0;
+    const text = new fabric.IText(char, {
+      left: (canvasW - fontSize) / 2,
+      top: (canvasH - fontSize) / 2,
+      fontSize,
+      fontFamily: 'Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
+    });
+    this.canvas.add(text);
+    this.canvas.setActiveObject(text);
+    this.canvas.renderAll();
   }
 
   clear() {

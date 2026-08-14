@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { PasswordInput } from '@/components/ui/password-input';
 
 function SignupForm() {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,7 +19,7 @@ function SignupForm() {
 
   async function handleEmailSignup(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!fullName || !email || !password) return;
     setLoading(true);
     setError('');
 
@@ -29,6 +31,9 @@ function SignupForm() {
       password,
       options: {
         emailRedirectTo: callbackUrl,
+        data: {
+          full_name: fullName,
+        },
       },
     });
 
@@ -126,6 +131,19 @@ function SignupForm() {
 
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Full name</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                autoComplete="name"
+                placeholder="Jane Doe"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all"
+              />
+            </div>
+
+            <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Email</label>
               <input
                 type="email"
@@ -140,15 +158,13 @@ function SignupForm() {
 
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={setPassword}
                 required
                 minLength={8}
                 autoComplete="new-password"
                 placeholder="Min. 8 characters"
-                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f] transition-all"
               />
             </div>
 

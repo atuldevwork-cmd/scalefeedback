@@ -1,5 +1,5 @@
 export interface WidgetConfig {
-  position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  position: 'middle-right' | 'middle-left' | 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
   color: string;
   collectConsole: boolean;
   collectNetwork: boolean;
@@ -22,7 +22,7 @@ export interface Organisation {
   id: string;
   name: string;
   slug: string;
-  plan: 'free' | 'pro' | 'enterprise';
+  plan: 'free' | 'pro' | 'agency';
   created_at: string;
   updated_at: string;
 }

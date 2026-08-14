@@ -1,31 +1,166 @@
 import { record } from 'rrweb';
 import type { WidgetConfig, FeedbackType, AnnotationTool } from '../types';
 import { captureScreenshot } from '../capture/screenshot';
+import { detectExtension, captureFullPageViaExtension } from '../capture/extension-bridge';
 import { ConsoleCapture } from '../capture/console';
 import { NetworkCapture } from '../capture/network';
 import { collectMetadata } from '../capture/metadata';
 import { AnnotationCanvas } from '../annotation/canvas';
-import { submitFeedback } from './api';
+import { submitFeedback, shareSnapshot } from './api';
 import widgetStyles from '../ui/styles.css?inline';
 
-const HOST_ID = 'scalefeedback-widget';
+const HOST_ID = 'pinmarks-widget';
 const SF_GUEST_KEY = 'sf_guest_identity';
+
+// [emoji, searchable name] — used to render the full emoji picker grid and
+// to filter it as the user types in the picker's search box.
+const EMOJI_DATA: [string, string][] = [
+  ['😀', 'grinning'], ['😃', 'smiley'], ['😄', 'smile'], ['😁', 'grin'],
+  ['😆', 'laughing'], ['😅', 'sweat smile'], ['🤣', 'rofl'], ['😂', 'joy'],
+  ['🙂', 'slightly smiling'], ['🙃', 'upside down'], ['😉', 'wink'], ['😊', 'blush'],
+  ['😇', 'innocent'], ['🥰', 'smiling hearts'], ['😍', 'heart eyes'], ['🤩', 'star struck'],
+  ['😘', 'kiss'], ['😗', 'kissing'], ['😚', 'kissing closed eyes'], ['😙', 'kissing smiling eyes'],
+  ['😋', 'yum'], ['😛', 'tongue'], ['😜', 'winking tongue'], ['🤪', 'zany'],
+  ['😝', 'squinting tongue'], ['🤑', 'money mouth'], ['🤗', 'hugging'], ['🤭', 'hand over mouth'],
+  ['🤫', 'shushing'], ['🤔', 'thinking'], ['🤐', 'zipper mouth'], ['🤨', 'raised eyebrow'],
+  ['😐', 'neutral'], ['😑', 'expressionless'], ['😶', 'no mouth'], ['😏', 'smirk'],
+  ['😒', 'unamused'], ['🙄', 'rolling eyes'], ['😬', 'grimacing'], ['🤥', 'lying'],
+  ['😌', 'relieved'], ['😔', 'pensive'], ['😪', 'sleepy'], ['🤤', 'drooling'],
+  ['😴', 'sleeping'], ['😷', 'mask'], ['🤒', 'thermometer'], ['🤕', 'head bandage'],
+  ['🤢', 'nauseated'], ['🤮', 'vomiting'], ['🤧', 'sneezing'], ['🥵', 'hot'],
+  ['🥶', 'cold'], ['🥴', 'woozy'], ['😵', 'dizzy'], ['🤯', 'exploding head'],
+  ['🤠', 'cowboy'], ['🥳', 'partying'], ['🥸', 'disguised'], ['😎', 'sunglasses'],
+  ['🤓', 'nerd'], ['🧐', 'monocle'], ['😕', 'confused'], ['😟', 'worried'],
+  ['🙁', 'slightly frowning'], ['😮', 'open mouth'], ['😯', 'hushed'], ['😲', 'astonished'],
+  ['😳', 'flushed'], ['🥺', 'pleading'], ['😦', 'frowning'], ['😧', 'anguished'],
+  ['😨', 'fearful'], ['😰', 'anxious sweat'], ['😥', 'sad relieved'], ['😢', 'cry'],
+  ['😭', 'sob'], ['😱', 'scream'], ['😖', 'confounded'], ['😣', 'persevering'],
+  ['😞', 'disappointed'], ['😓', 'downcast sweat'], ['😩', 'weary'], ['😫', 'tired'],
+  ['🥱', 'yawning'], ['😤', 'triumph'], ['😡', 'rage'], ['😠', 'angry'],
+  ['🤬', 'cursing'], ['😈', 'smiling imp'], ['👿', 'imp'], ['💀', 'skull'],
+  ['💩', 'poop'], ['🤡', 'clown'], ['👻', 'ghost'], ['👽', 'alien'],
+  ['🤖', 'robot'], ['😺', 'cat smile'], ['😻', 'cat heart eyes'], ['😼', 'cat smirk'],
+  ['👋', 'wave'], ['🤚', 'raised back of hand'], ['🖐️', 'hand'], ['✋', 'raised hand'],
+  ['👌', 'ok hand'], ['🤌', 'pinched fingers'], ['✌️', 'victory'], ['🤞', 'crossed fingers'],
+  ['🤟', 'love you gesture'], ['🤘', 'rock on'], ['👈', 'point left'], ['👉', 'point right'],
+  ['👆', 'point up'], ['👇', 'point down'], ['👍', 'thumbs up'], ['👎', 'thumbs down'],
+  ['✊', 'fist'], ['👊', 'punch'], ['🤛', 'left fist'], ['🤜', 'right fist'],
+  ['👏', 'clap'], ['🙌', 'raised hands'], ['👐', 'open hands'], ['🤲', 'palms up'],
+  ['🙏', 'pray'], ['💪', 'muscle'], ['🖖', 'vulcan'], ['👀', 'eyes'],
+  ['👁️', 'eye'], ['🧠', 'brain'], ['🦷', 'tooth'], ['👂', 'ear'],
+  ['💯', '100'], ['💥', 'boom'], ['💫', 'dizzy star'], ['💦', 'sweat drops'],
+  ['💨', 'dash'], ['🕳️', 'hole'], ['💣', 'bomb'], ['💬', 'speech balloon'],
+  ['👤', 'bust'], ['🔥', 'fire'], ['✨', 'sparkles'], ['🎉', 'party'],
+  ['🎊', 'confetti ball'], ['🎈', 'balloon'], ['🎁', 'gift'], ['🏆', 'trophy'],
+  ['🥇', 'gold medal'], ['⭐', 'star'], ['🌟', 'glowing star'], ['⚡', 'lightning'],
+  ['☀️', 'sun'], ['🌈', 'rainbow'], ['☁️', 'cloud'], ['❄️', 'snowflake'],
+  ['✅', 'check mark'], ['☑️', 'check box'], ['✔️', 'heavy check'], ['❌', 'cross mark'],
+  ['❎', 'cross mark button'], ['⭕', 'circle'], ['🚫', 'no entry'], ['⚠️', 'warning'],
+  ['❓', 'question'], ['❗', 'exclamation'], ['💡', 'bulb'], ['🔒', 'lock'],
+  ['🔓', 'unlock'], ['🔑', 'key'], ['🔍', 'magnifying glass'], ['📌', 'pin'],
+  ['📎', 'paperclip'], ['🔗', 'link'], ['🛠️', 'tools'], ['⚙️', 'gear'],
+  ['🐛', 'bug'], ['🚀', 'rocket'], ['⏰', 'alarm clock'], ['⏳', 'hourglass'],
+  ['📅', 'calendar'], ['📈', 'chart up'], ['📉', 'chart down'], ['💻', 'laptop'],
+  ['📱', 'mobile'], ['🖥️', 'desktop'], ['❤️', 'red heart'], ['🧡', 'orange heart'],
+  ['💛', 'yellow heart'], ['💚', 'green heart'], ['💙', 'blue heart'], ['💜', 'purple heart'],
+  ['🖤', 'black heart'], ['🤍', 'white heart'], ['🤎', 'brown heart'], ['💔', 'broken heart'],
+  ['❣️', 'heart exclamation'], ['💕', 'two hearts'], ['💞', 'revolving hearts'], ['💓', 'beating heart'],
+  ['💗', 'growing heart'], ['💖', 'sparkling heart'], ['💘', 'heart arrow'], ['💝', 'heart ribbon'],
+  ['🤝', 'handshake'], ['✍️', 'writing hand'], ['💅', 'nail care'], ['🤳', 'selfie'],
+  ['🐶', 'dog'], ['🐱', 'cat'], ['🐭', 'mouse'], ['🐹', 'hamster'],
+  ['🐰', 'rabbit'], ['🦊', 'fox'], ['🐻', 'bear'], ['🐼', 'panda'],
+  ['🐨', 'koala'], ['🐯', 'tiger'], ['🦁', 'lion'], ['🐮', 'cow'],
+  ['🐷', 'pig'], ['🐸', 'frog'], ['🐵', 'monkey'], ['🐔', 'chicken'],
+  ['🐧', 'penguin'], ['🐦', 'bird'], ['🐤', 'baby chick'], ['🦆', 'duck'],
+  ['🦅', 'eagle'], ['🦉', 'owl'], ['🦇', 'bat'], ['🐺', 'wolf'],
+  ['🐗', 'boar'], ['🐴', 'horse'], ['🦄', 'unicorn'], ['🐝', 'bee'],
+  ['🐛', 'caterpillar'], ['🦋', 'butterfly'], ['🐌', 'snail'], ['🐞', 'ladybug'],
+  ['🐜', 'ant'], ['🦟', 'mosquito'], ['🕷️', 'spider'], ['🕸️', 'spider web'],
+  ['🐢', 'turtle'], ['🐍', 'snake'], ['🦎', 'lizard'], ['🦖', 't-rex'],
+  ['🐙', 'octopus'], ['🦑', 'squid'], ['🦐', 'shrimp'], ['🦀', 'crab'],
+  ['🐡', 'blowfish'], ['🐠', 'tropical fish'], ['🐟', 'fish'], ['🐬', 'dolphin'],
+  ['🐳', 'whale'], ['🦈', 'shark'], ['🐊', 'crocodile'], ['🐅', 'tiger2'],
+  ['🦓', 'zebra'], ['🦍', 'gorilla'], ['🐘', 'elephant'], ['🦛', 'hippo'],
+  ['🐪', 'camel'], ['🦒', 'giraffe'], ['🐐', 'goat'], ['🦌', 'deer'],
+  ['🐕', 'dog2'], ['🐩', 'poodle'], ['🐈', 'cat2'], ['🐓', 'rooster'],
+  ['🦃', 'turkey'], ['🦚', 'peacock'], ['🦜', 'parrot'], ['🦢', 'swan'],
+  ['🐇', 'rabbit2'], ['🦔', 'hedgehog'], ['🐁', 'mouse2'], ['🐀', 'rat'],
+  ['🍏', 'green apple'], ['🍎', 'red apple'], ['🍐', 'pear'], ['🍊', 'tangerine'],
+  ['🍋', 'lemon'], ['🍌', 'banana'], ['🍉', 'watermelon'], ['🍇', 'grapes'],
+  ['🍓', 'strawberry'], ['🫐', 'blueberries'], ['🍈', 'melon'], ['🍒', 'cherries'],
+  ['🍑', 'peach'], ['🥭', 'mango'], ['🍍', 'pineapple'], ['🥥', 'coconut'],
+  ['🥝', 'kiwi'], ['🍅', 'tomato'], ['🥑', 'avocado'], ['🥦', 'broccoli'],
+  ['🥬', 'leafy green'], ['🥒', 'cucumber'], ['🌶️', 'hot pepper'], ['🌽', 'corn'],
+  ['🥕', 'carrot'], ['🧄', 'garlic'], ['🧅', 'onion'], ['🥔', 'potato'],
+  ['🍠', 'sweet potato'], ['🥐', 'croissant'], ['🍞', 'bread'], ['🥖', 'baguette'],
+  ['🧀', 'cheese'], ['🥚', 'egg'], ['🍳', 'fried egg'], ['🥞', 'pancakes'],
+  ['🥓', 'bacon'], ['🍗', 'poultry leg'], ['🍖', 'meat on bone'], ['🌭', 'hot dog'],
+  ['🍔', 'hamburger'], ['🍟', 'fries'], ['🍕', 'pizza'], ['🥪', 'sandwich'],
+  ['🌮', 'taco'], ['🌯', 'burrito'], ['🥗', 'salad'], ['🍝', 'spaghetti'],
+  ['🍜', 'ramen'], ['🍲', 'stew'], ['🍣', 'sushi'], ['🍱', 'bento'],
+  ['🍤', 'fried shrimp'], ['🍙', 'rice ball'], ['🍚', 'rice'], ['🥟', 'dumpling'],
+  ['🍦', 'ice cream'], ['🍨', 'ice cream bowl'], ['🍧', 'shaved ice'], ['🍩', 'doughnut'],
+  ['🍪', 'cookie'], ['🎂', 'birthday cake'], ['🍰', 'cake'], ['🧁', 'cupcake'],
+  ['🍫', 'chocolate'], ['🍬', 'candy'], ['🍭', 'lollipop'], ['🍯', 'honey'],
+  ['🍼', 'baby bottle'], ['☕', 'coffee'], ['🍵', 'tea'], ['🍺', 'beer'],
+  ['🍻', 'cheers'], ['🥂', 'clinking glasses'], ['🍷', 'wine'], ['🍹', 'tropical drink'],
+  ['🍸', 'cocktail'], ['🧃', 'juice box'], ['🥤', 'cup with straw'], ['🧋', 'bubble tea'],
+  ['🚗', 'car'], ['🚕', 'taxi'], ['🚙', 'suv'], ['🚌', 'bus'],
+  ['🏎️', 'racing car'], ['🚓', 'police car'], ['🚑', 'ambulance'], ['🚒', 'fire truck'],
+  ['🚚', 'truck'], ['🚲', 'bike'], ['🛴', 'scooter'], ['🏍️', 'motorcycle'],
+  ['✈️', 'airplane'], ['🛫', 'flight departure'], ['🚀', 'rocket ship'], ['🛸', 'ufo'],
+  ['🚁', 'helicopter'], ['⛵', 'boat'], ['🚤', 'speedboat'], ['🛳️', 'ship'],
+  ['⚓', 'anchor'], ['🚦', 'traffic light'], ['🚏', 'bus stop'], ['🗺️', 'map'],
+  ['🗽', 'statue of liberty'], ['🗼', 'tower'], ['🏰', 'castle'], ['🎡', 'ferris wheel'],
+  ['🎢', 'roller coaster'], ['⛲', 'fountain'], ['🏖️', 'beach'], ['🏝️', 'desert island'],
+  ['🏜️', 'desert'], ['🌋', 'volcano'], ['⛰️', 'mountain'], ['🏔️', 'snowy mountain'],
+  ['🏕️', 'camping'], ['⛺', 'tent'], ['🏠', 'house'], ['🏢', 'office building'],
+  ['🏥', 'hospital'], ['🏦', 'bank'], ['🏫', 'school'], ['⛪', 'church'],
+  ['🕌', 'mosque'], ['🕍', 'synagogue'], ['⛩️', 'shrine'], ['🌍', 'earth'],
+  ['🌙', 'crescent moon'], ['☀️', 'sun2'], ['⭐', 'star2'], ['☁️', 'cloud2'],
+  ['⌚', 'watch'], ['📷', 'camera'], ['🎥', 'movie camera'], ['📺', 'tv'],
+  ['📻', 'radio'], ['🎮', 'video game'], ['🎲', 'game die'], ['🧩', 'puzzle'],
+  ['🎸', 'guitar'], ['🎹', 'piano'], ['🎺', 'trumpet'], ['🎻', 'violin'],
+  ['🥁', 'drum'], ['🎤', 'microphone'], ['🎧', 'headphones'], ['⚽', 'soccer'],
+  ['🏀', 'basketball'], ['🏈', 'football'], ['⚾', 'baseball'], ['🎾', 'tennis'],
+  ['🏐', 'volleyball'], ['🏓', 'ping pong'], ['🏸', 'badminton'], ['🥊', 'boxing glove'],
+  ['🎯', 'dart'], ['🎳', 'bowling'], ['🎣', 'fishing'], ['🎿', 'ski'],
+  ['🛹', 'skateboard'], ['🏆', 'trophy2'], ['🥇', 'gold medal2'], ['🎨', 'art palette'],
+  ['🖌️', 'paintbrush'], ['✏️', 'pencil'], ['📝', 'memo'], ['📚', 'books'],
+  ['📖', 'open book'], ['📦', 'package'], ['📮', 'postbox'], ['✉️', 'envelope'],
+  ['📧', 'email'], ['💵', 'dollar'], ['💰', 'money bag'], ['💳', 'credit card'],
+  ['📊', 'bar chart'], ['📋', 'clipboard'], ['🗂️', 'card index'], ['🗓️', 'spiral calendar'],
+  ['✂️', 'scissors'], ['🔨', 'hammer'], ['🧲', 'magnet'], ['🧪', 'test tube'],
+  ['🔬', 'microscope'], ['🔭', 'telescope'], ['💉', 'syringe'], ['🩹', 'bandage'],
+  ['🩺', 'stethoscope'], ['🚪', 'door'], ['🛏️', 'bed'], ['🚽', 'toilet'],
+  ['🚿', 'shower'], ['🛒', 'shopping cart'], ['🎗️', 'ribbon2'], ['🎀', 'ribbon'],
+  ['🧸', 'teddy bear'], ['🪁', 'kite'], ['♻️', 'recycle'], ['🔱', 'trident'],
+  ['🇺🇳', 'united nations'], ['🇺🇸', 'united states'], ['🇬🇧', 'united kingdom'], ['🇮🇳', 'india'],
+  ['🇨🇦', 'canada'], ['🇦🇺', 'australia'], ['🇩🇪', 'germany'], ['🇫🇷', 'france'],
+  ['🇮🇹', 'italy'], ['🇪🇸', 'spain'], ['🇯🇵', 'japan'], ['🇰🇷', 'south korea'],
+  ['🇨🇳', 'china'], ['🇧🇷', 'brazil'], ['🇷🇺', 'russia'], ['🇲🇽', 'mexico'],
+  ['🇳🇱', 'netherlands'], ['🇸🇪', 'sweden'], ['🇨🇭', 'switzerland'], ['🇸🇬', 'singapore'],
+  ['🇦🇪', 'uae'], ['🇿🇦', 'south africa'],
+];
 
 type Step = 'annotate' | 'form' | 'submitting' | 'success';
 
-export class ScaleFeedbackWidget {
+export class PinmarksWidget {
   private config: WidgetConfig;
   private shadowRoot: ShadowRoot;
   private step: Step = 'annotate';
   private screenshotDataUrl = '';
   private annotationCanvas: AnnotationCanvas | null = null;
-  private currentTool: AnnotationTool = 'arrow';
+  private currentTool: AnnotationTool = 'select';
   private feedbackType: FeedbackType = 'bug';
   private isOpen = false;
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
   private guestIdentityOverride = false; // true when user clicked "Change"
   private replayEvents: unknown[] = [];
   private stopRecording: (() => void) | null = null;
+  // Set once on mount (not re-checked per capture) — gates the "Entire page"
+  // toolbar button, which needs the companion browser extension for scroll+stitch.
+  private extensionInstalled = false;
 
   constructor(config: WidgetConfig) {
     this.config = config;
@@ -59,6 +194,8 @@ export class ScaleFeedbackWidget {
 
     // Render FAB
     this.renderFAB();
+
+    void detectExtension().then((res) => { this.extensionInstalled = res.installed; });
   }
 
   private startReplayRecording() {
@@ -123,7 +260,7 @@ export class ScaleFeedbackWidget {
     if (!this.isOpen) void this.openWidget();
   }
 
-  /** Called by window.ScaleFeedback.setUser() — pre-identifies the reporter. */
+  /** Called by window.Pinmarks.setUser() — pre-identifies the reporter. */
   public setUser(user: { name: string; email: string } | null) {
     this.config.user = user ?? undefined;
   }
@@ -155,7 +292,7 @@ export class ScaleFeedbackWidget {
           border-radius:50%;
           animation:sf-body-spin 0.7s linear infinite;
         "></div>
-        <span style="font-size:14px;font-weight:600;color:#ffffff;letter-spacing:0.01em;">Preparing…</span>
+        <span style="font-size:14px;font-weight:600;color:#ffffff;letter-spacing:0.01em;">Capturing screenshot…</span>
       </div>
       <style>
         @keyframes sf-body-spin { to { transform: rotate(360deg); } }
@@ -192,11 +329,11 @@ export class ScaleFeedbackWidget {
     this.showLoadingOverlay();
 
     try {
-      this.screenshotDataUrl = await captureScreenshot(HOST_ID, this.config.apiBaseUrl);
+      this.screenshotDataUrl = await captureScreenshot(HOST_ID, this.config.apiBaseUrl, this.config.projectApiKey);
       // Compression is deferred to just before upload so the annotation
       // canvas always displays the full-quality PNG.
     } catch (err) {
-      console.warn('[ScaleFeedback] Screenshot capture failed, continuing without it.', err);
+      console.warn('[Pinmarks] Screenshot capture failed, continuing without it.', err);
       this.screenshotDataUrl = '';
     }
 
@@ -246,6 +383,7 @@ export class ScaleFeedbackWidget {
       this.shadowRoot.appendChild(overlay);
       this.initAnnotationCanvas();
       this.bindColorPicker();
+      this.bindImageInput();
       return;
     }
 
@@ -310,6 +448,7 @@ export class ScaleFeedbackWidget {
               ${this.toolBtn('rectangle', '<rect x="3" y="3" width="18" height="18" rx="2"/>', 'Rect')}
               ${this.toolBtn('circle', '<circle cx="12" cy="12" r="9"/>', 'Circle')}
               ${this.toolBtn('freehand', '<path d="M3 17c3-3 5-6 8-6s5 4 8 4"/>', 'Draw')}
+              ${this.toolBtn('highlighter', '<path d="M12 2s6 7.5 6 12a6 6 0 01-12 0c0-4.5 6-12 6-12z"/>', 'Highlight')}
               ${this.toolBtn('text', '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>', 'Text')}
               ${this.toolBtn('blur', '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>', 'Blur')}
               ${this.toolBtn('select', '<path d="M5 3l14 9-7 1-3 7z"/>', 'Select')}
@@ -320,6 +459,8 @@ export class ScaleFeedbackWidget {
                   <path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
                 </svg>
               </button>
+              ${this.annotationExtrasHtml()}
+              ${this.entirePageBtn()}
             </div>
           </div>
           <div class="sf-annotate-canvas-area">
@@ -378,6 +519,7 @@ export class ScaleFeedbackWidget {
     this.shadowRoot.appendChild(overlay);
     this.initAnnotationCanvas();
     this.bindColorPicker();
+    this.bindImageInput();
   }
 
   private renderHeader(title: string): string {
@@ -404,6 +546,62 @@ export class ScaleFeedbackWidget {
     </button>`;
   }
 
+  // Shared block of extra toolbar controls (redo/download/copy/image/emoji
+  // actions) — inserted identically into both the desktop split-panel and
+  // the non-mobile annotate-step toolbars, directly after Undo so the two
+  // sit next to each other.
+  private annotationExtrasHtml(): string {
+    return `
+      <button class="sf-tool-btn" data-action="redo" title="Redo" aria-label="Redo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3L21 13"/>
+        </svg>
+      </button>
+      <button class="sf-tool-btn" data-action="insert-image" title="Insert image" aria-label="Insert image">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+        </svg>
+      </button>
+      <input type="file" accept="image/*" data-role="image-input" style="display:none" />
+      <button class="sf-tool-btn" data-action="emoji-toggle" title="Insert emoji" aria-label="Insert emoji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+      <button class="sf-tool-btn" data-action="download" title="Download" aria-label="Download">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>
+        </svg>
+      </button>
+      <button class="sf-tool-btn" data-action="copy" title="Copy to clipboard" aria-label="Copy to clipboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/>
+        </svg>
+      </button>
+      <button class="sf-tool-btn" data-action="share-link" title="Copy share link" aria-label="Copy share link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+        </svg>
+      </button>
+    `;
+  }
+
+  // Only rendered once the companion browser extension is detected — full-page
+  // (scroll + stitch) capture isn't possible via getDisplayMedia or html2canvas.
+  private entirePageBtn(): string {
+    if (!this.extensionInstalled) return '';
+    return `<button class="sf-tool-btn" data-action="capture-full-page" title="Capture entire page" aria-label="Capture entire page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M8 21H5a2 2 0 01-2-2v-3M16 21h3a2 2 0 002-2v-3"/>
+      </svg>
+      <span class="sf-tool-label">Entire page</span>
+    </button>`;
+  }
+
   private isMobile(): boolean {
     return window.innerWidth <= 768;
   }
@@ -419,6 +617,7 @@ export class ScaleFeedbackWidget {
           ${this.toolBtn('rectangle', '<rect x="3" y="3" width="18" height="18" rx="2"/>', 'Rect')}
           ${this.toolBtn('circle', '<circle cx="12" cy="12" r="9"/>', 'Circle')}
           ${this.toolBtn('freehand', '<path d="M3 17c3-3 5-6 8-6s5 4 8 4"/>', 'Draw')}
+          ${this.toolBtn('highlighter', '<path d="M12 2s6 7.5 6 12a6 6 0 01-12 0c0-4.5 6-12 6-12z"/>', 'Highlight')}
           ${this.toolBtn('text', '<polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/>', 'Text')}
           ${this.toolBtn('blur', '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>', 'Blur')}
           ${this.toolBtn('select', '<path d="M5 3l14 9-7 1-3 7z"/>', 'Select')}
@@ -429,6 +628,8 @@ export class ScaleFeedbackWidget {
               <path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/>
             </svg>
           </button>
+          ${this.annotationExtrasHtml()}
+          ${this.entirePageBtn()}
         </div>
         <div class="sf-annotate-actions">
           <button class="sf-btn-secondary" data-action="close" style="padding:8px 14px;font-size:13px">Cancel</button>
@@ -638,6 +839,15 @@ export class ScaleFeedbackWidget {
     const action = target.closest('[data-action]')?.getAttribute('data-action');
     const tool = target.closest('[data-tool]')?.getAttribute('data-tool') as AnnotationTool | null;
     const typeBtn = target.closest('[data-type]')?.getAttribute('data-type') as FeedbackType | null;
+    const emoji = target.closest('[data-emoji]')?.getAttribute('data-emoji');
+
+    // Close the emoji popup on any click outside it (except its own toggle,
+    // handled below, and its own emoji buttons, which need it to stay open
+    // until the pick is processed).
+    const openPopup = this.shadowRoot.querySelector<HTMLElement>('[data-role="emoji-popup"]');
+    if (openPopup && action !== 'emoji-toggle' && !emoji && !openPopup.contains(target)) {
+      openPopup.remove();
+    }
 
     // Confirm-close dialog actions (always checked first)
     if (action === 'confirm-leave') { this.dismissConfirm(); this.closeWidget(); return; }
@@ -655,6 +865,25 @@ export class ScaleFeedbackWidget {
 
     // Tool & undo — work whenever canvas is active (annotate step, desktop split)
     if (action === 'undo') { this.annotationCanvas?.undo(); return; }
+    if (action === 'redo') { this.annotationCanvas?.redo(); return; }
+    if (action === 'capture-full-page') { void this.captureEntirePage(target.closest<HTMLButtonElement>('[data-action="capture-full-page"]')); return; }
+    if (action === 'download') { this.downloadScreenshot(); return; }
+    if (action === 'copy') { void this.copyScreenshotToClipboard(); return; }
+    if (action === 'share-link') { void this.shareLink(target.closest<HTMLButtonElement>('[data-action="share-link"]')); return; }
+    if (action === 'insert-image') {
+      target.closest<HTMLButtonElement>('[data-action="insert-image"]')?.blur();
+      this.shadowRoot.querySelector<HTMLInputElement>('[data-role="image-input"]')?.click();
+      return;
+    }
+    if (action === 'emoji-toggle') {
+      this.toggleEmojiPicker(target.closest<HTMLElement>('[data-action="emoji-toggle"]'));
+      return;
+    }
+    if (emoji) {
+      this.annotationCanvas?.addEmoji(emoji);
+      this.shadowRoot.querySelector('[data-role="emoji-popup"]')?.remove();
+      return;
+    }
     if (tool) {
       this.currentTool = tool;
       this.annotationCanvas?.setTool(tool);
@@ -688,6 +917,117 @@ export class ScaleFeedbackWidget {
     });
   }
 
+  // Re-bind the hidden file input after each annotate render (DOM is rebuilt) —
+  // 'change' doesn't flow through the delegated click handler like data-action buttons do.
+  private bindImageInput() {
+    const input = this.shadowRoot.querySelector<HTMLInputElement>('[data-role="image-input"]');
+    input?.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') this.annotationCanvas?.addImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+      input.value = ''; // allow re-selecting the same file later
+    });
+  }
+
+  // Appended directly to shadowRoot (like showConfirmClose()) rather than
+  // nested inside the toolbar — the desktop split panel's ancestors
+  // (.sf-desktop-overlay's backdrop-filter, .sf-desktop-left/.sf-annotate-topbar's
+  // overflow clipping) would otherwise clip a popup nested inside the toolbar.
+  // position:fixed + real screen coordinates from the button's own
+  // getBoundingClientRect() sidesteps all of that.
+  private toggleEmojiPicker(anchor: HTMLElement | null) {
+    const existing = this.shadowRoot.querySelector('[data-role="emoji-popup"]');
+    if (existing) { existing.remove(); return; }
+    if (!anchor) return;
+    const rect = anchor.getBoundingClientRect();
+    const popup = document.createElement('div');
+    popup.className = 'sf-emoji-popup';
+    popup.setAttribute('data-role', 'emoji-popup');
+    popup.style.position = 'fixed';
+    popup.style.top = `${rect.bottom + 4}px`;
+    popup.style.left = `${rect.left}px`;
+
+    const grid = document.createElement('div');
+    grid.className = 'sf-emoji-grid';
+
+    const renderGrid = (filter: string) => {
+      const q = filter.trim().toLowerCase();
+      const list = q ? EMOJI_DATA.filter(([, name]) => name.includes(q)) : EMOJI_DATA;
+      grid.innerHTML = list.length
+        ? list.map(([em, name]) => `<button type="button" class="sf-emoji-btn" data-emoji="${em}" title="${name}">${em}</button>`).join('')
+        : `<div class="sf-emoji-empty">No emoji found</div>`;
+    };
+
+    const search = document.createElement('input');
+    search.type = 'text';
+    search.className = 'sf-emoji-search';
+    search.placeholder = 'Search for emojis…';
+    search.addEventListener('input', () => renderGrid(search.value));
+    // Emoji buttons are handled by the delegated shadow-root click handler
+    // (data-emoji), so no extra listener is needed here beyond building the grid.
+
+    renderGrid('');
+    popup.appendChild(search);
+    popup.appendChild(grid);
+    this.shadowRoot.appendChild(popup);
+    search.focus();
+  }
+
+  private downloadScreenshot() {
+    if (!this.annotationCanvas) return;
+    const a = document.createElement('a');
+    a.href = this.annotationCanvas.getAnnotatedDataUrl();
+    a.download = 'feedback.png';
+    a.click();
+  }
+
+  private async copyScreenshotToClipboard() {
+    if (!this.annotationCanvas) return;
+    try {
+      const res = await fetch(this.annotationCanvas.getAnnotatedDataUrl());
+      const blob = await res.blob();
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    } catch (err) {
+      console.warn('[Pinmarks] Copy to clipboard failed.', err);
+    }
+  }
+
+  private async shareLink(btn: HTMLButtonElement | null) {
+    if (!this.annotationCanvas) return;
+    const originalTitle = btn?.title;
+    try {
+      const url = await shareSnapshot(
+        this.config.apiBaseUrl,
+        this.config.projectApiKey,
+        this.annotationCanvas.getAnnotatedDataUrl(),
+      );
+      await navigator.clipboard.writeText(url);
+      if (btn) {
+        btn.title = 'Copied!';
+        setTimeout(() => { if (btn) btn.title = originalTitle ?? 'Copy share link'; }, 1500);
+      }
+    } catch (err) {
+      console.warn('[Pinmarks] Share link failed.', err);
+    }
+  }
+
+  private async captureEntirePage(btn: HTMLButtonElement | null) {
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+    try {
+      const dataUrl = await captureFullPageViaExtension();
+      this.screenshotDataUrl = dataUrl;
+      await this.annotationCanvas?.replaceBackgroundImage(dataUrl);
+    } catch (err) {
+      console.warn('[Pinmarks] Entire-page capture failed.', err);
+    } finally {
+      if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    }
+  }
+
   private goToForm() {
     if (this.annotationCanvas) {
       this.screenshotDataUrl = this.annotationCanvas.getAnnotatedDataUrl();
@@ -699,11 +1039,11 @@ export class ScaleFeedbackWidget {
   }
 
   private async handleSubmit() {
-    // Desktop split panel: capture annotations before reading form fields
+    // Desktop split panel: read the current annotated state without tearing
+    // the canvas down yet — validation below can still fail and return early,
+    // and the screenshot should stay visible while the user fixes the form.
     if (!this.isMobile() && this.annotationCanvas) {
       this.screenshotDataUrl = this.annotationCanvas.getAnnotatedDataUrl();
-      this.annotationCanvas.destroy();
-      this.annotationCanvas = null;
     }
 
     const title = this.shadowRoot.querySelector<HTMLInputElement>('#sf-title')?.value.trim();
@@ -732,6 +1072,10 @@ export class ScaleFeedbackWidget {
     }
 
     if (errorEl) errorEl.style.display = 'none';
+
+    // Leave the canvas alone here — it stays visible while the request is in
+    // flight, and renderModal() already tears it down when the step changes
+    // to 'success' (or leaves it up if submission fails, so the user can retry).
 
     // Show loading
     if (submitBtn) {

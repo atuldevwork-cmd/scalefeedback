@@ -81,7 +81,7 @@ export function CreateProjectDialog() {
                 <span className="material-symbols-outlined text-[#ff724f] text-[18px]">create_new_folder</span>
               </div>
               <div>
-                <h2 className="text-base font-bold text-[#300a46] font-heading">New Project</h2>
+                <h2 className="text-base font-bold text-[#300a46] font-heading text-left">New Project</h2>
                 <p className="text-xs text-gray-500">One project per website</p>
               </div>
               <button

@@ -2,11 +2,12 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured, MOCK_PROJECTS, MOCK_FEEDBACK } from '@/lib/mock-data';
+import { marketingUrl } from '@/lib/marketing-url';
 import { FeedbackFilters } from './feedback-filters';
 import { RealtimeRefresh } from './realtime-refresh';
 import { FeedbackListClient } from './feedback-list-client';
 import { AiScanDialog } from './ai-scan-dialog';
-import type { Project, Feedback, FeedbackStatus } from '@scalefeedback/shared';
+import type { Project, Feedback, FeedbackStatus } from '@pinmarks/shared';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -47,6 +48,7 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
   let allFeedback: Feedback[] = [];
   let userRole: string | null = null;
   let clickupConnected = false;
+  let plan: 'free' | 'pro' | 'agency' = 'free';
 
   if (isSupabaseConfigured()) {
     try {
@@ -71,16 +73,18 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
           if (membership) {
             userRole = membership.role;
             project = proj;
-            const [feedbackResult, clickupResult] = await Promise.all([
+            const [feedbackResult, clickupResult, orgResult] = await Promise.all([
               service.from('feedback').select(
                 'id,project_id,title,description,type,status,priority,reporter_name,reporter_email,page_url,browser,os,screen_size,viewport_size,device_pixel_ratio,screenshot_url,assigned_to,external_id,external_url,custom_metadata,created_at,updated_at'
                 // session_events / console_logs / network_logs intentionally omitted — large JSONB only needed in detail view.
                 // custom_metadata included — small, needed for AI Scan badge + category in list view.
               ).eq('project_id', id).order('created_at', { ascending: false }),
               service.from('integrations').select('id').eq('project_id', id).eq('type', 'clickup').eq('enabled', true).maybeSingle(),
+              service.from('organisations').select('plan').eq('id', proj.organisation_id).single(),
             ]);
             allFeedback = (feedbackResult.data ?? []) as Feedback[];
             clickupConnected = !!clickupResult.data;
+            if (orgResult.data?.plan) plan = orgResult.data.plan as 'free' | 'pro' | 'agency';
           }
         }
       }
@@ -131,14 +135,28 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
           )}
         </div>
         <div className="flex items-center gap-2">
-          <AiScanDialog projectId={id} projectDomain={project.domain ?? undefined} />
-          <Link
-            href={`/projects/${id}/analytics`}
-            className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#111111] transition-all"
-          >
-            <span className="material-symbols-outlined text-[16px]">bar_chart</span>
-            Analytics
-          </Link>
+          <AiScanDialog projectId={id} projectDomain={project.domain ?? undefined} plan={plan} />
+          {plan === 'agency' ? (
+            <Link
+              href={`/projects/${id}/analytics`}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#111111] transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px]">bar_chart</span>
+              Analytics
+            </Link>
+          ) : (
+            <a
+              href={marketingUrl('/pricing')}
+              title="Upgrade to Agency to unlock Analytics"
+              className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-sm font-medium px-3 py-2 rounded-xl hover:border-[#ff724f]/40 hover:text-[#111111] transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px] text-gray-400">lock</span>
+              Analytics
+              <span className="text-[10px] font-bold bg-[#fff3f0] text-[#ff724f] px-1.5 py-0.5 rounded-full tracking-wide">
+                AGENCY
+              </span>
+            </a>
+          )}
           <Link
             href={`/projects/${id}/settings`}
             className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#111111] transition-all"

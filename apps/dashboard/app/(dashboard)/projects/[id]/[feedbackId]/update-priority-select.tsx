@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { isSupabaseConfigured } from '@/lib/mock-data';
-import type { FeedbackPriority } from '@scalefeedback/shared';
+import type { FeedbackPriority } from '@pinmarks/shared';
 import {
   Select,
   SelectContent,

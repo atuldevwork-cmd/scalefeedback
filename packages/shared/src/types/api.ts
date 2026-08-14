@@ -40,6 +40,19 @@ export interface SubmitFeedbackPayload {
   session_events_gz?: string;
 }
 
+// Sent by the widget's server-side snapshot render path (capture/snapshot-render.ts)
+// to POST /api/render-snapshot. Response is a raw image/png body, not JSON.
+export interface RenderSnapshotRequest {
+  project_api_key: string;
+  dom_snapshot_gz: string; // gzip+base64 of the rrweb-snapshot serialized DOM tree (JSON)
+  page_url: string;
+  viewport_width: number;
+  viewport_height: number;
+  scroll_x: number;
+  scroll_y: number;
+  device_pixel_ratio: number;
+}
+
 export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;

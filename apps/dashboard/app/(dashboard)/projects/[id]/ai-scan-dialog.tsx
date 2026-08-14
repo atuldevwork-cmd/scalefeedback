@@ -3,10 +3,12 @@
 import { useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/toast';
+import { marketingUrl } from '@/lib/marketing-url';
 
 interface Props {
   projectId: string;
   projectDomain?: string;
+  plan: 'free' | 'pro' | 'agency';
 }
 
 type ScanState = 'idle' | 'scanning' | 'done' | 'error';
@@ -17,7 +19,8 @@ interface ScanResult {
   message?: string;
 }
 
-export function AiScanDialog({ projectId, projectDomain }: Props) {
+export function AiScanDialog({ projectId, projectDomain, plan }: Props) {
+  const locked = plan !== 'agency';
   const [open, setOpen] = useState(false);
   const [urls, setUrls] = useState<string[]>(['']);
   const [errorMsgs, setErrorMsgs] = useState<string[]>(['']);
@@ -134,13 +137,27 @@ export function AiScanDialog({ projectId, projectDomain }: Props) {
   return (
     <>
       {/* Trigger button */}
-      <button
-        onClick={openDialog}
-        className="flex items-center gap-1.5 bg-[#ff724f] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#e8603a] transition-all shadow-sm"
-      >
-        <span className="material-symbols-outlined text-[16px]">travel_explore</span>
-        Scan Website
-      </button>
+      {locked ? (
+        <a
+          href={marketingUrl('/pricing')}
+          title="Upgrade to Agency to unlock the AI website scanner"
+          className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-sm font-medium px-3 py-2 rounded-xl hover:border-[#ff724f]/40 hover:text-[#111111] transition-all"
+        >
+          <span className="material-symbols-outlined text-[16px] text-gray-400">lock</span>
+          Scan Website
+          <span className="text-[10px] font-bold bg-[#fff3f0] text-[#ff724f] px-1.5 py-0.5 rounded-full tracking-wide">
+            AGENCY
+          </span>
+        </a>
+      ) : (
+        <button
+          onClick={openDialog}
+          className="flex items-center gap-1.5 bg-[#ff724f] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#e8603a] transition-all shadow-sm"
+        >
+          <span className="material-symbols-outlined text-[16px]">travel_explore</span>
+          Scan Website
+        </button>
+      )}
 
       {/* Modal */}
       {open && (

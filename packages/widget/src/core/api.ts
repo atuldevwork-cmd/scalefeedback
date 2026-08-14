@@ -1,5 +1,6 @@
 import type { ConsoleLogEntry, NetworkLogEntry, FeedbackType } from '../types';
 import { collectMetadata } from '../capture/metadata';
+import { gzipToBase64 } from './gzip';
 
 export interface SubmitOptions {
   apiBaseUrl: string;
@@ -16,35 +17,10 @@ export interface SubmitOptions {
   sessionEvents?: unknown[];
 }
 
-// Gzip-compress session events using the native browser CompressionStream API.
-// JSON typically compresses 8-12x, turning a 4MB HubSpot snapshot into ~400KB.
-// Returns base64-encoded gzip, or null if the API is unavailable.
-async function compressEvents(events: unknown[]): Promise<string | null> {
-  if (typeof CompressionStream === 'undefined') return null;
-  try {
-    const json = JSON.stringify(events);
-    const bytes = new TextEncoder().encode(json);
-    const cs = new CompressionStream('gzip');
-    const writer = cs.writable.getWriter();
-    writer.write(bytes);
-    writer.close();
-    const compressed = await new Response(cs.readable).arrayBuffer();
-    // Chunk-encode to avoid call-stack overflow on large arrays
-    const arr = new Uint8Array(compressed);
-    let binary = '';
-    for (let i = 0; i < arr.length; i += 8192) {
-      binary += String.fromCharCode(...arr.subarray(i, i + 8192));
-    }
-    return btoa(binary);
-  } catch {
-    return null;
-  }
-}
-
 export async function submitFeedback(opts: SubmitOptions): Promise<void> {
   let sessionEventsGz: string | null = null;
   if (opts.sessionEvents?.length) {
-    sessionEventsGz = await compressEvents(opts.sessionEvents);
+    sessionEventsGz = await gzipToBase64(opts.sessionEvents);
   }
 
   const response = await fetch(`${opts.apiBaseUrl}/api/feedback`, {
@@ -72,4 +48,22 @@ export async function submitFeedback(opts: SubmitOptions): Promise<void> {
     const err = await response.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(err.error ?? 'Submission failed');
   }
+}
+
+// Uploads the current annotated screenshot and returns a public share URL —
+// a standalone action independent of feedback submission (the "Link" toolbar button).
+export async function shareSnapshot(apiBaseUrl: string, projectApiKey: string, screenshot: string): Promise<string> {
+  const response = await fetch(`${apiBaseUrl}/api/share-snapshot`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_api_key: projectApiKey, screenshot }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(err.error ?? 'Failed to create share link');
+  }
+
+  const data = await response.json();
+  return data.url as string;
 }

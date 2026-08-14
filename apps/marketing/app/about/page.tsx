@@ -45,7 +45,7 @@ const VALUES = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col">
-      <MarketingNavbar />
+      <MarketingNavbar activePage="about" />
 
       {/* ── Hero ── */}
       <section className="bg-[#111111] relative overflow-hidden">

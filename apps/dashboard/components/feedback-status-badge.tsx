@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { FeedbackStatus } from '@scalefeedback/shared';
+import type { FeedbackStatus } from '@pinmarks/shared';
 
 const statusConfig: Record<FeedbackStatus, { label: string; className: string }> = {
   open: { label: 'Open', className: 'bg-blue-50 text-blue-700' },

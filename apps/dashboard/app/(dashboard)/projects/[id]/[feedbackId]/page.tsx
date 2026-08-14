@@ -13,7 +13,7 @@ import { TimelinePanel } from './timeline-panel';
 import { ReporterInviteButton } from './reporter-invite-button';
 import { FeedbackActionsMenu } from './feedback-actions-menu';
 import { MediaViewer } from './media-viewer';
-import type { Feedback, Project } from '@scalefeedback/shared';
+import type { Feedback, Project } from '@pinmarks/shared';
 
 type ClickUpTaskData = {
   id: string;

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { FeedbackType } from '@scalefeedback/shared';
+import type { FeedbackType } from '@pinmarks/shared';
 
 const typeConfig: Record<FeedbackType, { label: string; className: string }> = {
   bug: { label: 'Bug', className: 'bg-red-50 text-red-700' },

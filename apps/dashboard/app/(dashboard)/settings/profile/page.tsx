@@ -4,19 +4,29 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/toast';
+import { PasswordInput } from '@/components/ui/password-input';
 
 export default function ProfilePage() {
   const toast = useToast();
   const [name, setName] = useState('');
+  const [initialName, setInitialName] = useState('');
   const [email, setEmail] = useState('');
+  const [initialEmail, setInitialEmail] = useState('');
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [settingPassword, setSettingPassword] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [modalError, setModalError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -25,21 +35,65 @@ export default function ProfilePage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setEmail(user.email ?? '');
+        setInitialEmail(user.email ?? '');
         setUserId(user.id);
         const fullName =
           user.user_metadata?.full_name ??
           user.user_metadata?.name ??
           '';
         setName(fullName);
+        setInitialName(fullName);
         const avatar =
           user.user_metadata?.avatar_url ??
           user.user_metadata?.picture ??
           null;
         setAvatarUrl(avatar);
+        setHasPassword((user.identities ?? []).some((i) => i.provider === 'email'));
       }
       setLoading(false);
     });
   }, []);
+
+  function closePasswordModal() {
+    setShowPasswordModal(false);
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setModalError('');
+  }
+
+  async function handleSetPasswordAndContinue(e: React.FormEvent) {
+    e.preventDefault();
+    setModalError('');
+    if (!newPassword || !confirmNewPassword) return;
+    if (newPassword !== confirmNewPassword) {
+      setModalError('Passwords do not match');
+      return;
+    }
+
+    setSettingPassword(true);
+    const supabase = createClient();
+    const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
+    if (pwError) {
+      setSettingPassword(false);
+      setModalError(pwError.message);
+      return;
+    }
+    setHasPassword(true);
+
+    await supabase.auth.updateUser({ data: { full_name: name } });
+    setInitialName(name);
+    const { error: emailError } = await supabase.auth.updateUser({ email });
+    setSettingPassword(false);
+
+    if (emailError) {
+      setModalError(emailError.message);
+      return;
+    }
+
+    closePasswordModal();
+    setIsEditingEmail(false);
+    toast('Password set — confirmation link sent to finish changing your email.');
+  }
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -101,9 +155,30 @@ export default function ProfilePage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    const emailChanged = email !== initialEmail;
+
+    if (emailChanged && !hasPassword) {
+      setShowPasswordModal(true);
+      return;
+    }
+
     setSaving(true);
     const supabase = createClient();
     await supabase.auth.updateUser({ data: { full_name: name } });
+    setInitialName(name);
+
+    if (emailChanged) {
+      const { error } = await supabase.auth.updateUser({ email });
+      setSaving(false);
+      if (error) {
+        toast(error.message, 'error');
+        return;
+      }
+      setIsEditingEmail(false);
+      toast('Confirmation link sent — check your inbox to finish changing your email.');
+      return;
+    }
+
     setSaving(false);
     toast('Profile saved');
   }
@@ -158,39 +233,125 @@ export default function ProfilePage() {
             <div className="h-20 flex items-center justify-center text-sm text-gray-400">Loading…</div>
           ) : (
             <form onSubmit={handleSave} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Full name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Email address</label>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">Full name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">Work email</label>
+                {isEditingEmail ? (
                   <input
                     type="email"
                     value={email}
-                    disabled
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoFocus
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#ff724f]/30 focus:border-[#ff724f]"
                   />
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-900">
+                    {email}{' '}
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingEmail(true)}
+                      className="text-[#ff724f] font-medium hover:text-[#e8603a]"
+                    >
+                      Change email
+                    </button>
+                  </p>
+                )}
               </div>
+
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="bg-[#ff724f] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#e8603a] transition-colors disabled:opacity-60"
+                  disabled={saving || (name === initialName && email === initialEmail)}
+                  className="bg-[#ff724f] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#e8603a] transition-colors disabled:opacity-60 disabled:bg-gray-200 disabled:text-gray-400"
                 >
-                  {saving ? 'Saving…' : 'Save changes'}
+                  {saving ? 'Saving…' : 'Save'}
                 </button>
               </div>
             </form>
           )}
         </div>
+
+        {/* Set password to continue email change */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={closePasswordModal} />
+            <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
+              <button
+                onClick={closePasswordModal}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-[#fff3f0] rounded-full flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-[#ff724f] text-[20px]">lock</span>
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Set a password to continue</h2>
+              </div>
+              <p className="text-sm text-gray-500 mb-5">
+                Your account uses Google sign-in only. Set a password now and we&apos;ll go ahead with your email change to <strong className="text-gray-700">{email}</strong> right after.
+              </p>
+
+              <form onSubmit={handleSetPasswordAndContinue} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">New password</label>
+                  <PasswordInput
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Min. 8 characters"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1.5">Confirm password</label>
+                  <PasswordInput
+                    value={confirmNewPassword}
+                    onChange={setConfirmNewPassword}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Min. 8 characters"
+                  />
+                </div>
+
+                {modalError && (
+                  <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{modalError}</p>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closePasswordModal}
+                    className="flex-1 border border-gray-200 text-gray-700 font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={settingPassword}
+                    className="flex-1 bg-[#ff724f] hover:bg-[#e8603a] text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm disabled:opacity-60"
+                  >
+                    {settingPassword ? 'Setting…' : 'Set password & continue'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Danger zone */}
         <div className="bg-white border border-red-200 rounded-xl p-6">

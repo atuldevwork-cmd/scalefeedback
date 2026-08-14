@@ -1,51 +1,29 @@
+import Image from 'next/image';
+
 function FeedbackVisual() {
   return (
-    <div className="bg-[#FFF8CC] rounded-2xl p-6 h-72 flex items-center justify-center border border-yellow-200">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-sm">
-        <div className="bg-gray-100 rounded-t-xl px-3 py-2 flex items-center gap-1.5 border-b border-gray-200">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
-          <div className="flex-1 mx-2 bg-white rounded px-2 py-0.5 text-[10px] text-gray-400 font-mono">mysite.com/checkout</div>
-        </div>
-        <div className="p-4">
-          <div className="space-y-2 mb-4">
-            <div className="h-4 bg-gray-100 rounded w-2/3" />
-            <div className="h-3 bg-gray-100 rounded w-full" />
-            <div className="h-3 bg-gray-100 rounded w-4/5" />
-          </div>
-          <div className="relative mb-4">
-            <div className="h-9 bg-[#FFF8CC] border-2 border-[#F5C800] border-dashed rounded-lg flex items-center px-3">
-              <span className="text-[10px] text-[#D4A800] font-medium">This button is not responding!</span>
-            </div>
-            <div className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-[#F5C800] rounded-full flex items-center justify-center text-[#111111] text-[9px] font-bold shadow-md border-2 border-white">1</div>
-          </div>
-          <div className="flex justify-end">
-            <div className="bg-[#F5C800] text-[#111111] text-[10px] px-3 py-1.5 rounded-lg font-bold">Submit feedback</div>
-          </div>
-        </div>
-      </div>
+    <div className="h-72 flex items-center justify-center">
+      <Image
+        src="/images/website-feedback.png"
+        alt="Pinning feedback on a live website"
+        width={2271}
+        height={1514}
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 }
 
 function BugReportVisual() {
   return (
-    <div className="bg-[#F9F9F9] rounded-2xl p-6 h-72 flex flex-col gap-2 border border-gray-100">
-      <p className="text-xs font-semibold text-[#111111] mb-1">Auto-captured bug context</p>
-      {[
-        { label: 'Browser', value: 'Chrome 124', color: 'bg-[#FFF8CC] text-[#D4A800]' },
-        { label: 'OS', value: 'macOS Sonoma', color: 'bg-gray-100 text-[#111111]' },
-        { label: 'Screen', value: '1440 × 900', color: 'bg-blue-50 text-blue-700' },
-        { label: 'URL', value: '/checkout/step-2', color: 'bg-gray-100 text-[#555555]' },
-        { label: 'Console errors', value: '2 errors', color: 'bg-red-50 text-red-700' },
-        { label: 'Network', value: '1 failed request', color: 'bg-red-50 text-red-700' },
-      ].map(item => (
-        <div key={item.label} className="bg-white rounded-lg px-3 py-1.5 flex items-center justify-between border border-gray-100 shadow-sm">
-          <span className="text-xs text-[#555555] font-medium">{item.label}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${item.color}`}>{item.value}</span>
-        </div>
-      ))}
+    <div className="h-72 flex items-center justify-center">
+      <Image
+        src="/images/bug-reporting.png"
+        alt="Bug report with full developer context"
+        width={2344}
+        height={1562}
+        className="w-full h-full object-contain"
+      />
     </div>
   );
 }
@@ -348,7 +326,7 @@ export function FeaturesSection() {
                 </div>
 
                 {/* Visual side */}
-                <div className="flex-1 bg-[#F9F9F9] p-8 flex items-center justify-center border-t md:border-t-0 border-gray-100 md:border-l md:border-r-0">
+                <div className="flex-1 bg-[#F9F9F9] flex items-center justify-center border-t md:border-t-0 border-gray-100 md:border-l md:border-r-0">
                   <div className="w-full max-w-md">
                     <Visual />
                   </div>

@@ -6,7 +6,7 @@ import { Menu, X } from 'lucide-react';
 import { appUrl } from '@/lib/app-url';
 
 interface MarketingNavbarProps {
-  activePage?: 'home' | 'pricing' | 'contact';
+  activePage?: 'home' | 'about' | 'pricing' | 'contact';
 }
 
 export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
@@ -30,9 +30,9 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
 
         {/* Nav links — centered, desktop only */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/#features" className={linkClass()}>Features</Link>
-          <Link href="/#integrations" className={linkClass()}>Integrations</Link>
-          <Link href="/about" className={linkClass()}>About Us</Link>
+          <Link href="/#features" className={linkClass('features')}>Features</Link>
+          <Link href="/#integrations" className={linkClass('integrations')}>Integrations</Link>
+          <Link href="/about" className={linkClass('about')}>About Us</Link>
           <Link href="/pricing" className={linkClass('pricing')}>Pricing</Link>
           <Link href="/contact" className={linkClass('contact')}>Contact</Link>
         </div>
@@ -62,7 +62,7 @@ export function MarketingNavbar({ activePage }: MarketingNavbarProps) {
         <div className="md:hidden absolute top-full left-0 right-0 border-t border-gray-100 bg-white/95 backdrop-blur shadow-lg px-4 py-4 flex flex-col gap-4 z-50">
           <Link href="/#features" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Features</Link>
           <Link href="/#integrations" className="text-sm text-[#555555] hover:text-[#111111] transition-colors py-1" onClick={() => setMobileOpen(false)}>Integrations</Link>
-          <Link href="/about" className={`py-1 ${linkClass()}`} onClick={() => setMobileOpen(false)}>About Us</Link>
+          <Link href="/about" className={`py-1 ${linkClass('about')}`} onClick={() => setMobileOpen(false)}>About Us</Link>
           <Link href="/pricing" className={`py-1 ${linkClass('pricing')}`} onClick={() => setMobileOpen(false)}>Pricing</Link>
           <Link href="/contact" className={`py-1 ${linkClass('contact')}`} onClick={() => setMobileOpen(false)}>Contact</Link>
           <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
