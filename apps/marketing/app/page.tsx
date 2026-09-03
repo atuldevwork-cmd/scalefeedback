@@ -162,7 +162,7 @@ export default function HomePage() {
 
 
       {/* ── HOW IT WORKS ──────────────────────────────────────────── */}
-      <section className="py-24 bg-white">
+      <section id="features" className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <p className="text-sm font-semibold text-[#ff724f] uppercase tracking-widest mb-3">How it works</p>
