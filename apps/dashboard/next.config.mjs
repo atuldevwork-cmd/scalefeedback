@@ -4,11 +4,13 @@ const nextConfig = {
   // (puppeteer ships with a ~300MB Chromium binary; @sparticuz/chromium downloads at runtime)
   experimental: {
     serverComponentsExternalPackages: ['puppeteer', 'puppeteer-core', '@sparticuz/chromium', 'cheerio'],
-    // Ensures the vendored rrweb-snapshot bundle ships in the deployed
-    // function's filesystem — it's only reached via a runtime fs.readFileSync,
+    // Ensures vendored bundles (rrweb-snapshot, axe-core) ship in the deployed
+    // function's filesystem — they're only reached via a runtime fs.readFileSync,
     // which Vercel's build-time file tracer won't pick up on its own.
     outputFileTracingIncludes: {
       '/api/render-snapshot/route': ['./lib/vendor/**'],
+      '/api/ai-scan/route': ['./lib/vendor/**'],
+      '/api/monitor/[projectId]/scan/route': ['./lib/vendor/**'],
     },
   },
   images: {

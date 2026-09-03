@@ -1,0 +1,22 @@
+-- Screen Capture settings (marker.io-style): Basic Auth credentials used
+-- server-side when rendering screenshots of Basic-Auth-protected pages.
+--
+-- These live in dedicated columns instead of `widget_config` because
+-- `widget_config` is returned VERBATIM (per-key) by the public, unauthenticated
+-- GET /api/widget-config endpoint (CORS '*', looked up by the project's public
+-- api_key — any website visitor holding it can call this). Every other widget
+-- setting is safe to keep in that JSONB because none of it is a secret. Basic
+-- Auth username/password ARE secrets, so they must never be reachable through
+-- that column — hence separate, non-public columns that the widget-config
+-- route does not select.
+--
+-- The companion boolean flags (basicAuthEnabled, nativeScreenshotApi,
+-- authenticatedMediaCapture) are NOT secrets and live as new keys inside the
+-- existing `widget_config` JSONB — no schema change needed for those.
+--
+-- Note: consistent with how OAuth tokens are already stored on `integrations`
+-- (see migrations 004/017 — `access_token text`, no application-level
+-- encryption in this codebase), these are stored as plain TEXT rather than
+-- introducing a new encryption convention.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS basic_auth_username TEXT;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS basic_auth_password TEXT;

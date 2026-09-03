@@ -7,6 +7,7 @@ import { FeedbackFilters } from './feedback-filters';
 import { RealtimeRefresh } from './realtime-refresh';
 import { FeedbackListClient } from './feedback-list-client';
 import { AiScanDialog } from './ai-scan-dialog';
+import { Tooltip } from '@/components/ui/tooltip';
 import type { Project, Feedback, FeedbackStatus } from '@pinmarks/shared';
 
 interface Props {
@@ -136,6 +137,32 @@ export default async function ProjectFeedbackPage({ params, searchParams }: Prop
         </div>
         <div className="flex items-center gap-2">
           <AiScanDialog projectId={id} projectDomain={project.domain ?? undefined} plan={plan} />
+          {plan === 'agency' ? (
+            <Tooltip content="Ongoing accessibility monitoring — tracks WCAG issues over time and flags regressions automatically. Different from AI Scan, which is a one-time check.">
+              <Link
+                href={`/projects/${id}/monitor`}
+                className="flex items-center gap-1.5 border border-gray-200 text-gray-600 text-sm font-medium px-3 py-2 rounded-xl hover:bg-gray-50 hover:text-[#111111] transition-all"
+              >
+                <span className="material-symbols-outlined text-[16px]">radar</span>
+                Monitor
+                <span className="text-[10px] font-bold bg-[#fff3f0] text-[#ff724f] px-1.5 py-0.5 rounded-full tracking-wide">
+                  NEW
+                </span>
+              </Link>
+            </Tooltip>
+          ) : (
+            <a
+              href={marketingUrl('/pricing')}
+              title="Upgrade to Agency to unlock Website Monitoring"
+              className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-sm font-medium px-3 py-2 rounded-xl hover:border-[#ff724f]/40 hover:text-[#111111] transition-all"
+            >
+              <span className="material-symbols-outlined text-[16px] text-gray-400">lock</span>
+              Monitor
+              <span className="text-[10px] font-bold bg-[#fff3f0] text-[#ff724f] px-1.5 py-0.5 rounded-full tracking-wide">
+                AGENCY
+              </span>
+            </a>
+          )}
           {plan === 'agency' ? (
             <Link
               href={`/projects/${id}/analytics`}

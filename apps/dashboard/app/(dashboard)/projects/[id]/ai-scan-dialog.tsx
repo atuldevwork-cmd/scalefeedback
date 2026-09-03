@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/toast';
+import { Tooltip } from '@/components/ui/tooltip';
 import { marketingUrl } from '@/lib/marketing-url';
 
 interface Props {
@@ -144,19 +145,21 @@ export function AiScanDialog({ projectId, projectDomain, plan }: Props) {
           className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-sm font-medium px-3 py-2 rounded-xl hover:border-[#ff724f]/40 hover:text-[#111111] transition-all"
         >
           <span className="material-symbols-outlined text-[16px] text-gray-400">lock</span>
-          Scan Website
+          AI Scan
           <span className="text-[10px] font-bold bg-[#fff3f0] text-[#ff724f] px-1.5 py-0.5 rounded-full tracking-wide">
             AGENCY
           </span>
         </a>
       ) : (
-        <button
-          onClick={openDialog}
-          className="flex items-center gap-1.5 bg-[#ff724f] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#e8603a] transition-all shadow-sm"
-        >
-          <span className="material-symbols-outlined text-[16px]">travel_explore</span>
-          Scan Website
-        </button>
+        <Tooltip content="One-time AI scan — checks UX, SEO, CRO & accessibility, then adds the findings to Feedback. Different from Monitor, which tracks accessibility issues over time.">
+          <button
+            onClick={openDialog}
+            className="flex items-center gap-1.5 bg-[#ff724f] text-white text-sm font-medium px-3 py-2 rounded-xl hover:bg-[#e8603a] transition-all shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[16px]">travel_explore</span>
+            AI Scan
+          </button>
+        </Tooltip>
       )}
 
       {/* Modal */}
@@ -174,8 +177,8 @@ export function AiScanDialog({ projectId, projectDomain, plan }: Props) {
                   <span className="material-symbols-outlined text-[#ff724f] text-[18px]">travel_explore</span>
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-[#111111]">AI Website Scanner</h2>
-                  <p className="text-xs text-gray-400">Crawl pages and auto-generate issues</p>
+                  <h2 className="text-base font-bold text-[#111111]">AI Scan</h2>
+                  <p className="text-xs text-gray-400">One-time scan · adds issues to Feedback</p>
                 </div>
               </div>
               {scanState !== 'scanning' && (
@@ -281,7 +284,14 @@ export function AiScanDialog({ projectId, projectDomain, plan }: Props) {
                 <div className="flex flex-col gap-4">
                   <p className="text-sm text-gray-500">
                     Enter one or more page URLs to scan. Each page will be checked for
-                    UX, SEO, CRO, accessibility, and technical issues.
+                    UX, SEO, CRO, accessibility, and technical issues — once, right now.
+                  </p>
+                  <p className="text-xs text-gray-400 -mt-2.5">
+                    Want issues tracked over time instead? Use{' '}
+                    <a href={`/projects/${projectId}/monitor`} className="text-[#ff724f] font-medium hover:underline">
+                      Monitor
+                    </a>{' '}
+                    for ongoing accessibility checks.
                   </p>
 
                   {/* URL repeater */}

@@ -1,18 +1,23 @@
 import { load } from 'cheerio';
 import { readFileSync } from 'fs';
-import { createRequire } from 'module';
+import { join } from 'path';
 import { getBrowser } from './browser';
-
-const _require = createRequire(import.meta.url);
 
 let _axeSource: string | undefined;
 function getAxeSource(): string {
   if (_axeSource !== undefined) return _axeSource;
   try {
-    _axeSource = readFileSync(_require.resolve('axe-core'), 'utf8');
-  } catch {
+    // Read a vendored copy via a static literal path — same pattern already used
+    // for lib/vendor/rrweb-snapshot.min.js in render-snapshot/route.ts. Both
+    // require.resolve(import.meta.url-derived path) and require.resolve('axe-core')
+    // break under Next's webpack bundling (the former resolves to a virtual path,
+    // the latter — once axe-core is marked external — returns the bare specifier
+    // instead of a real filesystem path). Vendoring sidesteps module resolution
+    // entirely. Update apps/dashboard/lib/vendor/axe-core.js when bumping axe-core.
+    _axeSource = readFileSync(join(process.cwd(), 'lib/vendor/axe-core.js'), 'utf8');
+  } catch (err) {
     _axeSource = '';
-    console.warn('[crawler] Could not load axe-core source — accessibility audit disabled');
+    console.warn('[crawler] Could not load axe-core source — accessibility audit disabled:', err);
   }
   return _axeSource;
 }
@@ -54,6 +59,11 @@ export interface PageContent {
   hasFavicon: boolean;
   consoleErrors: string[];
   axeViolations: AxeViolation[];
+  // Count only (not the full pass objects — would bloat every crawl for data
+  // we don't need) — lets computeAccessibilityScore in lib/monitor.ts weigh
+  // violations against how many checks actually passed, not just count
+  // failures in isolation. 0 when axe didn't run (see axeSrc guard below).
+  axePassesCount: number;
   screenshotBuffer?: Buffer;
   mobileScreenshotBuffer?: Buffer;
   // Richer signals for deep analysis
@@ -77,7 +87,7 @@ export interface CrawlResult {
 const PAGE_TIMEOUT_MS = 20_000;
 const MAX_BODY_CHARS = 3_000;
 
-const BOT_UA = 'Mozilla/5.0 (compatible; PinmarksBot/1.0; +https://pinmarks.com)';
+export const BOT_UA = 'Mozilla/5.0 (compatible; PinmarksBot/1.0; +https://pinmarks.com)';
 
 function isSitemapUrl(url: string) {
   return /sitemap.*\.xml/i.test(url);
@@ -88,7 +98,7 @@ function isSpecificPage(url: string): boolean {
   return path.length > 0;
 }
 
-function parseHtmlContent(url: string, html: string, statusCode: number): Omit<PageContent, 'consoleErrors' | 'axeViolations' | 'screenshotBuffer' | 'mobileScreenshotBuffer'> {
+function parseHtmlContent(url: string, html: string, statusCode: number): Omit<PageContent, 'consoleErrors' | 'axeViolations' | 'axePassesCount' | 'screenshotBuffer' | 'mobileScreenshotBuffer'> {
   const $ = load(html);
   const baseOrigin = new URL(url).origin;
 
@@ -234,7 +244,7 @@ async function fetchPage(url: string): Promise<PageContent> {
     clearTimeout(timer);
   }
   const parsed = parseHtmlContent(url, html, statusCode);
-  return { ...parsed, consoleErrors: [], axeViolations: [] };
+  return { ...parsed, consoleErrors: [], axeViolations: [], axePassesCount: 0 };
 }
 
 async function fetchSitemapUrls(sitemapUrl: string): Promise<string[]> {
@@ -319,7 +329,7 @@ async function crawlWithFetch(url: string, maxPages: number): Promise<CrawlResul
 
 // ─── Puppeteer-based crawler ─────────────────────────────────────────────────
 
-async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlResult> {
+async function crawlWithPuppeteer(url: string, maxPages: number, axeTags?: string[]): Promise<CrawlResult> {
   const browser = await getBrowser();
 
   type PuppeteerBrowser = typeof browser;
@@ -361,16 +371,18 @@ async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlR
     await page.setViewport({ width: 1440, height: 900 }).catch(() => {});
 
     let axeViolations: AxeViolation[] = [];
+    let axePassesCount = 0;
     const axeSrc = getAxeSource();
     if (axeSrc) {
       try {
         await page.evaluate(axeSrc);
-        const axeResult = await page.evaluate(async () => {
+        const axeResult = await page.evaluate(async (tags: string[] | undefined) => {
           // @ts-ignore — axe is injected into page context
-          const r = await window.axe.run({ reporter: 'v2' });
-          return r.violations;
-        });
-        axeViolations = (axeResult ?? []) as AxeViolation[];
+          const r = await window.axe.run(tags?.length ? { runOnly: { type: 'tag', values: tags } } : { reporter: 'v2' });
+          return { violations: r.violations, passesCount: r.passes.length };
+        }, axeTags);
+        axeViolations = (axeResult?.violations ?? []) as AxeViolation[];
+        axePassesCount = axeResult?.passesCount ?? 0;
       } catch (e) {
         console.warn(`[crawler] axe-core run failed for ${pageUrl}:`, e);
       }
@@ -379,7 +391,7 @@ async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlR
     const html = await page.content();
     await page.close();
     const parsed = parseHtmlContent(pageUrl, html, statusCode);
-    return { ...parsed, consoleErrors, axeViolations, screenshotBuffer, mobileScreenshotBuffer };
+    return { ...parsed, consoleErrors, axeViolations, axePassesCount, screenshotBuffer, mobileScreenshotBuffer };
   }
 
   async function parseSitemapUrls(sitemapUrl: string): Promise<string[]> {
@@ -454,12 +466,12 @@ async function crawlWithPuppeteer(url: string, maxPages: number): Promise<CrawlR
 
 // ─── Public entry point ───────────────────────────────────────────────────────
 
-export async function crawlWebsite(url: string, maxPages = 10): Promise<CrawlResult> {
+export async function crawlWebsite(url: string, maxPages = 10, axeTags?: string[]): Promise<CrawlResult> {
   console.log(process.env.VERCEL
     ? '[crawler] Using Puppeteer + @sparticuz/chromium (production)'
     : '[crawler] Using Puppeteer crawler (local dev)');
   try {
-    return await crawlWithPuppeteer(url, maxPages);
+    return await crawlWithPuppeteer(url, maxPages, axeTags);
   } catch (err) {
     console.warn('[crawler] Chromium launch failed, falling back to fetch:', err);
     return crawlWithFetch(url, maxPages);

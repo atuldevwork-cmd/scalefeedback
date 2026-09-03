@@ -47,6 +47,11 @@ function withCors(res: NextResponse): NextResponse {
   return res;
 }
 
+interface BasicAuthCreds {
+  username: string;
+  password: string;
+}
+
 async function renderScreenshot(
   tree: RawNode,
   viewportWidth: number,
@@ -54,10 +59,15 @@ async function renderScreenshot(
   scrollX: number,
   scrollY: number,
   dpr: number,
+  basicAuth?: BasicAuthCreds,
 ): Promise<Buffer> {
   const browser = await getBrowser();
   try {
     const page = await browser.newPage();
+    // Sub-resources (images/fonts/stylesheets) referenced by the rebuilt DOM are
+    // fetched for real below — if the site sits behind HTTP Basic Auth, those
+    // requests 401 without this (showing as broken images in the screenshot).
+    if (basicAuth) await page.authenticate(basicAuth);
     await page.setViewport({ width: viewportWidth, height: viewportHeight, deviceScaleFactor: dpr || 1 });
 
     await page.setRequestInterception(true);
@@ -119,7 +129,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceClient();
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('id, is_active')
+      .select('id, is_active, widget_config, basic_auth_username, basic_auth_password')
       .eq('api_key', body.project_api_key)
       .single();
 
@@ -129,6 +139,11 @@ export async function POST(request: NextRequest) {
     if (!project.is_active) {
       return withCors(NextResponse.json({ error: 'Project is inactive' }, { status: 403 }));
     }
+
+    const widgetCfg = (project.widget_config ?? {}) as Record<string, unknown>;
+    const basicAuth: BasicAuthCreds | undefined = widgetCfg.basicAuthEnabled && project.basic_auth_username && project.basic_auth_password
+      ? { username: project.basic_auth_username, password: project.basic_auth_password }
+      : undefined;
 
     if (!body.dom_snapshot_gz || !body.viewport_width || !body.viewport_height) {
       return withCors(NextResponse.json({ error: 'Missing snapshot data' }, { status: 400 }));
@@ -152,6 +167,7 @@ export async function POST(request: NextRequest) {
         body.scroll_x ?? 0,
         body.scroll_y ?? 0,
         body.device_pixel_ratio ?? 1,
+        basicAuth,
       ),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Render timed out')), RENDER_TIMEOUT_MS)
