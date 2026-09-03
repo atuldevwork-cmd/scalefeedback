@@ -98,6 +98,13 @@ export async function parseConfig(): Promise<WidgetConfig> {
         secretParamType: remote.secretParamType ?? 'default',
         secretParam:     remote.secretParam     ?? '',
         sessionReplay:   remote.sessionReplay   ?? false,
+        aiRewrite:       remote.aiRewrite       ?? false,
+        titleGeneration: remote.aiTitleGeneration ?? false,
+        guestFormTypes:  remote.guestFormTypes,
+        memberFormTypes: remote.memberFormTypes,
+        guestFormFields:  remote.guestFormFields,
+        memberFormFields: remote.memberFormFields,
+        assignableMembers: remote.assignableMembers,
         user:            presetUser,
       };
     }

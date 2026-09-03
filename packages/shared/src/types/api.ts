@@ -1,4 +1,4 @@
-import type { FeedbackType, ConsoleLog, NetworkLog } from './feedback';
+import type { FeedbackType, FeedbackPriority, ConsoleLog, NetworkLog } from './feedback';
 
 export interface SubmitFeedbackPayload {
   // Project identification
@@ -29,8 +29,19 @@ export interface SubmitFeedbackPayload {
   console_logs: ConsoleLog[];
   network_logs: NetworkLog[];
 
-  // Priority
-  priority?: string;
+  // Priority — sent when the widget's "Priority" field is toggled visible for
+  // this issue type (Guest Forms / Member Forms > Fields). Persisted for
+  // real in apps/dashboard/app/api/feedback/route.ts's baseInsert.
+  priority?: FeedbackPriority;
+
+  // Assignee — sent when the widget's "Assignee" field is toggled visible.
+  // Must be a user_id from the assignableMembers list the widget-config API
+  // returned; the server re-validates org membership before persisting.
+  assigned_to?: string;
+
+  // Due date — sent when the widget's "Due date" field is toggled visible.
+  // ISO date string (YYYY-MM-DD).
+  due_date?: string;
 
   // Custom metadata
   custom_metadata?: Record<string, unknown>;

@@ -4,7 +4,8 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { sendNewFeedbackEmail } from '@/lib/email';
 import { rateLimit } from '@/lib/rate-limit';
 import { planAtLeast } from '@/lib/plan';
-import type { SubmitFeedbackPayload } from '@pinmarks/shared';
+import { translateFeedbackText, generateFeedbackTitle } from '@/lib/ai-text';
+import type { SubmitFeedbackPayload, AiSettings } from '@pinmarks/shared';
 
 // Handle CORS preflight
 export async function OPTIONS() {
@@ -88,28 +89,90 @@ export async function POST(request: NextRequest) {
         })()
       : (body.session_events ?? null);
 
+    // Org plan is needed for both the session-replay gate below and the AI features —
+    // fetch it once and reuse rather than querying multiple times.
+    let orgPlan: string | null | undefined;
+    let aiSettings: Partial<AiSettings> | undefined;
+    if (sessionEvents || body.title || body.description) {
+      const { data: org } = await supabase
+        .from('organisations')
+        .select('plan, ai_settings')
+        .eq('id', project.organisation_id)
+        .single();
+      orgPlan = org?.plan;
+      aiSettings = org?.ai_settings ?? undefined;
+    }
+
     // Defense in depth: session_events is only a Pro/Agency feature. The widget
     // already gets `sessionReplay: false` from /api/widget-config on lower plans
     // and won't record, but a stale cached config or a direct API call
     // shouldn't be able to smuggle a recording in anyway.
-    if (sessionEvents) {
-      const { data: org } = await supabase
-        .from('organisations')
-        .select('plan')
-        .eq('id', project.organisation_id)
-        .single();
-      if (!planAtLeast(org?.plan, 'pro')) {
-        sessionEvents = null;
-      }
+    if (sessionEvents && !planAtLeast(orgPlan, 'pro')) {
+      sessionEvents = null;
+    }
+
+    const customMetadata = { ...(body.custom_metadata ?? {}) } as Record<string, unknown>;
+    let translatedTitle = body.title;
+    let translatedDescription = body.description;
+
+    // AI Translation (Pro+, admin-configurable at /settings/ai): detect reports not
+    // already in the team's language and translate for the dashboard, keeping the
+    // original text around so the team can still see what was actually written.
+    if (planAtLeast(orgPlan, 'pro') && (aiSettings?.translate_enabled ?? true) && (body.title || body.description)) {
+      try {
+        const translation = await translateFeedbackText(
+          { title: body.title, description: body.description },
+          aiSettings?.team_language || 'English'
+        );
+        if (translation) {
+          translatedTitle = translation.title;
+          translatedDescription = translation.description;
+          customMetadata.translation = {
+            detectedLanguage: translation.detectedLanguage,
+            originalTitle: body.title ?? null,
+            originalDescription: body.description ?? null,
+          };
+        }
+      } catch { /* translation must never block submission */ }
+    }
+
+    // AI Title Generation (Pro+, admin-configurable at /settings/ai): when enabled the
+    // widget hides the title field for reporters, so generate one from the description.
+    if (
+      planAtLeast(orgPlan, 'pro') &&
+      aiSettings?.title_generation_enabled &&
+      !translatedTitle?.trim() &&
+      translatedDescription?.trim()
+    ) {
+      try {
+        translatedTitle = await generateFeedbackTitle(translatedDescription);
+      } catch { /* title generation must never block submission */ }
+    }
+
+    // Assignee — re-validate against real org membership rather than trusting
+    // the client-submitted user_id verbatim (the widget only offers ids from
+    // assignableMembers, but a raw API call could send anything).
+    let assignedTo: string | null = null;
+    if (body.assigned_to && project.organisation_id) {
+      const { data: memberRow } = await supabase
+        .from('members')
+        .select('user_id')
+        .eq('organisation_id', project.organisation_id)
+        .eq('user_id', body.assigned_to)
+        .not('accepted_at', 'is', null)
+        .maybeSingle();
+      if (memberRow) assignedTo = memberRow.user_id;
     }
 
     const baseInsert = {
       project_id: project.id,
       reporter_name: body.reporter_name || null,
       reporter_email: body.reporter_email || null,
-      title: body.title || null,
-      description: body.description || null,
+      title: translatedTitle || null,
+      description: translatedDescription || null,
       type: body.type,
+      priority: body.priority || 'medium',
+      assigned_to: assignedTo,
       screenshot_url: screenshotPath,
       page_url: body.page_url,
       browser: body.browser,
@@ -120,13 +183,14 @@ export async function POST(request: NextRequest) {
       user_agent: body.user_agent,
       console_logs: body.console_logs ?? [],
       network_logs: body.network_logs ?? [],
-      custom_metadata: body.custom_metadata ?? {},
+      custom_metadata: customMetadata,
     };
 
-    // Insert feedback record (with session_events if provided, fall back without if column missing)
+    // Insert feedback record (with session_events/due_date if provided, fall back
+    // without them if either column is missing — e.g. migration 031 not applied yet).
     let { data: feedback, error: insertError } = await supabase
       .from('feedback')
-      .insert({ ...baseInsert, session_events: sessionEvents })
+      .insert({ ...baseInsert, session_events: sessionEvents, due_date: body.due_date || null })
       .select()
       .single();
 

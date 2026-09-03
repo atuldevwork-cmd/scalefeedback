@@ -16,6 +16,7 @@ const NAV = [
     items: [
       { label: 'General', href: '/settings/general' },
       { label: 'Members', href: '/settings/team' },
+      { label: 'AI', href: '/settings/ai' },
       { label: 'Audit Logs', href: '/settings/audit-logs' },
     ],
   },

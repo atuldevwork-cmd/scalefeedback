@@ -6,7 +6,7 @@ import { ConsoleCapture } from '../capture/console';
 import { NetworkCapture } from '../capture/network';
 import { collectMetadata } from '../capture/metadata';
 import { AnnotationCanvas } from '../annotation/canvas';
-import { submitFeedback, shareSnapshot } from './api';
+import { submitFeedback, shareSnapshot, improveFeedbackText } from './api';
 import widgetStyles from '../ui/styles.css?inline';
 
 const HOST_ID = 'pinmarks-widget';
@@ -143,6 +143,31 @@ const EMOJI_DATA: [string, string][] = [
   ['🇦🇪', 'uae'], ['🇿🇦', 'south africa'],
 ];
 
+// [key, display label (matches existing button text), icon svg] for the 4
+// feedback types the widget supports. Shared by both type-grid render sites
+// (mobile form step + desktop split panel) and filtered per-audience by
+// PinmarksWidget.enabledFeedbackTypes() — see Guest Forms / Member Forms in
+// Project Settings.
+const FEEDBACK_TYPES: { key: FeedbackType; label: string; icon: string }[] = [
+  { key: 'bug', label: 'Bug', icon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C13.04 5.06 12.54 5 12 5c-.54 0-1.04.06-1.53.17L8.41 3 7 4.41l1.62 1.62C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>' },
+  { key: 'suggestion', label: 'Idea', icon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>' },
+  { key: 'question', label: 'Question', icon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>' },
+  { key: 'other', label: 'Other', icon: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>' },
+];
+
+const ALL_FEEDBACK_TYPES: FeedbackType[] = FEEDBACK_TYPES.map((t) => t.key);
+
+// Extra fields a Guest/Member form can show, set via Project Settings >
+// Guest Forms / Member Forms > Fields — the same set for every issue type.
+type FieldKey = 'title' | 'priority' | 'assignee' | 'dueDate';
+
+// Fallback list used when guestFormFields/memberFormFields is empty or unset
+// (e.g. a project that has never opened the Fields UI). This intentionally is
+// NOT an empty array: today, before this feature existed, every widget
+// already asks for a Title (unless AI title-generation is on) and never asks
+// for anything else — so ['title'] is the true default behavior, not [].
+const DEFAULT_VISIBLE_FIELDS: FieldKey[] = ['title'];
+
 type Step = 'annotate' | 'form' | 'submitting' | 'success';
 
 export class PinmarksWidget {
@@ -156,6 +181,7 @@ export class PinmarksWidget {
   private isOpen = false;
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
   private guestIdentityOverride = false; // true when user clicked "Change"
+  private aiImproveLoading = false;
   private replayEvents: unknown[] = [];
   private stopRecording: (() => void) | null = null;
   // Set once on mount (not re-checked per capture) — gates the "Entire page"
@@ -164,6 +190,14 @@ export class PinmarksWidget {
 
   constructor(config: WidgetConfig) {
     this.config = config;
+
+    // If the default type isn't in this reporter's enabled-types list (Guest
+    // Forms / Member Forms in Project Settings), fall back to the first type
+    // that IS enabled so the picker never opens on a hidden type.
+    const enabledTypes = this.enabledFeedbackTypes();
+    if (!enabledTypes.includes(this.feedbackType)) {
+      this.feedbackType = enabledTypes[0] ?? 'bug';
+    }
 
     // Build shadow DOM host
     const host = document.createElement('div');
@@ -196,6 +230,44 @@ export class PinmarksWidget {
     this.renderFAB();
 
     void detectExtension().then((res) => { this.extensionInstalled = res.installed; });
+  }
+
+  // Which issue-type keys the current reporter is allowed to pick — guest
+  // list if this session has no identified user, member list once one is
+  // set (mirrors the guestReporting/config.user branching used elsewhere in
+  // this file to distinguish guest vs. member reporters).
+  private enabledFeedbackTypes(): FeedbackType[] {
+    const list = this.config.user ? this.config.memberFormTypes : this.config.guestFormTypes;
+    return list && list.length > 0 ? list : ALL_FEEDBACK_TYPES;
+  }
+
+  // Which extra fields (Title/Priority/Assignee/Due date) are visible on the
+  // form — the same set for every issue type, for the current audience (guest
+  // vs. member — same guestReporting/config.user split used by
+  // enabledFeedbackTypes()). See DEFAULT_VISIBLE_FIELDS for why an empty/unset
+  // list falls back to ['title'] rather than [].
+  private visibleFields(): FieldKey[] {
+    const fields = this.config.user ? this.config.memberFormFields : this.config.guestFormFields;
+    return Array.isArray(fields) && fields.length > 0 ? (fields as FieldKey[]) : DEFAULT_VISIBLE_FIELDS;
+  }
+
+  // Title has an extra global override on top of the per-type toggle: when
+  // AI title-generation is on, the server writes the title from the
+  // description, so the input is never shown regardless of the Fields config.
+  private shouldShowTitleField(): boolean {
+    return !this.config.titleGeneration && this.visibleFields().includes('title');
+  }
+
+  private renderTypeGrid(): string {
+    return `
+      <div class="sf-type-grid">
+        ${FEEDBACK_TYPES.filter((t) => this.enabledFeedbackTypes().includes(t.key)).map((t) => `
+          <button class="sf-type-btn ${this.feedbackType === t.key ? 'active' : ''}" data-type="${t.key}">
+            <span class="sf-type-icon">${t.icon}</span>${t.label}
+          </button>
+        `).join('')}
+      </div>
+    `;
   }
 
   private startReplayRecording() {
@@ -480,29 +552,10 @@ export class PinmarksWidget {
           <div class="sf-desktop-right-body">
             <div class="sf-field">
               <label class="sf-label">Type</label>
-              <div class="sf-type-grid">
-                <button class="sf-type-btn ${this.feedbackType === 'bug' ? 'active' : ''}" data-type="bug">
-                  <span class="sf-type-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C13.04 5.06 12.54 5 12 5c-.54 0-1.04.06-1.53.17L8.41 3 7 4.41l1.62 1.62C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg></span>Bug
-                </button>
-                <button class="sf-type-btn ${this.feedbackType === 'suggestion' ? 'active' : ''}" data-type="suggestion">
-                  <span class="sf-type-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></span>Idea
-                </button>
-                <button class="sf-type-btn ${this.feedbackType === 'question' ? 'active' : ''}" data-type="question">
-                  <span class="sf-type-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg></span>Question
-                </button>
-                <button class="sf-type-btn ${this.feedbackType === 'other' ? 'active' : ''}" data-type="other">
-                  <span class="sf-type-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></span>Other
-                </button>
-              </div>
+              ${this.renderTypeGrid()}
             </div>
-            <div class="sf-field">
-              <label class="sf-label" for="sf-title">Title <span style="color:#dc2626">*</span></label>
-              <input id="sf-title" class="sf-input" type="text" placeholder="Brief summary…" />
-            </div>
-            <div class="sf-field">
-              <label class="sf-label" for="sf-description">Description <span style="color:#6b5b8a;font-weight:400">(optional)</span></label>
-              <textarea id="sf-description" class="sf-textarea" placeholder="What happened? What did you expect?"></textarea>
-            </div>
+            ${this.typeFieldsHtml()}
+            ${this.descriptionFieldHtml()}
             ${guestHtml}
             <div id="sf-error" style="display:none;background:#fef2f2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;"></div>
           </div>
@@ -599,6 +652,105 @@ export class PinmarksWidget {
         <path d="M8 3H5a2 2 0 00-2 2v3M16 3h3a2 2 0 012 2v3M8 21H5a2 2 0 01-2-2v-3M16 21h3a2 2 0 002-2v-3"/>
       </svg>
       <span class="sf-tool-label">Entire page</span>
+    </button>`;
+  }
+
+  private titleFieldHtml(): string {
+    if (!this.shouldShowTitleField()) return '';
+    return `<div class="sf-field">
+      <div class="sf-field-label-row">
+        <label class="sf-label" for="sf-title">Title <span style="color:#dc2626">*</span></label>
+        ${this.aiImproveButtonHtml()}
+      </div>
+      <input id="sf-title" class="sf-input" type="text" placeholder="Brief summary…" />
+    </div>`;
+  }
+
+  // Real, wired end-to-end: shown only when "Priority" is toggled visible for
+  // this issue type (Guest Forms / Member Forms > Fields), collected in
+  // handleSubmit() and sent to /api/feedback, which persists it on the
+  // feedback row (see apps/dashboard/app/api/feedback/route.ts baseInsert).
+  private priorityFieldHtml(current?: string): string {
+    if (!this.visibleFields().includes('priority')) return '';
+    const value = current ?? 'medium';
+    const opt = (v: string, label: string) => `<option value="${v}" ${value === v ? 'selected' : ''}>${label}</option>`;
+    return `<div class="sf-field">
+      <label class="sf-label" for="sf-priority">Priority</label>
+      <select id="sf-priority" class="sf-select">
+        ${opt('low', 'Low')}${opt('medium', 'Medium')}${opt('high', 'High')}${opt('critical', 'Critical')}
+      </select>
+    </div>`;
+  }
+
+  // Real, wired end-to-end: shown only when "Assignee" is toggled visible for
+  // this issue type. Options come from config.assignableMembers (org members
+  // the widget-config API resolved server-side) — collected in handleSubmit()
+  // and sent to /api/feedback, which re-validates membership before persisting
+  // to feedback.assigned_to.
+  private assigneeFieldHtml(current?: string): string {
+    if (!this.visibleFields().includes('assignee')) return '';
+    const members = this.config.assignableMembers ?? [];
+    if (members.length === 0) return '';
+    const opt = (v: string, label: string) => `<option value="${v}" ${current === v ? 'selected' : ''}>${label}</option>`;
+    return `<div class="sf-field">
+      <label class="sf-label" for="sf-assignee">Assignee</label>
+      <select id="sf-assignee" class="sf-select">
+        ${opt('', 'Unassigned')}${members.map((m) => opt(m.id, m.name)).join('')}
+      </select>
+    </div>`;
+  }
+
+  // Real, wired end-to-end: shown only when "Due date" is toggled visible for
+  // this issue type. Collected in handleSubmit() and sent to /api/feedback,
+  // which persists it on feedback.due_date.
+  private dueDateFieldHtml(current?: string): string {
+    if (!this.visibleFields().includes('dueDate')) return '';
+    return `<div class="sf-field">
+      <label class="sf-label" for="sf-due-date">Due date</label>
+      <input id="sf-due-date" class="sf-input" type="date" value="${current ?? ''}" />
+    </div>`;
+  }
+
+  // Both render sites (desktop split panel + mobile/standard form) wrap
+  // Title+Priority+Assignee+Due date in a `data-role="type-fields"` container
+  // so that switching issue type mid-form (handleClick's `typeBtn` branch) can
+  // patch just this container via refreshTypeDependentFields() instead of
+  // calling the full renderModal(), which would tear down and rebuild the
+  // annotation canvas (see initAnnotationCanvas) and destroy any in-progress
+  // annotations.
+  private typeFieldsHtml(): string {
+    return `<div data-role="type-fields">${this.titleFieldHtml()}${this.priorityFieldHtml()}${this.assigneeFieldHtml()}${this.dueDateFieldHtml()}</div>`;
+  }
+
+  private refreshTypeDependentFields() {
+    const container = this.shadowRoot.querySelector<HTMLElement>('[data-role="type-fields"]');
+    if (!container) return;
+    const prevTitle = this.shadowRoot.querySelector<HTMLInputElement>('#sf-title')?.value ?? '';
+    const prevPriority = this.shadowRoot.querySelector<HTMLSelectElement>('#sf-priority')?.value;
+    const prevAssignee = this.shadowRoot.querySelector<HTMLSelectElement>('#sf-assignee')?.value;
+    const prevDueDate = this.shadowRoot.querySelector<HTMLInputElement>('#sf-due-date')?.value;
+    container.innerHTML = `${this.titleFieldHtml()}${this.priorityFieldHtml(prevPriority)}${this.assigneeFieldHtml(prevAssignee)}${this.dueDateFieldHtml(prevDueDate)}`;
+    const titleInput = this.shadowRoot.querySelector<HTMLInputElement>('#sf-title');
+    if (titleInput && prevTitle) titleInput.value = prevTitle;
+  }
+
+  private descriptionFieldHtml(): string {
+    const titleGen = this.config.titleGeneration;
+    return `<div class="sf-field">
+      <div class="sf-field-label-row">
+        <label class="sf-label" for="sf-description">Description ${titleGen ? '' : '<span style="color:#6b5b8a;font-weight:400">(optional)</span>'}</label>
+        ${titleGen ? this.aiImproveButtonHtml() : ''}
+      </div>
+      <textarea id="sf-description" class="sf-textarea" placeholder="What happened? What did you expect?"></textarea>
+    </div>`;
+  }
+
+  private aiImproveButtonHtml(): string {
+    if (!this.config.aiRewrite) return '';
+    return `<button type="button" class="sf-ai-improve-btn" data-action="ai-improve" ${this.aiImproveLoading ? 'disabled' : ''}>
+      ${this.aiImproveLoading
+        ? '<span class="sf-spinner-sm"></span> Improving…'
+        : '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8l-4.4 1.2L12 14l-1.6-4.8L6 8l4.4-1.2L12 2z"/><path d="M19 13l.8 2.2L22 16l-2.2.8L19 19l-.8-2.2L16 16l2.2-.8L19 13z"/></svg> Improve with AI'}
     </button>`;
   }
 
@@ -713,39 +865,11 @@ export class PinmarksWidget {
       <div class="sf-form">
         <div class="sf-field">
           <label class="sf-label">Type</label>
-          <div class="sf-type-grid">
-            <button class="sf-type-btn ${this.feedbackType === 'bug' ? 'active' : ''}" data-type="bug">
-              <span class="sf-type-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C13.04 5.06 12.54 5 12 5c-.54 0-1.04.06-1.53.17L8.41 3 7 4.41l1.62 1.62C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"/></svg>
-              </span>Bug
-            </button>
-            <button class="sf-type-btn ${this.feedbackType === 'suggestion' ? 'active' : ''}" data-type="suggestion">
-              <span class="sf-type-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
-              </span>Idea
-            </button>
-            <button class="sf-type-btn ${this.feedbackType === 'question' ? 'active' : ''}" data-type="question">
-              <span class="sf-type-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-              </span>Question
-            </button>
-            <button class="sf-type-btn ${this.feedbackType === 'other' ? 'active' : ''}" data-type="other">
-              <span class="sf-type-icon">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-              </span>Other
-            </button>
-          </div>
+          ${this.renderTypeGrid()}
         </div>
 
-        <div class="sf-field">
-          <label class="sf-label" for="sf-title">Title <span style="color:#dc2626">*</span></label>
-          <input id="sf-title" class="sf-input" type="text" placeholder="Brief summary…" />
-        </div>
-
-        <div class="sf-field">
-          <label class="sf-label" for="sf-description">Description <span style="color:#6b5b8a;font-weight:400">(optional)</span></label>
-          <textarea id="sf-description" class="sf-textarea" placeholder="What happened? What did you expect?"></textarea>
-        </div>
+        ${this.typeFieldsHtml()}
+        ${this.descriptionFieldHtml()}
 
         ${this.config.guestReporting ? (() => {
           // Host app has pre-identified the user — no fields needed
@@ -899,12 +1023,14 @@ export class PinmarksWidget {
 
     // Submit & form actions — work from mobile form step AND desktop split panel
     if (action === 'submit') { void this.handleSubmit(); return; }
+    if (action === 'ai-improve') { void this.handleAiImprove(target.closest<HTMLButtonElement>('[data-action="ai-improve"]')); return; }
     if (action === 'change-identity') { this.guestIdentityOverride = true; this.renderModal(); return; }
     if (typeBtn) {
       this.feedbackType = typeBtn;
       this.shadowRoot.querySelectorAll('[data-type]').forEach((btn) => {
         btn.classList.toggle('active', btn.getAttribute('data-type') === typeBtn);
       });
+      this.refreshTypeDependentFields();
       return;
     }
   }
@@ -1048,6 +1174,9 @@ export class PinmarksWidget {
 
     const title = this.shadowRoot.querySelector<HTMLInputElement>('#sf-title')?.value.trim();
     const description = this.shadowRoot.querySelector<HTMLTextAreaElement>('#sf-description')?.value.trim();
+    const priority = this.shadowRoot.querySelector<HTMLSelectElement>('#sf-priority')?.value;
+    const assignedTo = this.shadowRoot.querySelector<HTMLSelectElement>('#sf-assignee')?.value || undefined;
+    const dueDate = this.shadowRoot.querySelector<HTMLInputElement>('#sf-due-date')?.value || undefined;
     const errorEl = this.shadowRoot.querySelector<HTMLElement>('#sf-error');
     const submitBtn = this.shadowRoot.querySelector<HTMLButtonElement>('[data-action="submit"]');
 
@@ -1059,7 +1188,16 @@ export class PinmarksWidget {
       if (errorEl) { errorEl.textContent = msg; errorEl.style.display = 'block'; }
     };
 
-    if (!title) { showError('Please enter a title.'); return; }
+    if (this.config.titleGeneration) {
+      if (!description) { showError('Please describe the issue.'); return; }
+    } else if (this.shouldShowTitleField()) {
+      if (!title) { showError('Please enter a title.'); return; }
+    } else if (!description) {
+      // Title field isn't shown for this issue type (hidden via Fields
+      // settings) and AI title-generation is off — need at least a
+      // description so there's something to submit.
+      showError('Please describe the issue.'); return;
+    }
 
     // Name and email are required when guestReporting is on and no user is pre-set
     if (this.config.guestReporting && !this.config.user) {
@@ -1107,6 +1245,9 @@ export class PinmarksWidget {
         consoleLogs: ConsoleCapture.getLogs(),
         networkLogs: NetworkCapture.getLogs(),
         sessionEvents: this.config.sessionReplay ? [...this.replayEvents] : undefined,
+        priority,
+        assignedTo,
+        dueDate,
       });
 
       // Clear logs after successful submit
@@ -1136,6 +1277,50 @@ export class PinmarksWidget {
     }
 
     void metadata; // used inline in api.ts
+  }
+
+  private async handleAiImprove(btn: HTMLButtonElement | null) {
+    if (this.aiImproveLoading) return;
+
+    const titleEl = this.shadowRoot.querySelector<HTMLInputElement>('#sf-title');
+    const descEl = this.shadowRoot.querySelector<HTMLTextAreaElement>('#sf-description');
+    const errorEl = this.shadowRoot.querySelector<HTMLElement>('#sf-error');
+    const title = titleEl?.value.trim() ?? '';
+    const description = descEl?.value.trim() ?? '';
+
+    if (!title && !description) {
+      if (errorEl) { errorEl.textContent = 'Write a title or description first.'; errorEl.style.display = 'block'; }
+      return;
+    }
+
+    if (errorEl) errorEl.style.display = 'none';
+
+    // Mutate the button directly (like shareLink/captureEntirePage) instead of a
+    // full renderModal() — a re-render here would blur the title/description
+    // fields and drop the user's cursor position.
+    this.aiImproveLoading = true;
+    const originalHtml = btn?.innerHTML;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="sf-spinner-sm"></span> Improving…';
+    }
+
+    try {
+      const improved = await improveFeedbackText(this.config.apiBaseUrl, this.config.projectApiKey, title, description);
+      if (titleEl) titleEl.value = improved.title;
+      if (descEl) descEl.value = improved.description;
+    } catch (err) {
+      if (errorEl) {
+        errorEl.textContent = err instanceof Error ? err.message : 'Could not improve text. Please try again.';
+        errorEl.style.display = 'block';
+      }
+    } finally {
+      this.aiImproveLoading = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml ?? 'Improve with AI';
+      }
+    }
   }
 
   private showConfirmClose() {

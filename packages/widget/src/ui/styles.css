@@ -612,6 +612,12 @@
 
 .sf-field { display: flex; flex-direction: column; gap: 6px; }
 
+/* Title/Priority/Assignee/Due date are all rendered inside one wrapper div
+   (see typeFieldsHtml() in widget.ts) so refreshTypeDependentFields() can
+   patch just that group on type switch — give it the same 18px rhythm as
+   .sf-form's own gap so those fields don't look cramped next to Description. */
+[data-role="type-fields"] { display: flex; flex-direction: column; gap: 18px; }
+
 /* Name + email: side by side on desktop, stacked on mobile */
 .sf-name-email-row {
   display: grid;
@@ -756,6 +762,39 @@
 }
 
 @keyframes sf-spin { to { transform: rotate(360deg); } }
+
+/* === AI improve button (Pro+, next to Title label) === */
+.sf-field-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.sf-ai-improve-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: #ff724f;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.sf-ai-improve-btn:hover { background: #fff3f0; }
+.sf-ai-improve-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.sf-ai-improve-btn svg { flex-shrink: 0; }
+
+.sf-spinner-sm {
+  width: 11px;
+  height: 11px;
+  border: 2px solid rgba(255,114,79,0.25);
+  border-top-color: #ff724f;
+  border-radius: 50%;
+  animation: sf-spin 0.6s linear infinite;
+  display: inline-block;
+}
 
 /* === Loading overlay (while capturing screenshot) === */
 .sf-loading-overlay {

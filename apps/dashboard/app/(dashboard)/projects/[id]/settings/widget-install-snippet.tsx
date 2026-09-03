@@ -19,7 +19,7 @@ function StepNumber({ n }: { n: number }) {
   );
 }
 
-function SnippetCodeBlock({ code }: { code: string }) {
+function SnippetCodeBlock({ code, hideCode }: { code: string; hideCode?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="border border-[#111111]/15 rounded-lg overflow-hidden">
@@ -32,7 +32,14 @@ function SnippetCodeBlock({ code }: { code: string }) {
           {copied ? 'Copied!' : 'Copy code'}
         </button>
       </div>
-      <pre className="px-4 py-4 text-sm font-mono text-gray-800 overflow-x-auto whitespace-pre bg-white leading-relaxed">{code}</pre>
+      {hideCode ? (
+        <div className="px-4 py-8 flex flex-col items-center justify-center gap-1.5 bg-white text-center">
+          <span className="material-symbols-outlined text-[22px] text-gray-300">visibility_off</span>
+          <p className="text-xs text-gray-400">Prompt hidden — click &quot;Copy code&quot; to copy it to your clipboard.</p>
+        </div>
+      ) : (
+        <pre className="px-4 py-4 text-sm font-mono text-gray-800 overflow-x-auto whitespace-pre bg-white leading-relaxed">{code}</pre>
+      )}
     </div>
   );
 }
@@ -403,7 +410,7 @@ Docs: ${appUrl}/docs`;
             Copy this prompt into Claude Code, Cursor, or any AI coding assistant — it'll detect how your codebase is
             built and wire up the Pinmarks widget for you, with your project&apos;s API key already filled in.
           </p>
-          <SnippetCodeBlock code={aiInstallPrompt} />
+          <SnippetCodeBlock code={aiInstallPrompt} hideCode />
         </div>
       )}
 

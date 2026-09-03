@@ -10,7 +10,10 @@ import { ArchiveProjectButton } from './archive-project-button';
 import { IntegrationsPanel } from './integrations-panel';
 import { GuestsPanel } from './guests-panel';
 import { ButtonPanel } from './button-panel';
+import { IssueTypesPanel } from './issue-types-panel';
 import { SessionReplayPanel } from './session-replay-panel';
+import { DeveloperToolsPanel } from './developer-tools-panel';
+import { ScreenCapturePanel } from './screen-capture-panel';
 import { SettingsNav } from './settings-nav';
 import type { Project } from '@pinmarks/shared';
 
@@ -32,6 +35,12 @@ export default async function ProjectSettingsPage({ params }: Props) {
       const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from('projects').select('*').eq('id', id).single();
       project = data as Project | null;
+
+      // Never let the Basic Auth password ride along in the RSC payload sent to
+      // the browser for this page — child client components that need it fetch
+      // it explicitly through the authenticated /api/projects/[id]/screen-capture
+      // route instead (see ScreenCapturePanel).
+      if (project) delete (project as { basic_auth_password?: string | null }).basic_auth_password;
 
       if (project) {
         const { data: org } = await service
@@ -75,7 +84,11 @@ export default async function ProjectSettingsPage({ params }: Props) {
   const navItems = [
     { id: 'widget-installation', label: 'Widget Installation' },
     { id: 'button', label: 'Button' },
+    { id: 'guest-forms', label: 'Guest Forms' },
+    { id: 'member-forms', label: 'Member Forms' },
     { id: 'session-replay', label: 'Session Replay' },
+    { id: 'developer-tools', label: 'Developer Tools' },
+    { id: 'screen-capture', label: 'Screen Capture' },
     { id: 'project-details', label: 'Project Details' },
     ...(canManage ? [
       { id: 'integrations', label: 'Integrations' },
@@ -104,7 +117,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
       <div className="space-y-8 mt-6">
 
         <div id="widget-installation" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
-          <h2 className="font-semibold text-foreground mb-1">Widget Installation</h2>
+          <h2 className="text-lg font-bold text-foreground mb-1">Widget Installation</h2>
           <p className="text-sm text-muted-foreground mb-4">
             Paste this snippet before the closing <code className="bg-muted px-1 py-0.5 rounded text-xs">&lt;/body&gt;</code> tag on your website.
           </p>
@@ -112,29 +125,62 @@ export default async function ProjectSettingsPage({ params }: Props) {
         </div>
 
         <div id="button" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
-          <h2 className="font-semibold text-foreground mb-1">Button</h2>
+          <h2 className="text-lg font-bold text-foreground mb-1">Button</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Customize the feedback button appearance and targeting behavior.
           </p>
           <ButtonPanel project={project} />
         </div>
 
+        <div id="guest-forms" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
+          <h2 className="text-lg font-bold text-foreground mb-1">Guest Forms</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose which issue types guests and unidentified reporters can pick from when submitting feedback.
+            Best for UAT or collecting issues from clients who don&apos;t have a workspace account.
+          </p>
+          <IssueTypesPanel project={project} configKey="guestFormTypes" />
+        </div>
+
+        <div id="member-forms" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
+          <h2 className="text-lg font-bold text-foreground mb-1">Member Forms</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Choose which issue types logged-in members and admins can pick from when submitting feedback.
+          </p>
+          <IssueTypesPanel project={project} configKey="memberFormTypes" />
+        </div>
+
         <div id="session-replay" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
-          <h2 className="font-semibold text-foreground mb-1">Session Replay</h2>
+          <h2 className="text-lg font-bold text-foreground mb-1">Session Replay</h2>
           <p className="text-sm text-muted-foreground mb-6">
             Record user sessions so you can watch exactly what happened before a bug report was submitted.
           </p>
           <SessionReplayPanel project={project} plan={plan} />
         </div>
 
+        <div id="developer-tools" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
+          <h2 className="text-lg font-bold text-foreground mb-1">Developer Tools</h2>
+          <p className="text-sm text-muted-foreground mb-2">
+            Control what technical data the widget collects from your website and attaches to new issues.
+          </p>
+          <DeveloperToolsPanel project={project} plan={plan} />
+        </div>
+
+        <div id="screen-capture" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
+          <h2 className="text-lg font-bold text-foreground mb-1">Screen Capture</h2>
+          <p className="text-sm text-muted-foreground mb-2">
+            Control how screenshots of your website are captured, including Basic Auth protected pages and sensitive content.
+          </p>
+          <ScreenCapturePanel project={project} plan={plan} />
+        </div>
+
         <div id="project-details" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
-          <h2 className="font-semibold text-foreground mb-4">Project Details</h2>
+          <h2 className="text-lg font-bold text-foreground mb-4">Project Details</h2>
           <ProjectSettingsForm project={project} />
         </div>
 
         {canManage && (
           <div id="integrations" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
-            <h2 className="font-semibold text-foreground mb-1">Integrations</h2>
+            <h2 className="text-lg font-bold text-foreground mb-1">Integrations</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Connect feedback to your existing tools. Triggers on each new feedback submission.
             </p>
@@ -146,7 +192,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
 
         {canManage && (
           <div id="guest-access" className="bg-card border border-border rounded-xl p-6 scroll-mt-16">
-            <h2 className="font-semibold text-foreground mb-1">Guest Access</h2>
+            <h2 className="text-lg font-bold text-foreground mb-1">Guest Access</h2>
             <p className="text-sm text-muted-foreground mb-4">
               Share read-only access with clients so they can view feedback without a workspace account.
             </p>
@@ -156,7 +202,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
 
         {canManage && (
           <div id="danger-zone" className="bg-card border border-red-200 rounded-xl p-6 scroll-mt-16">
-            <h2 className="font-semibold text-red-700 mb-1">Danger Zone</h2>
+            <h2 className="text-lg font-bold text-red-700 mb-1">Danger Zone</h2>
 
             <div className="flex items-start justify-between gap-4 py-4 border-b border-gray-100">
               <div>

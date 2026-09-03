@@ -15,6 +15,12 @@ export interface SubmitOptions {
   networkLogs: NetworkLogEntry[];
   customMetadata?: Record<string, unknown>;
   sessionEvents?: unknown[];
+  /** Sent only when the "Priority" field is visible for this issue type (Guest Forms / Member Forms > Fields). */
+  priority?: string;
+  /** Sent only when the "Assignee" field is visible for this issue type. A user_id from config.assignableMembers. */
+  assignedTo?: string;
+  /** Sent only when the "Due date" field is visible for this issue type. ISO date string (YYYY-MM-DD). */
+  dueDate?: string;
 }
 
 export async function submitFeedback(opts: SubmitOptions): Promise<void> {
@@ -37,6 +43,9 @@ export async function submitFeedback(opts: SubmitOptions): Promise<void> {
       console_logs: opts.consoleLogs,
       network_logs: opts.networkLogs,
       custom_metadata: opts.customMetadata ?? {},
+      priority: opts.priority,
+      assigned_to: opts.assignedTo,
+      due_date: opts.dueDate,
       // Send gzip-compressed events; server decompresses before storing.
       // Falls back to null if CompressionStream is unavailable.
       session_events_gz: sessionEventsGz,
@@ -48,6 +57,28 @@ export async function submitFeedback(opts: SubmitOptions): Promise<void> {
     const err = await response.json().catch(() => ({ error: 'Unknown error' }));
     throw new Error(err.error ?? 'Submission failed');
   }
+}
+
+// Sends the current title/description to Claude for cleanup + title generation
+// (Pro+ only — the widget only shows the trigger button when config.aiRewrite is true).
+export async function improveFeedbackText(
+  apiBaseUrl: string,
+  projectApiKey: string,
+  title: string,
+  description: string
+): Promise<{ title: string; description: string }> {
+  const response = await fetch(`${apiBaseUrl}/api/ai-rewrite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_api_key: projectApiKey, title, description }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(err.error ?? 'Failed to improve text');
+  }
+
+  return response.json();
 }
 
 // Uploads the current annotated screenshot and returns a public share URL —

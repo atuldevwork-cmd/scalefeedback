@@ -13,6 +13,7 @@ import { TimelinePanel } from './timeline-panel';
 import { ReporterInviteButton } from './reporter-invite-button';
 import { FeedbackActionsMenu } from './feedback-actions-menu';
 import { MediaViewer } from './media-viewer';
+import { TranslationBadge } from './translation-badge';
 import type { Feedback, Project } from '@pinmarks/shared';
 
 type ClickUpTaskData = {
@@ -482,6 +483,13 @@ export default async function FeedbackDetailPage({ params }: Props) {
               />
             </div>
             <h1 className="text-xl font-bold text-foreground">{feedback.title ?? feedback.page_url}</h1>
+            {!!feedback.custom_metadata?.translation && (
+              <TranslationBadge
+                detectedLanguage={String((feedback.custom_metadata.translation as Record<string, unknown>).detectedLanguage ?? 'another language')}
+                originalTitle={((feedback.custom_metadata.translation as Record<string, unknown>).originalTitle as string) ?? null}
+                originalDescription={((feedback.custom_metadata.translation as Record<string, unknown>).originalDescription as string) ?? null}
+              />
+            )}
             {feedback.description && (
               <p className="text-muted-foreground mt-2 leading-relaxed">{feedback.description}</p>
             )}
