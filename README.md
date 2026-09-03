@@ -261,6 +261,19 @@ RESEND_API_KEY=re_<your-key>
 
 > **Note:** Never commit `.env.local` to version control. The `SUPABASE_SERVICE_ROLE_KEY` has admin-level DB access.
 
+Create `apps/worker/.env.local` (see `apps/worker/.env.local.example`) with the same Supabase values as above, plus optionally a PageSpeed Insights key:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://<your-project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+
+# Optional: Google PageSpeed Insights — works without a key but shares a
+# small global quota across every keyless caller (exhausts almost
+# immediately). Get a free key from
+# console.cloud.google.com/apis/library/pagespeedonline.googleapis.com
+PAGESPEED_API_KEY=<your-pagespeed-api-key>
+```
+
 ---
 
 ## Widget Integration

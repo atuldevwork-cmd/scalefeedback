@@ -176,6 +176,46 @@ export default function DocsPage() {
 
         <div className="space-y-14">
 
+          {/* ── Website Monitoring ── */}
+          <section id="website-monitoring">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#ff724f] text-[20px]">radar</span>
+              Website Monitoring
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#fff3f0] text-[#ff724f]">New</span>
+            </h2>
+            <p className="text-sm text-muted-foreground mb-5">
+              Scan your site for accessibility issues without waiting for a reporter to find them. Open a project&apos;s
+              <strong className="text-foreground"> Monitor</strong> tab, give it a list of URLs (or a sitemap), and run a scan on demand.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              {[
+                { icon: 'travel_explore', title: 'Scan any page list', desc: 'Paste individual URLs or a sitemap — exclude pages you don’t care about.' },
+                { icon: 'accessibility_new', title: 'WCAG accessibility checks', desc: 'Missing alt text, low color contrast, missing ARIA attributes, and missing skip-to-content links.' },
+                { icon: 'photo_camera', title: 'Screenshotted issues', desc: 'Every issue is captured with a screenshot of the broken element plus a plain-English fix.' },
+                { icon: 'content_copy', title: 'Automatic grouping', desc: 'The same issue found on multiple pages is grouped once, not duplicated per page.' },
+              ].map(({ icon, title, desc }) => (
+                <div key={title} className="border border-border rounded-xl p-4 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-[#ff724f] text-[20px] shrink-0 mt-0.5">{icon}</span>
+                  <div>
+                    <p className="text-sm font-medium text-foreground leading-tight">{title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-start gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+              <span className="material-symbols-outlined text-amber-500 text-[20px] shrink-0 mt-0.5">construction</span>
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Scans are on-demand for now</p>
+                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                  Scheduled (weekly / monthly) automatic re-scans are coming soon. For now, rescan a project any time from its Monitor tab.
+                </p>
+              </div>
+            </div>
+          </section>
+
           {/* ── Quick start ── */}
           <section id="quickstart">
             <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
