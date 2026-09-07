@@ -84,6 +84,17 @@ export default async function GuestProjectPage({ params }: Props) {
 
   const isGuest = !!guestAccess && !membership;
 
+  let otherProjectsCount = 0;
+  if (isGuest) {
+    const { count } = await service
+      .from('project_guests')
+      .select('project_id', { count: 'exact', head: true })
+      .eq('email', user.email ?? '')
+      .not('accepted_at', 'is', null)
+      .neq('project_id', projectId);
+    otherProjectsCount = count ?? 0;
+  }
+
   return (
     <div className="min-h-screen bg-[#f9f9fb]">
       {/* Header */}
@@ -91,7 +102,7 @@ export default async function GuestProjectPage({ params }: Props) {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-            <a className="flex items-center gap-2 shrink-0" href="/projects">
+            <a className="flex items-center gap-2 shrink-0" href={isGuest ? '/guest' : '/projects'}>
             <div className="w-8 h-8 bg-[#ff724f] rounded-lg flex items-center justify-center font-bold text-white text-sm">P</div>
             <span className="font-bold text-lg text-[#111111]">Pinmarks</span>
             </a>
@@ -105,6 +116,11 @@ export default async function GuestProjectPage({ params }: Props) {
             )}
           </div>
           <div className="flex items-center gap-3">
+            {isGuest && otherProjectsCount > 0 && (
+              <Link href="/guest" className="text-xs font-medium text-[#ff724f] hover:text-[#ff724f]">
+                Switch project →
+              </Link>
+            )}
             <span className="text-xs text-gray-400">{user.email}</span>
             <NotificationBell isGuest />
             {!isGuest && (

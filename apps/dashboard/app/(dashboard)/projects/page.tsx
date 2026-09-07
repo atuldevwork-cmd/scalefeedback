@@ -62,15 +62,15 @@ export default async function ProjectsPage({ searchParams }: Props) {
             .order('created_at', { ascending: false });
           projects = (data ?? []) as Project[];
         } else {
-          // No workspace membership — check if user is a project guest
-          const { data: guestRows } = await service
+          // No workspace membership — check if user is a project guest.
+          // /guest itself redirects straight to the single project, or lists
+          // all of them when the guest has access to more than one.
+          const { count: guestCount } = await service
             .from('project_guests')
-            .select('project_id')
+            .select('project_id', { count: 'exact', head: true })
             .eq('email', user.email ?? '')
-            .not('accepted_at', 'is', null)
-            .limit(1);
-          const guestAccess = guestRows?.[0] ?? null;
-          redirectTo = guestAccess ? `/guest/${guestAccess.project_id}` : '/no-access';
+            .not('accepted_at', 'is', null);
+          redirectTo = guestCount && guestCount > 0 ? '/guest' : '/no-access';
         }
       }
     } catch {

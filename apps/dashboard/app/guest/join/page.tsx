@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { cleanupEmptyOwnerOrgs } from '@/lib/guest-cleanup';
+import { GuestAuthForm } from '../guest-auth-form';
 
 interface Props {
   searchParams: Promise<{ s?: string }>;
@@ -43,21 +45,7 @@ export default async function GuestJoinPage({ searchParams }: Props) {
           .eq('id', existing.id);
       }
       // Also clean up empty workspace in case they were added before but workspace wasn't cleaned
-      const { data: memberships } = await service
-        .from('members')
-        .select('organisation_id')
-        .eq('user_id', user.id)
-        .eq('role', 'owner');
-      for (const m of memberships ?? []) {
-        const [{ count: memberCount }, { count: projectCount }] = await Promise.all([
-          service.from('members').select('id', { count: 'exact', head: true }).eq('organisation_id', m.organisation_id),
-          service.from('projects').select('id', { count: 'exact', head: true }).eq('organisation_id', m.organisation_id),
-        ]);
-        if (memberCount === 1 && projectCount === 0) {
-          await service.from('members').delete().eq('organisation_id', m.organisation_id).eq('user_id', user.id);
-          await service.from('organisations').delete().eq('id', m.organisation_id);
-        }
-      }
+      await cleanupEmptyOwnerOrgs(service, user.id);
       redirect(`/guest/${project.id}`);
     }
 
@@ -74,33 +62,12 @@ export default async function GuestJoinPage({ searchParams }: Props) {
       expires_at: expires.toISOString(),
     });
 
-    // Clean up the auto-created empty workspace if this user signed up purely as a guest.
-    // The handle_new_user() trigger always creates an org at signup — but at that point the
-    // guest's email isn't in project_guests yet, so the guard is bypassed.
-    // Safe check: only delete an org where this user is the sole member AND it has 0 projects.
-    const { data: memberships } = await service
-      .from('members')
-      .select('organisation_id')
-      .eq('user_id', user.id)
-      .eq('role', 'owner');
-
-    for (const m of memberships ?? []) {
-      const [{ count: memberCount }, { count: projectCount }] = await Promise.all([
-        service.from('members').select('id', { count: 'exact', head: true }).eq('organisation_id', m.organisation_id),
-        service.from('projects').select('id', { count: 'exact', head: true }).eq('organisation_id', m.organisation_id),
-      ]);
-      if (memberCount === 1 && projectCount === 0) {
-        await service.from('members').delete().eq('organisation_id', m.organisation_id).eq('user_id', user.id);
-        await service.from('organisations').delete().eq('id', m.organisation_id);
-      }
-    }
+    await cleanupEmptyOwnerOrgs(service, user.id);
 
     redirect(`/guest/${project.id}`);
   }
 
-  // Not logged in — show sign in / sign up prompt
-  const next = `/guest/join?s=${s}`;
-
+  // Not logged in — single inline form handles both new and returning guests
   return (
     <div className="min-h-screen bg-[#f9f9fb] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full max-w-md text-center">
@@ -111,23 +78,8 @@ export default async function GuestJoinPage({ searchParams }: Props) {
           You&apos;re invited to view
         </h1>
         <p className="text-[#111111] font-semibold text-base mb-1">{project.name}</p>
-        <p className="text-gray-500 text-sm mb-6">Sign in or create a free account to access this project&apos;s feedback.</p>
-        <div className="space-y-3">
-          <Link
-            href={`/login?next=${encodeURIComponent(next)}`}
-            className="flex items-center justify-center gap-2 w-full bg-[#ff724f] hover:bg-[#e8603a] text-white font-semibold px-4 py-2.5 rounded-xl transition-all text-sm shadow-sm"
-          >
-            <span className="material-symbols-outlined text-[16px]">login</span>
-            Sign in to view project
-          </Link>
-          <Link
-            href={`/signup?next=${encodeURIComponent(next)}`}
-            className="flex items-center justify-center gap-2 w-full border border-gray-200 text-[#111111] font-medium px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-all text-sm"
-          >
-            <span className="material-symbols-outlined text-[16px]">person_add</span>
-            Create a free account
-          </Link>
-        </div>
+        <p className="text-gray-500 text-sm mb-6">Set a password to access this project&apos;s feedback.</p>
+        <GuestAuthForm mode="secret" secret={s} />
         <p className="text-xs text-gray-400 mt-6">No workspace subscription required for guests.</p>
       </div>
     </div>
