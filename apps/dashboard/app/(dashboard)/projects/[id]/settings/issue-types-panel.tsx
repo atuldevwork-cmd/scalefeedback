@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { Project, FeedbackType } from '@pinmarks/shared';
-import { IssueFieldsEditor, type FieldKey } from './issue-fields-editor';
+import { IssueFieldsEditor, type FieldKey, type FieldSettingsMap } from './issue-fields-editor';
 import { WidgetFieldsPreview } from './widget-fields-preview';
 
 interface Props {
@@ -43,6 +43,10 @@ function fieldsConfigKeyFor(configKey: 'guestFormTypes' | 'memberFormTypes'): 'g
   return configKey === 'guestFormTypes' ? 'guestFormFields' : 'memberFormFields';
 }
 
+function settingsConfigKeyFor(configKey: 'guestFormTypes' | 'memberFormTypes'): 'guestFieldSettings' | 'memberFieldSettings' {
+  return configKey === 'guestFormTypes' ? 'guestFieldSettings' : 'memberFieldSettings';
+}
+
 export function IssueTypesPanel({ project, configKey }: Props) {
   const cfg = (project.widget_config ?? {}) as unknown as Record<string, unknown>;
   const fieldsConfigKey = fieldsConfigKeyFor(configKey);
@@ -61,6 +65,16 @@ export function IssueTypesPanel({ project, configKey }: Props) {
     Array.isArray(storedFields) ? (storedFields as FieldKey[]) : DEFAULT_VISIBLE_FIELDS
   );
 
+  const settingsConfigKey = settingsConfigKeyFor(configKey);
+  const storedSettings = cfg[settingsConfigKey];
+  const [fieldSettings, setFieldSettings] = useState<FieldSettingsMap>(
+    storedSettings && typeof storedSettings === 'object' && !Array.isArray(storedSettings)
+      ? (storedSettings as FieldSettingsMap)
+      : {}
+  );
+
+  const [assignableMembers, setAssignableMembers] = useState<{ id: string; name: string }[]>([]);
+
   const [selectedType, setSelectedType] = useState<FeedbackType>(
     enabledKeys[0] ?? ISSUE_TYPES[0].key
   );
@@ -70,11 +84,41 @@ export function IssueTypesPanel({ project, configKey }: Props) {
   const router = useRouter();
   const supabase = createClient();
 
+  // Reuse the widget's own public config endpoint to resolve org member
+  // names for the Assignee field's "Preset value" picker — it already
+  // computes this list server-side (apps/dashboard/app/api/widget-config/route.ts),
+  // and an authenticated request always gets it regardless of whether
+  // Assignee is currently visible to reporters.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = {};
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+      const res = await fetch(`/api/widget-config?key=${project.api_key}`, { headers });
+      if (!res.ok || cancelled) return;
+      const data = await res.json();
+      if (!cancelled) setAssignableMembers(data.assignableMembers ?? []);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.api_key]);
+
+  // cfg is only a mount-time snapshot of project.widget_config — router.refresh()
+  // eventually re-syncs it, but not necessarily before the *next* persist() call
+  // (e.g. show a field, then immediately open its accordion and set a preset).
+  // cfgRef always has the latest locally-known config so back-to-back saves
+  // build on each other instead of one clobbering the other with stale data.
+  const cfgRef = useRef(cfg);
+  useEffect(() => { cfgRef.current = cfg; }, [cfg]);
+
   async function persist(patch: Record<string, unknown>) {
     setSaving(true);
+    const next = { ...cfgRef.current, ...patch };
+    cfgRef.current = next;
     await supabase
       .from('projects')
-      .update({ widget_config: { ...cfg, ...patch } })
+      .update({ widget_config: next })
       .eq('id', project.id);
     setSaving(false);
     setSaved(true);
@@ -99,6 +143,11 @@ export function IssueTypesPanel({ project, configKey }: Props) {
   function handleFieldsChange(next: FieldKey[]) {
     setFields(next);
     void persist({ [fieldsConfigKey]: next });
+  }
+
+  function handleSettingsChange(next: FieldSettingsMap) {
+    setFieldSettings(next);
+    void persist({ [settingsConfigKey]: next });
   }
 
   return (
@@ -161,7 +210,13 @@ export function IssueTypesPanel({ project, configKey }: Props) {
 
         {/* Middle column — Fields: always-on Issue type / description rows,
             plus the toggleable "Hidden fields" list shared by every type. */}
-        <IssueFieldsEditor fields={fields} onChange={handleFieldsChange} />
+        <IssueFieldsEditor
+          fields={fields}
+          onChange={handleFieldsChange}
+          settings={fieldSettings}
+          onSettingsChange={handleSettingsChange}
+          assignableMembers={assignableMembers}
+        />
 
         {/* Right column — live, static visual preview of the widget chrome.
             Never hits a real API — mirrors packages/widget/src/core/widget.ts's
@@ -171,6 +226,8 @@ export function IssueTypesPanel({ project, configKey }: Props) {
         <WidgetFieldsPreview
           selectedType={ISSUE_TYPES.find((t) => t.key === selectedType)!}
           fields={fields}
+          settings={fieldSettings}
+          assignableMembers={assignableMembers}
         />
       </div>
     </div>

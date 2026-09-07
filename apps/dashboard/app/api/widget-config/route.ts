@@ -60,34 +60,24 @@ export async function GET(req: NextRequest) {
   // falls back to [], same as a project that never opened the Fields UI.
   const guestFormFieldsRaw = Array.isArray(cfg.guestFormFields) ? (cfg.guestFormFields as string[]) : [];
   const memberFormFieldsRaw = Array.isArray(cfg.memberFormFields) ? (cfg.memberFormFields as string[]) : [];
-  const needsAssignees = guestFormFieldsRaw.includes('assignee') || memberFormFieldsRaw.includes('assignee');
-
-  // Name only, no email — this endpoint is fetched with a public, unauthenticated
-  // project key from any website embedding the widget, so we keep the exposure
-  // to the minimum needed to render an assignee picker.
-  let assignableMembers: { id: string; name: string }[] | undefined;
-  if (needsAssignees && project.organisation_id) {
-    const { data: memberRows } = await supabase
-      .from('members')
-      .select('user_id')
-      .eq('organisation_id', project.organisation_id)
-      .not('accepted_at', 'is', null);
-    const memberIds = (memberRows ?? []).map((m) => m.user_id as string);
-    if (memberIds.length > 0) {
-      const { data: usersResp } = await supabase.auth.admin.listUsers();
-      assignableMembers = (usersResp?.users ?? [])
-        .filter((u) => memberIds.includes(u.id))
-        .map((u) => ({
-          id: u.id,
-          name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email?.split('@')[0] ?? u.id.slice(0, 8),
-        }));
-    }
-  }
+  const guestFieldSettingsRaw = (cfg.guestFieldSettings ?? {}) as Record<string, unknown>;
+  const memberFieldSettingsRaw = (cfg.memberFieldSettings ?? {}) as Record<string, unknown>;
 
   // If the request includes a valid Supabase auth token, auto-identify the reporter
   // so the widget hides the name/email fields.
   // This covers: members, owners, admins, and accepted guests — anyone logged in.
   let loggedInUser: { name: string; email: string } | undefined;
+  // True when the identified user is a project guest, not an actual workspace
+  // member — keeps them on Guest Forms (Name/Email hidden, but no
+  // Priority/Assignee/Due date either) instead of Member Forms, which are
+  // meant for internal team members with real PM permissions on the project.
+  let isGuestUser = false;
+  // True for an authenticated workspace member/admin — used below to always
+  // resolve assignableMembers for the Project Settings UI (which needs the
+  // member list to populate an Assignee preset picker even when the Assignee
+  // field is currently hidden from reporters), without exposing member names
+  // to anonymous public widget-config calls that don't need them.
+  let isAuthenticatedMember = false;
 
   const authHeader = req.headers.get('Authorization');
   if (authHeader?.startsWith('Bearer ')) {
@@ -96,6 +86,18 @@ export async function GET(req: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser(token);
 
       if (user?.email) {
+        const { data: membership } = project.organisation_id
+          ? await supabase
+              .from('members')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('organisation_id', project.organisation_id)
+              .not('accepted_at', 'is', null)
+              .maybeSingle()
+          : { data: null };
+        isGuestUser = !membership;
+        isAuthenticatedMember = !!membership;
+
         // Prefer name from user_metadata (set on signup / OAuth)
         let name: string =
           user.user_metadata?.full_name ??
@@ -123,6 +125,31 @@ export async function GET(req: NextRequest) {
     } catch { /* ignore — just don't pre-fill */ }
   }
 
+  const needsAssignees =
+    guestFormFieldsRaw.includes('assignee') || memberFormFieldsRaw.includes('assignee') || isAuthenticatedMember;
+
+  // Name only, no email — this endpoint is fetched with a public, unauthenticated
+  // project key from any website embedding the widget, so we keep the exposure
+  // to the minimum needed to render an assignee picker.
+  let assignableMembers: { id: string; name: string }[] | undefined;
+  if (needsAssignees && project.organisation_id) {
+    const { data: memberRows } = await supabase
+      .from('members')
+      .select('user_id')
+      .eq('organisation_id', project.organisation_id)
+      .not('accepted_at', 'is', null);
+    const memberIds = (memberRows ?? []).map((m) => m.user_id as string);
+    if (memberIds.length > 0) {
+      const { data: usersResp } = await supabase.auth.admin.listUsers();
+      assignableMembers = (usersResp?.users ?? [])
+        .filter((u) => memberIds.includes(u.id))
+        .map((u) => ({
+          id: u.id,
+          name: u.user_metadata?.full_name ?? u.user_metadata?.name ?? u.email?.split('@')[0] ?? u.id.slice(0, 8),
+        }));
+    }
+  }
+
   return NextResponse.json(
     {
       color:           cfg.color           ?? '#7C3AED',
@@ -145,8 +172,10 @@ export async function GET(req: NextRequest) {
       // the widget itself falls back to ['title'] (see widget.ts DEFAULT_VISIBLE_FIELDS).
       guestFormFields:  guestFormFieldsRaw,
       memberFormFields: memberFormFieldsRaw,
+      guestFieldSettings:  guestFieldSettingsRaw,
+      memberFieldSettings: memberFieldSettingsRaw,
       ...(assignableMembers ? { assignableMembers } : {}),
-      ...(loggedInUser ? { user: loggedInUser } : {}),
+      ...(loggedInUser ? { user: loggedInUser, isGuestUser } : {}),
     },
     { headers: CORS }
   );

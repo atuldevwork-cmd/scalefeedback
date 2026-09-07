@@ -40,7 +40,7 @@ function ListRow({ project }: { project: GuestProject }) {
   return (
     <a
       href={`/guest/${project.id}`}
-      className="group flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50/60 transition-colors border-b border-gray-50 last:border-0"
+      className="group flex items-center gap-4 px-5 py-5 hover:bg-gray-50/60 transition-colors border-b border-gray-50 last:border-0"
     >
       <ProjectAvatar name={project.name} />
       <div className="flex-1 min-w-0">
@@ -95,7 +95,7 @@ export function GuestProjectsClient({ projects }: { projects: GuestProject[] }) 
           ))}
         </div>
       ) : (
-        <div className="max-w-2xl bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
           {projects.map((project) => (
             <ListRow key={project.id} project={project} />
           ))}

@@ -13,6 +13,8 @@ export interface WidgetConfig {
   secretParam?: string;
   /** Pre-identify the reporter (e.g. from your own auth). When set, name/email fields are hidden. */
   user?: { name: string; email: string };
+  /** True when `user` was identified as a project guest rather than a workspace member — keeps them on Guest Forms (types/fields) even though their identity is known. */
+  isGuestUser?: boolean;
   sessionReplay?: boolean;
   aiRewrite?: boolean;
   /** When true, the Title field is hidden for reporters — the server generates one from the description. */
@@ -25,6 +27,10 @@ export interface WidgetConfig {
   guestFormFields?: string[];
   /** Same as guestFormFields, for identified members (`user` is set). */
   memberFormFields?: string[];
+  /** Per-field customization (custom label, preset/default value, whether it's required) for guest reporters. Keyed by the same FieldKey as guestFormFields ('title' | 'priority' | 'assignee' | 'dueDate'). A field with a preset but not in guestFormFields is still sent — silently, as a hidden value the reporter never sees. */
+  guestFieldSettings?: Record<string, { label?: string; preset?: string; required?: boolean }>;
+  /** Same as guestFieldSettings, for identified members. */
+  memberFieldSettings?: Record<string, { label?: string; preset?: string; required?: boolean }>;
   /** Assignable org members, for the Assignee field's dropdown. Only sent by the server when at least one form type has 'assignee' visible. Name only — email is withheld since this config is fetched with a public, unauthenticated project key. */
   assignableMembers?: { id: string; name: string }[];
   onOpen?: () => void;

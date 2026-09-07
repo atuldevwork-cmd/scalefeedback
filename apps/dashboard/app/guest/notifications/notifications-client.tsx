@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { FormattedDate } from '@/components/formatted-date';
 import { NotificationBell } from '@/components/notification-bell';
-import { GuestLogoutButton } from '@/components/guest-logout-button';
+import { GuestUserMenu } from '../guest-user-menu';
 
 interface Notification {
   id: string;
@@ -53,9 +53,8 @@ export function GuestNotificationsClient({ notifications, userEmail }: { notific
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {userEmail && <span className="text-xs text-gray-400">{userEmail}</span>}
             <NotificationBell isGuest noLink />
-            <GuestLogoutButton />
+            <GuestUserMenu email={userEmail} />
           </div>
         </div>
       </header>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { createClickUpTask } from '@/lib/integrations/clickup';
+import { createClickUpTask, type ClickUpFieldMapping } from '@/lib/integrations/clickup';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // Fetch the feedback record
     const { data: feedback } = await service
       .from('feedback')
-      .select('id, project_id, title, description, type, page_url, external_id, screenshot_url, custom_metadata')
+      .select('id, project_id, title, description, type, page_url, external_id, screenshot_url, custom_metadata, priority, assigned_to, due_date, reporter_name, reporter_email')
       .eq('id', feedbackId)
       .single();
 
@@ -64,6 +64,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let fieldMappings: ClickUpFieldMapping[] | undefined;
+    if (config.fieldMappings) {
+      try { fieldMappings = JSON.parse(config.fieldMappings) as ClickUpFieldMapping[]; } catch { /* ignore, falls back to legacy behavior */ }
+    }
+
     // Build screenshot public URL if available
     const screenshotUrl = feedback.screenshot_url
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/screenshots/${feedback.screenshot_url}`
@@ -78,9 +83,14 @@ export async function POST(request: NextRequest) {
       feedbackTitle: feedback.title ?? `[${feedback.type}] ${feedback.page_url}`,
       feedbackType: feedback.type,
       description: feedback.description ?? undefined,
+      reporterName: feedback.reporter_name ?? undefined,
+      reporterEmail: feedback.reporter_email ?? undefined,
+      priority: feedback.priority ?? undefined,
+      dueDate: feedback.due_date ?? undefined,
       pageUrl: feedback.page_url,
       dashboardUrl,
       screenshotUrl,
+      fieldMappings,
     });
 
     if (!result) {

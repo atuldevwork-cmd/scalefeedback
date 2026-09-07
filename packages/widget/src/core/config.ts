@@ -80,8 +80,10 @@ export async function parseConfig(): Promise<WidgetConfig> {
       const remote = await res.json();
 
       // If the API returned a logged-in user, it overrides everything
+      let isGuestUser = false;
       if (remote.user?.name && remote.user?.email) {
         presetUser = remote.user as { name: string; email: string };
+        isGuestUser = Boolean(remote.isGuestUser);
       }
 
       return {
@@ -104,8 +106,11 @@ export async function parseConfig(): Promise<WidgetConfig> {
         memberFormTypes: remote.memberFormTypes,
         guestFormFields:  remote.guestFormFields,
         memberFormFields: remote.memberFormFields,
+        guestFieldSettings:  remote.guestFieldSettings,
+        memberFieldSettings: remote.memberFieldSettings,
         assignableMembers: remote.assignableMembers,
         user:            presetUser,
+        isGuestUser,
       };
     }
   } catch {

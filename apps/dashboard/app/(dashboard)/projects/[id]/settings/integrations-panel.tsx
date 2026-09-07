@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { ClickUpFieldMapper } from './clickup-field-mapper';
 
 type IntegrationType = 'slack' | 'github' | 'jira' | 'clickup' | 'webhook';
 
 interface Integration {
   type: IntegrationType;
   enabled: boolean;
+  // ClickUp's fieldMappings/hiddenFields are JSON-stringified inside this
+  // same string map (see clickup-field-mapper.tsx) rather than widening this
+  // shared type — keeps every other integration's typing untouched.
   config: Record<string, string>;
 }
 
@@ -492,6 +496,15 @@ function ClickUpConfig({ projectId, config, onSave, saving, saved, autoOpen }: C
         )}
         {saved && <p className="text-xs text-green-600 font-medium">✓ Saved</p>}
       </div>
+
+      {config.listId && (
+        <ClickUpFieldMapper
+          projectId={projectId}
+          listId={config.listId}
+          config={config}
+          onSave={(fullConfig) => onSave(fullConfig)}
+        />
+      )}
 
       {modalOpen && (
         <ConfigModal

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { NotificationBell } from '@/components/notification-bell';
-import { GuestLogoutButton } from '@/components/guest-logout-button';
+import { GuestUserMenu } from '../guest-user-menu';
 import { GuestProjectSwitcher } from '../guest-project-switcher';
 
 interface Props {
@@ -122,14 +122,13 @@ export default async function GuestProjectPage({ params }: Props) {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">{user.email}</span>
             <NotificationBell isGuest />
             {!isGuest && (
               <Link href={`/projects/${projectId}`} className="text-xs font-medium text-[#ff724f] hover:text-[#ff724f]">
                 Open in dashboard →
               </Link>
             )}
-            <GuestLogoutButton />
+            <GuestUserMenu email={user.email ?? undefined} />
           </div>
         </div>
       </header>

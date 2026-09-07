@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Inter } from 'next/font/google';
 import { ToastProvider } from '@/components/ui/toast';
+import { WidgetTokenSync } from '@/components/widget-token-sync';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -30,6 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${dmSans.variable} ${inter.variable}`}>
       <body>
+        <WidgetTokenSync />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

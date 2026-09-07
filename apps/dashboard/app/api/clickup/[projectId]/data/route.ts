@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getClickUpListFields } from '@/lib/integrations/clickup';
 
 interface Props { params: Promise<{ projectId: string }> }
 
@@ -85,6 +86,13 @@ export async function GET(req: NextRequest, { params }: Props) {
         name: m.username,
         avatar: m.profilePicture,
       }));
+      return NextResponse.json({ data });
+    }
+
+    if (type === 'fields') {
+      const listId = req.nextUrl.searchParams.get('listId');
+      if (!listId) return NextResponse.json({ error: 'Missing listId' }, { status: 400 });
+      const data = await getClickUpListFields(token, listId);
       return NextResponse.json({ data });
     }
 

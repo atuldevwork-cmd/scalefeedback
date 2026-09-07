@@ -38,8 +38,11 @@ export async function updateSession(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.access_token) {
       supabaseResponse.cookies.set('sf-wt', session.access_token, {
+        // SameSite=None cookies must be Secure regardless of environment — browsers
+        // reject them outright otherwise. Chrome treats localhost as a trustworthy
+        // origin, so `secure: true` still works over plain http in local dev.
         sameSite: 'none',
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
         httpOnly: true,
         path: '/',
         maxAge: 60 * 60, // 1 hour — matches Supabase JWT expiry

@@ -8,6 +8,9 @@ import { collectMetadata } from '../capture/metadata';
 import { AnnotationCanvas } from '../annotation/canvas';
 import { submitFeedback, shareSnapshot, improveFeedbackText } from './api';
 import widgetStyles from '../ui/styles.css?inline';
+import flatpickr from 'flatpickr';
+import type { Instance as FlatpickrInstance } from 'flatpickr/dist/types/instance';
+import flatpickrStyles from 'flatpickr/dist/flatpickr.min.css?inline';
 
 const HOST_ID = 'pinmarks-widget';
 const SF_GUEST_KEY = 'sf_guest_identity';
@@ -176,6 +179,7 @@ export class PinmarksWidget {
   private step: Step = 'annotate';
   private screenshotDataUrl = '';
   private annotationCanvas: AnnotationCanvas | null = null;
+  private dueDatePicker: FlatpickrInstance | null = null;
   private currentTool: AnnotationTool = 'select';
   private feedbackType: FeedbackType = 'bug';
   private isOpen = false;
@@ -205,9 +209,12 @@ export class PinmarksWidget {
     document.body.appendChild(host);
     this.shadowRoot = host.attachShadow({ mode: 'closed' });
 
-    // Inject styles
+    // Inject styles — flatpickr's own CSS is included so its calendar popup
+    // (appended into this shadow root, see initDueDatePicker()) picks up
+    // matching styles instead of being unstyled (shadow DOM doesn't inherit
+    // page-level stylesheets).
     const style = document.createElement('style');
-    style.textContent = widgetStyles;
+    style.textContent = widgetStyles + flatpickrStyles;
     this.shadowRoot.appendChild(style);
 
     // Start interceptors if configured
@@ -232,23 +239,39 @@ export class PinmarksWidget {
     void detectExtension().then((res) => { this.extensionInstalled = res.installed; });
   }
 
+  // A workspace member/admin (identified, and not flagged as a project guest).
+  // A project guest with a known identity still counts as a guest reporter
+  // here — Member Forms carry PM controls (Priority/Assignee/Due date) that
+  // are for internal team members only, per the Project Settings copy.
+  private isIdentifiedMember(): boolean {
+    return !!this.config.user && !this.config.isGuestUser;
+  }
+
   // Which issue-type keys the current reporter is allowed to pick — guest
-  // list if this session has no identified user, member list once one is
-  // set (mirrors the guestReporting/config.user branching used elsewhere in
-  // this file to distinguish guest vs. member reporters).
+  // list for guest/unidentified reporters, member list for identified
+  // workspace members.
   private enabledFeedbackTypes(): FeedbackType[] {
-    const list = this.config.user ? this.config.memberFormTypes : this.config.guestFormTypes;
+    const list = this.isIdentifiedMember() ? this.config.memberFormTypes : this.config.guestFormTypes;
     return list && list.length > 0 ? list : ALL_FEEDBACK_TYPES;
   }
 
   // Which extra fields (Title/Priority/Assignee/Due date) are visible on the
   // form — the same set for every issue type, for the current audience (guest
-  // vs. member — same guestReporting/config.user split used by
-  // enabledFeedbackTypes()). See DEFAULT_VISIBLE_FIELDS for why an empty/unset
-  // list falls back to ['title'] rather than [].
+  // vs. member — same split used by enabledFeedbackTypes()). See
+  // DEFAULT_VISIBLE_FIELDS for why an empty/unset list falls back to
+  // ['title'] rather than [].
   private visibleFields(): FieldKey[] {
-    const fields = this.config.user ? this.config.memberFormFields : this.config.guestFormFields;
+    const fields = this.isIdentifiedMember() ? this.config.memberFormFields : this.config.guestFormFields;
     return Array.isArray(fields) && fields.length > 0 ? (fields as FieldKey[]) : DEFAULT_VISIBLE_FIELDS;
+  }
+
+  // Per-field custom label / preset value / required flag (Project Settings >
+  // Guest Forms / Member Forms > Fields > per-field accordion). A field can
+  // carry a preset even while hidden — see priorityFieldHtml() etc., which
+  // render a hidden input with that value so it's still submitted silently.
+  private fieldSettings(key: FieldKey): { label?: string; preset?: string; required?: boolean } {
+    const map = this.isIdentifiedMember() ? this.config.memberFieldSettings : this.config.guestFieldSettings;
+    return map?.[key] ?? {};
   }
 
   // Title has an extra global override on top of the per-type toggle: when
@@ -475,6 +498,7 @@ export class PinmarksWidget {
 
     overlay.appendChild(modal);
     this.shadowRoot.appendChild(overlay);
+    this.initDueDatePicker();
   }
 
   private renderDesktopSplitPanel() {
@@ -573,6 +597,7 @@ export class PinmarksWidget {
     this.initAnnotationCanvas();
     this.bindColorPicker();
     this.bindImageInput();
+    this.initDueDatePicker();
   }
 
   private renderHeader(title: string): string {
@@ -657,9 +682,10 @@ export class PinmarksWidget {
 
   private titleFieldHtml(): string {
     if (!this.shouldShowTitleField()) return '';
+    const label = this.fieldSettings('title').label || 'Title';
     return `<div class="sf-field">
       <div class="sf-field-label-row">
-        <label class="sf-label" for="sf-title">Title <span style="color:#dc2626">*</span></label>
+        <label class="sf-label" for="sf-title">${label} <span style="color:#dc2626">*</span></label>
         ${this.aiImproveButtonHtml()}
       </div>
       <input id="sf-title" class="sf-input" type="text" placeholder="Brief summary…" />
@@ -671,12 +697,16 @@ export class PinmarksWidget {
   // handleSubmit() and sent to /api/feedback, which persists it on the
   // feedback row (see apps/dashboard/app/api/feedback/route.ts baseInsert).
   private priorityFieldHtml(current?: string): string {
-    if (!this.visibleFields().includes('priority')) return '';
-    const value = current ?? 'medium';
+    const settings = this.fieldSettings('priority');
+    if (!this.visibleFields().includes('priority')) {
+      // Hidden but has a preset — still submit it, just never shown to the reporter.
+      return settings.preset ? `<input type="hidden" id="sf-priority" value="${settings.preset}" />` : '';
+    }
+    const value = current ?? settings.preset ?? 'medium';
     const opt = (v: string, label: string) => `<option value="${v}" ${value === v ? 'selected' : ''}>${label}</option>`;
     return `<div class="sf-field">
-      <label class="sf-label" for="sf-priority">Priority</label>
-      <select id="sf-priority" class="sf-select">
+      <label class="sf-label" for="sf-priority">${settings.label || 'Priority'}${settings.required ? ' <span style="color:#dc2626">*</span>' : ''}</label>
+      <select id="sf-priority" class="sf-select" ${settings.required ? 'required' : ''}>
         ${opt('low', 'Low')}${opt('medium', 'Medium')}${opt('high', 'High')}${opt('critical', 'Critical')}
       </select>
     </div>`;
@@ -688,13 +718,17 @@ export class PinmarksWidget {
   // and sent to /api/feedback, which re-validates membership before persisting
   // to feedback.assigned_to.
   private assigneeFieldHtml(current?: string): string {
-    if (!this.visibleFields().includes('assignee')) return '';
+    const settings = this.fieldSettings('assignee');
+    if (!this.visibleFields().includes('assignee')) {
+      return settings.preset ? `<input type="hidden" id="sf-assignee" value="${settings.preset}" />` : '';
+    }
     const members = this.config.assignableMembers ?? [];
     if (members.length === 0) return '';
-    const opt = (v: string, label: string) => `<option value="${v}" ${current === v ? 'selected' : ''}>${label}</option>`;
+    const value = current ?? settings.preset ?? '';
+    const opt = (v: string, label: string) => `<option value="${v}" ${value === v ? 'selected' : ''}>${label}</option>`;
     return `<div class="sf-field">
-      <label class="sf-label" for="sf-assignee">Assignee</label>
-      <select id="sf-assignee" class="sf-select">
+      <label class="sf-label" for="sf-assignee">${settings.label || 'Assignee'}${settings.required ? ' <span style="color:#dc2626">*</span>' : ''}</label>
+      <select id="sf-assignee" class="sf-select" ${settings.required ? 'required' : ''}>
         ${opt('', 'Unassigned')}${members.map((m) => opt(m.id, m.name)).join('')}
       </select>
     </div>`;
@@ -704,11 +738,58 @@ export class PinmarksWidget {
   // this issue type. Collected in handleSubmit() and sent to /api/feedback,
   // which persists it on feedback.due_date.
   private dueDateFieldHtml(current?: string): string {
-    if (!this.visibleFields().includes('dueDate')) return '';
+    const settings = this.fieldSettings('dueDate');
+    if (!this.visibleFields().includes('dueDate')) {
+      return settings.preset ? `<input type="hidden" id="sf-due-date" value="${settings.preset}" />` : '';
+    }
+    const value = current ?? settings.preset ?? '';
+    // type="text", not "date" — initDueDatePicker() attaches flatpickr to
+    // this input right after it's inserted into the DOM, and having both the
+    // native browser date picker and flatpickr's calendar on the same field
+    // would show two conflicting UIs.
     return `<div class="sf-field">
-      <label class="sf-label" for="sf-due-date">Due date</label>
-      <input id="sf-due-date" class="sf-input" type="date" value="${current ?? ''}" />
+      <label class="sf-label" for="sf-due-date">${settings.label || 'Due date'}${settings.required ? ' <span style="color:#dc2626">*</span>' : ''}</label>
+      <input id="sf-due-date" class="sf-input" type="text" placeholder="Select date" value="${value}" ${settings.required ? 'required' : ''} />
     </div>`;
+  }
+
+  // Attaches flatpickr to the real (visible) due-date input, if one was just
+  // rendered into the DOM. Safe to call after every render that may contain
+  // `#sf-due-date` — destroys any previous instance first (StrictMode-style
+  // double-render, issue-type switches replacing the DOM node, etc. would
+  // otherwise leave stale/duplicate instances, same class of bug as the
+  // dashboard's DatePickerInput). Appends the calendar popup into this
+  // widget's own shadow root so it picks up the injected flatpickr CSS —
+  // appending to document.body (flatpickr's default) would render outside
+  // the shadow boundary and pick up none of it.
+  private initDueDatePicker() {
+    this.dueDatePicker?.destroy();
+    this.dueDatePicker = null;
+
+    const input = this.shadowRoot.querySelector<HTMLInputElement>('#sf-due-date');
+    if (!input || input.type === 'hidden') return;
+
+    const existing = (input as unknown as { _flatpickr?: FlatpickrInstance })._flatpickr;
+    existing?.destroy();
+
+    // appendTo must be a real, positioned HTMLElement — the ShadowRoot itself
+    // has no box/layout, and flatpickr's calendar (position: absolute,
+    // measured off the input's getBoundingClientRect) ends up with nothing
+    // to actually paint into if it's appended directly there. The mobile
+    // modal and desktop split panel each wrap their whole form in one of
+    // these two overlay elements, so whichever is currently mounted is a
+    // safe, real container already sized to the visible viewport.
+    const container =
+      this.shadowRoot.querySelector<HTMLElement>('.sf-overlay') ??
+      this.shadowRoot.querySelector<HTMLElement>('.sf-desktop-overlay') ??
+      input.parentElement ??
+      undefined;
+
+    this.dueDatePicker = flatpickr(input, {
+      dateFormat: 'Y-m-d',
+      defaultDate: input.value || undefined,
+      ...(container ? { appendTo: container } : {}),
+    });
   }
 
   // Both render sites (desktop split panel + mobile/standard form) wrap
@@ -732,6 +813,7 @@ export class PinmarksWidget {
     container.innerHTML = `${this.titleFieldHtml()}${this.priorityFieldHtml(prevPriority)}${this.assigneeFieldHtml(prevAssignee)}${this.dueDateFieldHtml(prevDueDate)}`;
     const titleInput = this.shadowRoot.querySelector<HTMLInputElement>('#sf-title');
     if (titleInput && prevTitle) titleInput.value = prevTitle;
+    this.initDueDatePicker();
   }
 
   private descriptionFieldHtml(): string {
@@ -1209,6 +1291,19 @@ export class PinmarksWidget {
       }
     }
 
+    // Priority/Assignee/Due date can be marked Required (Project Settings >
+    // Fields, per-field accordion) — no native <form> here, so enforce it
+    // manually, same pattern as the Title/Name/Email checks above.
+    if (this.visibleFields().includes('priority') && this.fieldSettings('priority').required && !priority) {
+      showError(`Please select a ${(this.fieldSettings('priority').label || 'Priority').toLowerCase()}.`); return;
+    }
+    if (this.visibleFields().includes('assignee') && this.fieldSettings('assignee').required && !assignedTo) {
+      showError(`Please select an ${(this.fieldSettings('assignee').label || 'Assignee').toLowerCase()}.`); return;
+    }
+    if (this.visibleFields().includes('dueDate') && this.fieldSettings('dueDate').required && !dueDate) {
+      showError(`Please select a ${(this.fieldSettings('dueDate').label || 'Due date').toLowerCase()}.`); return;
+    }
+
     if (errorEl) errorEl.style.display = 'none';
 
     // Leave the canvas alone here — it stays visible while the request is in
@@ -1363,6 +1458,8 @@ export class PinmarksWidget {
     this.shadowRoot.querySelector('.sf-desktop-overlay')?.remove();
     this.annotationCanvas?.destroy();
     this.annotationCanvas = null;
+    this.dueDatePicker?.destroy();
+    this.dueDatePicker = null;
     this.isOpen = false;
     this.screenshotDataUrl = '';
     this.guestIdentityOverride = false;

@@ -1,12 +1,16 @@
 'use client';
 
 import type { FeedbackType } from '@pinmarks/shared';
-import type { FieldKey } from './issue-fields-editor';
+import type { FieldKey, FieldSettingsMap } from './issue-fields-editor';
 
 interface Props {
   selectedType: { key: FeedbackType; label: string; icon: string };
   fields: FieldKey[];
+  settings: FieldSettingsMap;
+  assignableMembers: { id: string; name: string }[];
 }
+
+const PRIORITY_LABELS: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', critical: 'Critical' };
 
 // Self-contained, static visual mockup of the widget's own share-feedback
 // form (see renderFormStep()/renderDesktopSplitPanel() in
@@ -16,11 +20,20 @@ interface Props {
 // whenever a toggle changes in IssueFieldsEditor, since that state lives one
 // level up in IssueTypesPanel and both columns are siblings re-rendered
 // together on every state update — no extra plumbing needed here.
-export function WidgetFieldsPreview({ selectedType, fields }: Props) {
+export function WidgetFieldsPreview({ selectedType, fields, settings, assignableMembers }: Props) {
   const showTitle = fields.includes('title');
   const showPriority = fields.includes('priority');
   const showAssignee = fields.includes('assignee');
   const showDueDate = fields.includes('dueDate');
+
+  const titleLabel = settings.title?.label || 'Title';
+  const priorityLabel = settings.priority?.label || 'Priority';
+  const assigneeLabel = settings.assignee?.label || 'Assignee';
+  const dueDateLabel = settings.dueDate?.label || 'Due date';
+
+  const priorityValue = PRIORITY_LABELS[settings.priority?.preset ?? ''] ?? 'Medium';
+  const assigneeValue = assignableMembers.find((m) => m.id === settings.assignee?.preset)?.name ?? 'Unassigned';
+  const dueDateValue = settings.dueDate?.preset || 'Select date…';
 
   return (
     <div className="border border-gray-200 rounded-xl bg-white overflow-hidden">
@@ -51,7 +64,7 @@ export function WidgetFieldsPreview({ selectedType, fields }: Props) {
             {/* Title — real field, wired end-to-end */}
             {showTitle && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 mb-1">Title *</p>
+                <p className="text-[11px] font-semibold text-gray-500 mb-1">{titleLabel} *</p>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-400">
                   Brief summary…
                 </div>
@@ -76,32 +89,30 @@ export function WidgetFieldsPreview({ selectedType, fields }: Props) {
             {/* Priority — real field, wired end-to-end */}
             {showPriority && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 mb-1">Priority</p>
+                <p className="text-[11px] font-semibold text-gray-500 mb-1">{priorityLabel}{settings.priority?.required && ' *'}</p>
                 <div className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-600 flex items-center justify-between">
-                  Medium
+                  {priorityValue}
                   <span className="text-gray-400">▾</span>
                 </div>
               </div>
             )}
 
             {/* Assignee / Due date — real fields, wired end-to-end (see
-                issue-fields-editor.tsx). Assignee's actual options come from
-                the project's org members at render time in the live widget;
-                this preview shows a static placeholder instead. */}
+                issue-fields-editor.tsx). */}
             {showAssignee && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 mb-1">Assignee</p>
+                <p className="text-[11px] font-semibold text-gray-500 mb-1">{assigneeLabel}{settings.assignee?.required && ' *'}</p>
                 <div className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-400 flex items-center justify-between">
-                  Unassigned
+                  {assigneeValue}
                   <span className="text-gray-400">▾</span>
                 </div>
               </div>
             )}
             {showDueDate && (
               <div>
-                <p className="text-[11px] font-semibold text-gray-500 mb-1">Due date</p>
+                <p className="text-[11px] font-semibold text-gray-500 mb-1">{dueDateLabel}{settings.dueDate?.required && ' *'}</p>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-400">
-                  Select date…
+                  {dueDateValue}
                 </div>
               </div>
             )}

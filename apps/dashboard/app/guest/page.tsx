@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { GuestLogoutButton } from '@/components/guest-logout-button';
+import { GuestUserMenu } from './guest-user-menu';
 import { GuestProjectsClient } from './guest-projects-client';
 
 export default async function GuestHomePage() {
@@ -36,8 +36,7 @@ export default async function GuestHomePage() {
             <span className="font-bold text-lg text-[#111111]">Pinmarks</span>
           </a>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">{user.email}</span>
-            <GuestLogoutButton />
+            <GuestUserMenu email={user.email ?? undefined} />
           </div>
         </div>
       </header>
