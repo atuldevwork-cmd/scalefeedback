@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { NotificationBell } from '@/components/notification-bell';
 import { GuestLogoutButton } from '@/components/guest-logout-button';
+import { GuestProjectSwitcher } from '../guest-project-switcher';
 
 interface Props {
   params: Promise<{ projectId: string }>;
@@ -84,15 +85,16 @@ export default async function GuestProjectPage({ params }: Props) {
 
   const isGuest = !!guestAccess && !membership;
 
-  let otherProjectsCount = 0;
+  let guestProjects: { id: string; name: string }[] = [];
   if (isGuest) {
-    const { count } = await service
+    const { data: rows } = await service
       .from('project_guests')
-      .select('project_id', { count: 'exact', head: true })
+      .select('project_id, projects(id, name)')
       .eq('email', user.email ?? '')
-      .not('accepted_at', 'is', null)
-      .neq('project_id', projectId);
-    otherProjectsCount = count ?? 0;
+      .not('accepted_at', 'is', null);
+    guestProjects = (rows ?? [])
+      .map((r) => r.projects as unknown as { id: string; name: string } | null)
+      .filter((p): p is { id: string; name: string } => !!p);
   }
 
   return (
@@ -108,7 +110,11 @@ export default async function GuestProjectPage({ params }: Props) {
             </a>
             </div>
             <span className="text-gray-300">/</span>
-            <span className="text-sm font-semibold text-[#111111]">{project.name}</span>
+            {isGuest ? (
+              <GuestProjectSwitcher currentProjectId={projectId} currentProjectName={project.name} projects={guestProjects} />
+            ) : (
+              <span className="text-sm font-semibold text-[#111111]">{project.name}</span>
+            )}
             {isGuest && (
               <span className="text-xs bg-[#fff3f0] text-[#ff724f] font-semibold px-2 py-0.5 rounded-full border border-[#ff724f]/20">
                 Guest view
@@ -116,11 +122,6 @@ export default async function GuestProjectPage({ params }: Props) {
             )}
           </div>
           <div className="flex items-center gap-3">
-            {isGuest && otherProjectsCount > 0 && (
-              <Link href="/guest" className="text-xs font-medium text-[#ff724f] hover:text-[#ff724f]">
-                Switch project →
-              </Link>
-            )}
             <span className="text-xs text-gray-400">{user.email}</span>
             <NotificationBell isGuest />
             {!isGuest && (
